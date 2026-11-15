@@ -274,6 +274,9 @@ body {
 .nav-backdrop {
   display: none;
 }
+.drawer-close {
+  display: none;
+}
 .stepper {
   display: flex;
   align-items: center;
@@ -442,6 +445,12 @@ body {
   }
   .mobile-menu {
     display: inline-flex;
+  }
+  .drawer-close {
+    display: inline-flex;
+    position: absolute;
+    top: 20px;
+    right: 12px;
   }
   .nav-backdrop {
     display: block;

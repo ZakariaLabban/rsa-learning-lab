@@ -1,6 +1,28 @@
 import { expect, test } from '@playwright/test';
 import { routes } from '../src/app/routes';
 
+test('workspace visibility and status follow router case and trailing-slash rules', async ({
+  page,
+}) => {
+  await page.route('**/api/**', (route) => route.abort());
+  for (const path of ['/learn/encrypt/', '/LEARN/ENCRYPT']) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { name: 'Every message has a journey.' })).toBeVisible();
+    await expect(page.getByLabel('Message to encrypt')).toBeVisible();
+    await expect(page.locator('.migration-notice')).toBeVisible();
+    await expect(page.locator('.breadcrumb strong')).toHaveText('Encrypt / Decrypt');
+  }
+  for (const [path, label] of [
+    ['/learn/keys/', 'Keys'],
+    ['/LEARN/KEYS', 'Keys'],
+    ['/experiments/', 'Existing experiments'],
+  ]) {
+    await page.goto(path);
+    await expect(page.locator('.migration-notice')).toBeVisible();
+    await expect(page.locator('.breadcrumb strong')).toHaveText(label);
+  }
+});
+
 for (const width of [375, 1440])
   for (const theme of ['light', 'dark']) {
     test(`static routes work at ${width}px in ${theme} without Python`, async ({ page }) => {
@@ -61,4 +83,26 @@ test('navigation, theme persistence, focus trap and reduced motion', async ({ pa
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).not.toBeVisible();
   await expect(page.getByRole('button', { name: 'About this lab' })).toBeFocused();
+});
+
+test('mobile navigation contains keyboard focus and restores it on close', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  const toggle = page.getByRole('button', { name: 'Open navigation', exact: true });
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  const close = page.getByRole('button', { name: 'Close navigation menu', exact: true });
+  await expect(close).toBeFocused();
+  await expect(page.locator('.main-shell')).toHaveAttribute('inert', '');
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('button', { name: 'A quick orientation' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(toggle).toBeFocused();
+  await expect(page.locator('.main-shell')).not.toHaveAttribute('inert');
+  await page.keyboard.press('Enter');
+  await close.click();
+  await expect(toggle).toBeFocused();
 });

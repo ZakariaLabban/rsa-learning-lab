@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
-import { BrowserRouter, Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  BrowserRouter,
+  Link,
+  NavLink,
+  Route,
+  Routes,
+  matchPath,
+  useLocation,
+} from 'react-router-dom';
 import { Braces, CircleHelp, Menu, Moon, Sun, X } from 'lucide-react';
 import { ErrorBanner } from '../components/ErrorBanner';
 import { Home } from '../features/home/Home';
@@ -14,12 +22,56 @@ import { useLegacySession } from './useLegacySession';
 
 function Shell() {
   const location = useLocation();
-  const isWorkbench = location.pathname === '/learn/encrypt';
-  const isLegacy = isWorkbench || ['/learn/keys', '/experiments'].includes(location.pathname);
+  // Use the router's own matching rules, including case and trailing slashes.
+  const matches = (path: string) => matchPath(path, location.pathname) !== null;
+  const isWorkbench = matches('/learn/encrypt');
+  const isLegacy = isWorkbench || ['/learn/keys', '/experiments'].some(matches);
   const session = useLegacySession(isLegacy);
   const [guide, setGuide] = useState(true),
     [mobileNav, setMobileNav] = useState(false),
     [help, setHelp] = useState(false);
+  const drawerRef = useRef<HTMLElement>(null);
+  const navToggleRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!mobileNav) return;
+    const drawer = drawerRef.current;
+    const toggle = navToggleRef.current;
+    const controls = () =>
+      Array.from(
+        drawer?.querySelectorAll<HTMLElement>('a[href], button:not(:disabled)') ?? [],
+      ).filter((element) => element.getClientRects().length > 0);
+    controls()[0]?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setMobileNav(false);
+      }
+      if (event.key !== 'Tab') return;
+      const targets = controls();
+      const first = targets[0],
+        last = targets[targets.length - 1];
+      if (!first || !last) return;
+      const outside = !drawer?.contains(document.activeElement);
+      if (event.shiftKey && (document.activeElement === first || outside)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || outside)) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    const media = window.matchMedia('(max-width: 700px)');
+    const onResize = () => {
+      if (!media.matches) setMobileNav(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    media.addEventListener('change', onResize);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      media.removeEventListener('change', onResize);
+      toggle?.focus();
+    };
+  }, [mobileNav]);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try {
       const saved = localStorage.getItem('rsa-lab-theme');
@@ -38,7 +90,7 @@ function Shell() {
       /* Memory-only theme remains usable. */
     }
   }, [theme]);
-  const current = routes.find((route) => route.path === location.pathname);
+  const current = routes.find((route) => matches(route.path));
   useEffect(() => {
     document.title = `${current?.label ?? 'Explore'} · RSA Lab`;
   }, [current]);
@@ -59,10 +111,24 @@ function Shell() {
         <button
           className="nav-backdrop"
           aria-label="Close navigation"
+          tabIndex={-1}
           onClick={() => setMobileNav(false)}
         />
       )}
-      <aside className={`sidebar ${mobileNav ? 'nav-open' : ''}`} aria-label="Laboratory sidebar">
+      <aside
+        ref={drawerRef}
+        className={`sidebar ${mobileNav ? 'nav-open' : ''}`}
+        aria-label="Laboratory sidebar"
+        role={mobileNav ? 'dialog' : undefined}
+        aria-modal={mobileNav || undefined}
+      >
+        <button
+          className="icon-button drawer-close"
+          aria-label="Close navigation menu"
+          onClick={() => setMobileNav(false)}
+        >
+          <X size={20} />
+        </button>
         <Link
           to="/"
           className="brand"
@@ -104,17 +170,24 @@ function Shell() {
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <button className="sidebar-help" onClick={() => setHelp(true)}>
+          <button
+            className="sidebar-help"
+            onClick={() => {
+              setMobileNav(false);
+              setHelp(true);
+            }}
+          >
             <CircleHelp size={17} /> A quick orientation
           </button>
           <span className="helper-text">EECE 455 / 632 · Project 12</span>
         </div>
       </aside>
-      <div className="main-shell">
+      <div className="main-shell" inert={mobileNav}>
         <header className="topbar">
           <div className="breadcrumb">
             <button
               className="mobile-menu icon-button"
+              ref={navToggleRef}
               aria-label={mobileNav ? 'Close navigation' : 'Open navigation'}
               aria-expanded={mobileNav}
               onClick={() => setMobileNav(!mobileNav)}
