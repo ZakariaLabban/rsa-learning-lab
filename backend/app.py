@@ -183,7 +183,12 @@ if DIST.exists():
 
 
 @app.get("/")
-def index():
+@app.get("/{client_path:path}")
+def index(client_path: str = ""):
+    # BrowserRouter deep links use the same shell. Unknown API/assets requests
+    # must still return 404 rather than an HTML response masquerading as JSON.
+    if client_path.split("/", 1)[0] in ("api", "assets"):
+        raise HTTPException(404, "Not found")
     if (DIST / "index.html").exists():
         return FileResponse(DIST / "index.html")
     raise HTTPException(503, "Build the frontend first: cd frontend; npm run build")

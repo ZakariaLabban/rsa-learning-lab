@@ -2,6 +2,12 @@
 
 A local, interactive RSA learning application for EECE 455/632, Project 12.
 
+The frontend now opens on an overview with Learn/Break navigation, light/dark
+themes and direct page URLs. The worked example runs in the browser using the
+new TypeScript math engine. Existing Key Studio, Encrypt/Decrypt and Experiments
+remain functional through the local Python API during migration. Future lessons
+are explicitly marked as planned, not presented as finished features.
+
 ## Run on Windows
 
 After the initial setup, double-click **start-lab.cmd** and open
@@ -69,10 +75,14 @@ React / TypeScript / Motion / SVG
        custom Python RSA
 ```
 
-- `backend/core.py`: cryptographic mathematics, OAEP, and envelope encoding.
+- `reference/rsa_reference.py`: preserved Python mathematics, OAEP, and envelope encoding.
+- `backend/core.py`: compatibility imports for the existing API.
 - `backend/app.py`: session/API lifecycle and frontend serving.
-- `frontend/src/App.tsx`: interactive workspaces and playback.
-- `frontend/src/styles.css`: responsive visual system.
+- `frontend/src/app/`: URL routes, navigation, theme and temporary API session.
+- `frontend/src/features/`: landing, preserved workspaces and planned lesson pages.
+- `frontend/src/components/`: shared numerical displays, playback and teaching controls.
+- `frontend/src/engine/math/`: independent TypeScript arithmetic and optional traces.
+- `frontend/src/styles/`: responsive visual system and theme tokens.
 - `tests/`: core, interoperability, and API checks.
 
 ## Validation
@@ -80,10 +90,23 @@ React / TypeScript / Motion / SVG
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
 Set-Location frontend
+npm.cmd run lint
+npm.cmd run format:check
+npm.cmd run typecheck
+npm.cmd test
 npm.cmd run build
+npx.cmd playwright install chromium
+npm.cmd run test:browser
 ```
 
 Tests cover both key sizes, non-coprime messages, arithmetic, a known RSA example, Unicode/empty/zero-prefixed byte strings, message-length boundaries, malformed inputs, repeated ciphertext behavior, session isolation, and real API key-generation jobs. OAEP is checked **in both directions** against the independent `cryptography` implementation. The application does not call that library for RSA computations; it is a test reference only.
+
+Reproduce the committed cross-language fixtures with
+`python -m reference.generate_vectors --check` from the project root. See
+[reference guide](reference/README.md), [math contracts](docs/engine-contracts.md),
+[frontend structure](docs/frontend-structure.md), and [contributing](CONTRIBUTING.md).
+Use Node 22.13+ (Node 22 is recorded in `.nvmrc`). CI runs frontend checks/browser
+smoke tests and the Python reference/API tests on pull requests and `main`.
 
 ## Encoding and limits
 

@@ -1,0 +1,17 @@
+export const routes = [
+  { path: '/learn/keys', label: 'Keys', group: 'Learn', issue: 10 },
+  { path: '/learn/miller-rabin', label: 'Miller–Rabin', group: 'Learn', issue: 11 },
+  { path: '/learn/euclid', label: 'Extended Euclid', group: 'Learn', issue: 10 },
+  { path: '/learn/square-and-multiply', label: 'Square-and-Multiply', group: 'Learn', issue: 12 },
+  { path: '/learn/encrypt', label: 'Encrypt / Decrypt', group: 'Learn', issue: 13 },
+  { path: '/learn/crt', label: 'CRT', group: 'Learn', issue: 12 },
+  { path: '/learn/signatures', label: 'Signatures', group: 'Learn', issue: 14 },
+  { path: '/learn/why-rsa-works', label: 'Why RSA Works', group: 'Learn', issue: 11 },
+  { path: '/learn/practice', label: 'Practice', group: 'Learn', issue: 18 },
+  { path: '/break/factoring', label: 'Factoring Race', group: 'Break', issue: 15 },
+  { path: '/break/yes-or-no', label: 'YES or NO?', group: 'Break', issue: 46 },
+  { path: '/break/small-e', label: 'Small-e Broadcast', group: 'Break', issue: 47 },
+  { path: '/contacts', label: 'Contacts', group: 'Tools', issue: 16 },
+  { path: '/learn/example', label: 'Worked example', group: 'Tools', issue: 7 },
+  { path: '/experiments', label: 'Existing experiments', group: 'Tools', issue: 7 },
+] as const;
