@@ -4,6 +4,16 @@ from backend.app import app, SESSIONS
 from backend.core import Key
 
 
+def test_spa_deep_links_do_not_capture_unknown_api_routes(tmp_path, monkeypatch):
+    import importlib
+    backend = importlib.import_module("backend.app")
+    (tmp_path / "index.html").write_text("<html>RSA shell</html>")
+    monkeypatch.setattr(backend, "DIST", tmp_path)
+    with TestClient(app) as client:
+        assert client.get("/learn/example").text == "<html>RSA shell</html>"
+        assert client.get("/api/not-a-route").status_code == 404
+
+
 def test_session_isolation_and_validation():
     with TestClient(app) as client:
         first = client.post("/api/session").json()["token"]

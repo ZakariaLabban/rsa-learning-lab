@@ -1,0 +1,20 @@
+name: Task
+description: A focused feature or improvement
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Intended outcome
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Start and completion prerequisites
+      description: List actual dependencies; milestones are work groups, not start gates.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria and validation
+    validations:
+      required: true
