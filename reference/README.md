@@ -10,6 +10,7 @@ Run from the root using the project virtual environment:
 ```powershell
 python -m reference.generate_vectors
 python -m reference.generate_vectors --check
+python -m reference.check_ts_outputs
 python -m pytest -q
 ```
 
@@ -24,5 +25,17 @@ messages, user identities or any data requiring secrecy.
 Arithmetic expectations use Python built-in `pow` and `math.gcd`. Fixed-base
 Miller-Rabin examples are deterministic. Vectors include both 1024/2048-bit keys,
 non-coprime messages, phi/lambda exponents, OAEP ciphertexts and PSS signatures.
-The TypeScript tests consume arithmetic/key vectors now. Full browser OAEP/PSS
-consumption and reverse interoperability are issue #6, after the encodings in #4.
+
+## Interoperability in both directions (#6)
+
+- **Python -> TypeScript:** `frontend/src/engine/rsa/rsa.test.ts` decrypts the
+  library's OAEP ciphertexts and verifies its PSS signatures through the browser
+  operations, and checks the textbook vectors.
+- **TypeScript -> Python:** `frontend/src/engine/rsa/ts-outputs.test.ts` builds
+  deterministic outputs of the TypeScript engine (fixed OAEP seed and PSS salt) and
+  compares them with the committed `frontend/src/engine/__vectors__/ts-outputs.json`.
+  `check_ts_outputs.py` verifies that file with `cryptography`: OAEP (raw and inside
+  v2 envelopes), PSS, multi-block textbook envelopes, fingerprints and the lecture
+  teaching key. CI runs both sides. After an intended engine change, refresh the
+  file from `frontend` with `UPDATE_TS_OUTPUTS=1 npm run vectors:ts` (bash) or
+  `$env:UPDATE_TS_OUTPUTS=1; npm run vectors:ts` (PowerShell), then rerun the checker.
