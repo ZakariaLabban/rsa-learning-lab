@@ -42,7 +42,7 @@ fingerprint must match the chosen key. OAEP and hybrid require 1024/2048 bits.
 Textbook chunks are width-1 bytes, with a possibly shorter final chunk. The block
 count is max(1,ceil(byteLength/(width-1))); empty data uses one encryption of zero.
 Byte counts preserve leading zero bytes. At most 4096 textbook blocks are allowed.
-The existing text UI currently uses one block, with an explicit capacity display.
+The engine (`engine/rsa`, #6) produces and opens multi-block textbook envelopes.
 Textbook RSA is deterministic and does not detect arbitrary tampering.
 
 OAEP is RFC 8017 EME-OAEP using SHA-256, MGF1-SHA256 and empty label. Capacity is

@@ -26,8 +26,7 @@ Use `{trace:true,maxRows:256}` for optional arithmetic traces. Traces retain a
 bounded prefix; `rowCount` and `truncated` distinguish a summary from a complete
 table. Miller-Rabin also bounds stored sequences. Large traces do not change the
 computed answer. Prime searches/key construction/worker progress and cancellation are in #42;
-OAEP/PSS encodings are in #4. Full capabilities/signature composition and
-interop reporting remain #6.
+OAEP/PSS encodings are in #4. Complete operations are in `engine/rsa` (#6, below).
 
 The main app now uses the browser worker/client for key generation and message
 operations. Python remains an independent test reference; its legacy local API
@@ -35,6 +34,28 @@ is retained until #45. Worker key generation is implemented in #42;
 OAEP/PSS/AES/fingerprint/envelope helpers are documented in envelope-v2.md.
 Reference vectors and tests include both 1024/2048-bit fixtures, messages divisible
 by p/q, lecture Table 9.3, strong liars of 221 and the phi(1..30) table.
+
+## RSA operations (`frontend/src/engine/rsa/`, #6)
+
+Pages call these instead of combining math and encodings themselves. Encryption and
+verification need only a public key `{n, e}`; decryption and signing need the private key.
+
+| Function | Result / convention |
+| --- | --- |
+| `capabilities(key)` | Key class and allowed modes. Teaching (n<=64 bits): textbook numbers; textbook text only if n>=256 (blocks of width-1 bytes); teaching signature. Assignment (exactly 1024/2048): textbook, OAEP (max width-66 bytes), PSS, hybrid (#44). Other sizes throw |
+| `textbookEncryptNumber` / `textbookDecryptNumber` | Raw C=M^e mod n and M=C^d mod n (CRT), 0<=M<n |
+| `textbookEncryptBytes` / `textbookDecryptBytes` | "Block if needed": chunks of width-1 bytes (each < n), empty input = one zero block, at most 4096 blocks. Deterministic and not tamper-evident |
+| `oaepEncrypt` / `oaepDecrypt` | RSAES-OAEP (RFC 8017 7.1), SHA-256, empty label; one generic decryption error |
+| `pssSign` / `pssVerifySignature` | RSASSA-PSS (RFC 8017 8.1), SHA-256, MGF1-SHA256, 32-byte salt; verify returns false for any bad input |
+| `teachingSign` / `teachingVerify` | INSECURE s=(SHA-256(m) mod n)^d mod n for teaching keys; tiny n means digest collisions (tests show one) |
+| `sealBasic` / `openBasic` / `selectPrivateKey` | Textbook-block or OAEP v2 envelopes; opening picks the private key whose fingerprint and size match. Hybrid/signed envelopes: #44 |
+
+Only tests pass `testSeed`/`testSalt`; the worker never accepts injected randomness.
+Interoperability runs both ways in CI: the TypeScript operations consume the
+`cryptography` library's OAEP ciphertexts and PSS signatures, and the Python job
+verifies the committed TypeScript outputs (`ts-outputs.json`) with
+`python -m reference.check_ts_outputs` (see reference/README.md). The encoding layer is
+additionally cross-checked against OpenSSL through Node's crypto module.
 
 Specifications and references: [RFC 8017](https://datatracker.ietf.org/doc/html/rfc8017)
 for RSA primitives and octet conversions; course Chapters 8 and 9 for trace notation.
