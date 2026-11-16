@@ -1,5 +1,5 @@
 import { KeyRound, Plus } from 'lucide-react';
-import { type LabKey } from '../../api';
+import { type LabKey } from '../../engine/client';
 
 export type KeyControls = {
   labKey?: LabKey;

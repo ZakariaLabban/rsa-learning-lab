@@ -42,7 +42,7 @@ const mathSteps = [
     title: 'Choose the exponents',
     formula: 'e = 17      d = 2753',
     detail:
-      'Choose e coprime to φ(n). Find its modular inverse d, so e × d ≡ 1 mod φ(n). Our real-key engine uses e = 65537 and an inverse modulo Carmichael’s λ(n).',
+      'Choose e coprime to φ(n). Find its modular inverse d, so e × d ≡ 1 mod φ(n). Our real-key engine uses e = 65537 and an inverse modulo φ(n), with Carmichael’s λ(n) as another valid choice.',
     result: '17 × 2753 = 46801 = 15 × 3120 + 1',
     label: 'THE CONNECTED EXPONENTS',
   },

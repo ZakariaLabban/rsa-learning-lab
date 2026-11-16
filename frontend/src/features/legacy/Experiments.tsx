@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Activity, CircleHelp, Cpu, Download, Layers, Play, Plus, Sparkles } from 'lucide-react';
-import { api, type CipherResult, type LabKey, type Mode, type Recovered } from '../../api';
+import {
+  encryptMessage,
+  decryptEnvelope,
+  type CipherResult,
+  type LabKey,
+  type Mode,
+} from '../../engine/client';
 
 type CompareResult = { mode: Mode; first: CipherResult; second: CipherResult; recovered: boolean };
 export function Experiments({
@@ -46,12 +52,9 @@ export function Experiments({
     try {
       const results: CompareResult[] = [];
       for (const mode of ['textbook', 'oaep'] as Mode[]) {
-        const first = await api<CipherResult>('/encrypt', { key_id: labKey.id, message, mode });
-        const second = await api<CipherResult>('/encrypt', { key_id: labKey.id, message, mode });
-        const recovered = await api<Recovered>('/decrypt', {
-          key_id: labKey.id,
-          envelope: second.envelope,
-        });
+        const first = await encryptMessage(labKey.id, message, mode);
+        const second = await encryptMessage(labKey.id, message, mode);
+        const recovered = await decryptEnvelope(labKey.id, second.envelope);
         results.push({ mode, first, second, recovered: recovered.message === message });
       }
       if (id === version.current) setComparison(results);
@@ -70,12 +73,8 @@ export function Experiments({
       const encrypt: number[] = [],
         decrypt: number[] = [];
       for (let i = 0; i < 6; i++) {
-        const c = await api<CipherResult>('/encrypt', {
-          key_id: labKey.id,
-          message: 'RSA Lab benchmark',
-          mode: 'oaep',
-        });
-        const m = await api<Recovered>('/decrypt', { key_id: labKey.id, envelope: c.envelope });
+        const c = await encryptMessage(labKey.id, 'RSA Lab benchmark', 'oaep');
+        const m = await decryptEnvelope(labKey.id, c.envelope);
         if (i > 0) {
           encrypt.push(c.elapsed_ms);
           decrypt.push(m.elapsed_ms);
@@ -99,12 +98,12 @@ export function Experiments({
         JSON.stringify(
           {
             ...bench,
-            backend: 'Custom Python RSA + OAEP-SHA256',
+            backend: 'Custom browser RSA + OAEP-SHA256',
             samples: 5,
-            warmup: 1,
+            discarded_runs: 1,
             units: 'ms',
             browser: navigator.userAgent,
-            note: 'API computation time; excludes network, animation, and rendering. Single key; not a cross-machine study.',
+            note: 'Browser worker computation time; excludes animation and rendering. Single key; not a cross-machine study.',
           },
           null,
           2,
@@ -250,8 +249,8 @@ export function Experiments({
             <div className="eyebrow">EXPERIMENT / 02</div>
             <h3>Measure it. Don’t guess.</h3>
             <p>
-              Five measured OAEP operations after one warm-up. Times come from the Python engine and
-              exclude the network and animation.
+              Five recorded OAEP operations; the first run is discarded. Times come from the browser
+              worker and exclude animation and rendering.
             </p>
             {bench && (
               <>

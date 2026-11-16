@@ -23,7 +23,7 @@ export function Home() {
             Try a worked example <ArrowRight size={16} />
           </Link>
           <Link className="secondary-button" to="/learn/encrypt">
-            Open the existing lab
+            Encrypt a message
           </Link>
         </div>
       </section>

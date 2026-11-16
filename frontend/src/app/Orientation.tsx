@@ -50,13 +50,13 @@ export function Orientation({ onClose }: { onClose: () => void }) {
           issues are implemented.
         </p>
         <p>
-          The existing key studio, encryption workspace and experiments still use the local Python
-          server. The new shell and worked example run without it.
+          Key generation, encryption and the experiments run in your browser. No local server or
+          account is required.
         </p>
         <p>
           Use demonstration data. The custom engine is educational, not audited or constant-time.
-          The local API keeps keys temporarily in memory; refreshing starts a new session. 1024-bit
-          RSA is included for the assignment.
+          Keys stay in this tab’s memory; refreshing clears them. 1024-bit RSA is included for the
+          assignment.
         </p>
         <button className="primary-button" onClick={onClose}>
           Continue exploring

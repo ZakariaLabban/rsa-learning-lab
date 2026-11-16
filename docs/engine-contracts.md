@@ -25,11 +25,14 @@ future JSON/envelope adapters must explicitly encode integers as strings.
 Use `{trace:true,maxRows:256}` for optional arithmetic traces. Traces retain a
 bounded prefix; `rowCount` and `truncated` distinguish a summary from a complete
 table. Miller-Rabin also bounds stored sequences. Large traces do not change the
-computed answer. Prime searches/key construction/worker progress and cancellation
-remain #42; OAEP/PSS encodings remain #4 and composition/interop remains #6.
+computed answer. Prime searches/key construction/worker progress and cancellation are in #42;
+OAEP/PSS encodings are in #4. Full capabilities/signature composition and
+interop reporting remain #6.
 
-The main app still uses Python for generated-key encryption/decryption until
-those issues land. The existing small worked example now uses this math engine.
+The main app now uses the browser worker/client for key generation and message
+operations. Python remains an independent test reference; its legacy local API
+is retained until #45. Worker key generation is implemented in #42;
+OAEP/PSS/AES/fingerprint/envelope helpers are documented in envelope-v2.md.
 Reference vectors and tests include both 1024/2048-bit fixtures, messages divisible
 by p/q, lecture Table 9.3, strong liars of 221 and the phi(1..30) table.
 

@@ -22,7 +22,13 @@ import {
   Sparkles,
   UnlockKeyhole,
 } from 'lucide-react';
-import { api, type CipherResult, type Mode, type Recovered } from '../../api';
+import {
+  encryptMessage,
+  decryptEnvelope,
+  type CipherResult,
+  type Mode,
+  type Recovered,
+} from '../../engine/client';
 import { KeyBar, type KeyControls } from './KeyBar';
 import { CopyButton } from '../../components/CopyButton';
 const stageData = [
@@ -134,7 +140,7 @@ export function Workbench(
     setRecovered(undefined);
     setPlaying(false);
     try {
-      const encrypted = await api<CipherResult>('/encrypt', { key_id: labKey.id, message, mode });
+      const encrypted = await encryptMessage(labKey.id, message, mode);
       if (run.current !== thisRun) return;
       setResult(encrypted);
       setEnvelope(encrypted.envelope);
@@ -153,7 +159,7 @@ export function Workbench(
     setBusy(true);
     setError('');
     try {
-      const data = await api<Recovered>('/decrypt', { key_id: labKey.id, envelope });
+      const data = await decryptEnvelope(labKey.id, envelope);
       if (run.current !== thisRun) return;
       setRecovered(data);
       setOutputTab('recovered');
@@ -473,10 +479,10 @@ export function Workbench(
                     setStep(0);
                     setPlaying(false);
                   }}
-                  placeholder="Paste a rsa-lab.v1: envelope created with the active key…"
+                  placeholder="Paste a rsa-lab.v2: envelope created with the active key…"
                 />
                 <div className="input-meta">
-                  <span>Uses the active private key. Session keys are not persistent.</span>
+                  <span>Uses the active private key. Keys stay in this tab until you refresh.</span>
                 </div>
               </div>
               <div className="input-toolbar">
