@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Activity, CircleHelp, Cpu, Download, Layers, Play, Plus, Sparkles } from 'lucide-react';
-import { api, type CipherResult, type LabKey, type Mode, type Recovered } from '../../api';
+import {
+  encryptMessage,
+  decryptEnvelope,
+  type CipherResult,
+  type LabKey,
+  type Mode,
+} from '../../engine/client';
 
 type CompareResult = { mode: Mode; first: CipherResult; second: CipherResult; recovered: boolean };
 export function Experiments({
@@ -46,12 +52,9 @@ export function Experiments({
     try {
       const results: CompareResult[] = [];
       for (const mode of ['textbook', 'oaep'] as Mode[]) {
-        const first = await api<CipherResult>('/encrypt', { key_id: labKey.id, message, mode });
-        const second = await api<CipherResult>('/encrypt', { key_id: labKey.id, message, mode });
-        const recovered = await api<Recovered>('/decrypt', {
-          key_id: labKey.id,
-          envelope: second.envelope,
-        });
+        const first = await encryptMessage(labKey.id, message, mode);
+        const second = await encryptMessage(labKey.id, message, mode);
+        const recovered = await decryptEnvelope(labKey.id, second.envelope);
         results.push({ mode, first, second, recovered: recovered.message === message });
       }
       if (id === version.current) setComparison(results);
@@ -70,12 +73,8 @@ export function Experiments({
       const encrypt: number[] = [],
         decrypt: number[] = [];
       for (let i = 0; i < 6; i++) {
-        const c = await api<CipherResult>('/encrypt', {
-          key_id: labKey.id,
-          message: 'RSA Lab benchmark',
-          mode: 'oaep',
-        });
-        const m = await api<Recovered>('/decrypt', { key_id: labKey.id, envelope: c.envelope });
+        const c = await encryptMessage(labKey.id, 'RSA Lab benchmark', 'oaep');
+        const m = await decryptEnvelope(labKey.id, c.envelope);
         if (i > 0) {
           encrypt.push(c.elapsed_ms);
           decrypt.push(m.elapsed_ms);
@@ -99,12 +98,12 @@ export function Experiments({
         JSON.stringify(
           {
             ...bench,
-            backend: 'Custom Python RSA + OAEP-SHA256',
+            backend: 'Custom browser RSA + OAEP-SHA256',
             samples: 5,
-            warmup: 1,
+            discarded_runs: 1,
             units: 'ms',
             browser: navigator.userAgent,
-            note: 'API computation time; excludes network, animation, and rendering. Single key; not a cross-machine study.',
+            note: 'Browser worker computation time; excludes animation and rendering. Single key; not a cross-machine study.',
           },
           null,
           2,
@@ -124,12 +123,12 @@ export function Experiments({
         <span>
           <span className={`status-dot ${!labKey ? 'offline' : ''}`} />
           {labKey
-            ? `Active key: RSA-${labKey.bits} · ${labKey.fingerprint.slice(0, 8)}`
+            ? `Active key: RSA-${labKey.bits} آ· ${labKey.fingerprint.slice(0, 8)}`
             : 'Generate a key before running an experiment.'}
         </span>
         {!labKey && (
           <button className="secondary-button" disabled={generating} onClick={createKey}>
-            {generating ? 'Generating…' : 'Generate key pair'}
+            {generating ? 'Generatingâ€¦' : 'Generate key pair'}
             <Plus size={14} />
           </button>
         )}
@@ -164,7 +163,7 @@ export function Experiments({
             disabled={!labKey || busy || generating}
           >
             <Play size={14} />
-            {busy ? 'Computing…' : 'Run experiment'}
+            {busy ? 'Computingâ€¦' : 'Run experiment'}
           </button>
         </div>
         <div className="comparison-grid">
@@ -184,7 +183,7 @@ export function Experiments({
                   <span>RUN 01</span>
                   <code>
                     {result
-                      ? result.first.cipher_hex.slice(0, 48) + '…'
+                      ? result.first.cipher_hex.slice(0, 48) + 'â€¦'
                       : 'Waiting for your experiment'}
                   </code>
                 </div>
@@ -192,7 +191,7 @@ export function Experiments({
                   <span>RUN 02</span>
                   <code>
                     {result
-                      ? result.second.cipher_hex.slice(0, 48) + '…'
+                      ? result.second.cipher_hex.slice(0, 48) + 'â€¦'
                       : 'Waiting for your experiment'}
                   </code>
                 </div>
@@ -248,15 +247,15 @@ export function Experiments({
         <div className="benchmark-body">
           <div>
             <div className="eyebrow">EXPERIMENT / 02</div>
-            <h3>Measure it. Don’t guess.</h3>
+            <h3>Measure it. Donâ€™t guess.</h3>
             <p>
-              Five measured OAEP operations after one warm-up. Times come from the Python engine and
-              exclude the network and animation.
+              Five recorded OAEP operations; the first run is discarded. Times come from the browser
+              worker and exclude animation and rendering.
             </p>
             {bench && (
               <>
                 <div className="benchmark-meta mono">
-                  RSA-{bench.bits} · median · 5 samples · custom engine
+                  RSA-{bench.bits} آ· median آ· 5 samples آ· custom engine
                 </div>
                 <div className="benchmark-bar">
                   <span>Encrypt</span>
@@ -277,9 +276,10 @@ export function Experiments({
                   <strong className="mono">{median(bench.decrypt).toFixed(3)} ms</strong>
                 </div>
                 <p className="benchmark-range">
-                  Encryption range {Math.min(...bench.encrypt).toFixed(3)}–
-                  {Math.max(...bench.encrypt).toFixed(3)} ms · Decryption range{' '}
-                  {Math.min(...bench.decrypt).toFixed(3)}–{Math.max(...bench.decrypt).toFixed(3)} ms
+                  Encryption range {Math.min(...bench.encrypt).toFixed(3)}â€“
+                  {Math.max(...bench.encrypt).toFixed(3)} ms آ· Decryption range{' '}
+                  {Math.min(...bench.decrypt).toFixed(3)}â€“{Math.max(...bench.decrypt).toFixed(3)}{' '}
+                  ms
                 </p>
                 <button className="text-button aqua-text" onClick={exportBench}>
                   <Download size={14} />
@@ -289,7 +289,7 @@ export function Experiments({
             )}
           </div>
           <div className="generation-history">
-            <h4>Key generation · this session</h4>
+            <h4>Key generation آ· this session</h4>
             {history.length ? (
               history.slice(-5).map((k, i) => (
                 <div key={k.id}>

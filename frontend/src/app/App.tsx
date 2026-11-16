@@ -18,7 +18,7 @@ import { MathExplorer } from '../features/legacy/MathExplorer';
 import { Workbench } from '../features/legacy/Workbench';
 import { Orientation } from './Orientation';
 import { routes } from './routes';
-import { useLegacySession } from './useLegacySession';
+import { useBrowserSession } from './useBrowserSession';
 
 function Shell() {
   const location = useLocation();
@@ -26,7 +26,7 @@ function Shell() {
   const matches = (path: string) => matchPath(path, location.pathname) !== null;
   const isWorkbench = matches('/learn/encrypt');
   const isLegacy = isWorkbench || ['/learn/keys', '/experiments'].some(matches);
-  const session = useLegacySession(isLegacy);
+  const session = useBrowserSession();
   const [guide, setGuide] = useState(true),
     [mobileNav, setMobileNav] = useState(false),
     [help, setHelp] = useState(false);
@@ -218,14 +218,28 @@ function Shell() {
         <main id="main-content" tabIndex={-1}>
           {isLegacy && (
             <div className="migration-notice">
-              <strong>Existing local workspace</strong>
+              <strong>Your keys stay on this device</strong>
               <span>
-                {session.online === null
-                  ? 'Checking the local Python engine…'
-                  : session.online
-                    ? 'Python engine connected. Browser migration is in progress.'
-                    : 'Start the local Python server to generate keys and encrypt. The worked example runs without it.'}
+                RSA runs in your browser. Keys are kept in this tab’s memory; refreshing clears
+                them. Use demonstration data.
               </span>
+              {session.bits === 1024 && (
+                <span>
+                  1024-bit RSA is included for the assignment; use 2048 bits for the practical
+                  demonstrations.
+                </span>
+              )}
+            </div>
+          )}
+          {session.generating && (
+            <div className="generation-progress" role="status">
+              <span>
+                Finding probable primes · {session.candidates} candidates · {session.seconds}s
+                elapsed
+              </span>
+              <button className="secondary-button" onClick={session.cancelGeneration}>
+                Cancel key generation
+              </button>
             </div>
           )}
           <ErrorBanner message={session.error} onDismiss={() => session.setError('')} />

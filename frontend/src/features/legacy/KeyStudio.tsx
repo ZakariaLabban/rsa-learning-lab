@@ -10,9 +10,10 @@ import {
   KeyRound,
   LockKeyhole,
 } from 'lucide-react';
-import { api, type LabKey } from '../../api';
+import { revealPrivateKey, type LabKey } from '../../engine/client';
 import { KeyBar, type KeyControls } from './KeyBar';
 import { Value } from '../../components/Value';
+import { groupFingerprint } from '../../engine/encoding';
 export function KeyStudio(
   props: KeyControls & {
     history: LabKey[];
@@ -36,7 +37,7 @@ export function KeyStudio(
     if (!labKey) return;
     setRevealing(true);
     try {
-      setPrivateParts(await api<Record<string, string>>(`/keys/${labKey.id}/reveal`, {}));
+      setPrivateParts(await revealPrivateKey(labKey.id));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -49,7 +50,7 @@ export function KeyStudio(
       [
         JSON.stringify(
           {
-            format: 'rsa-lab-public-v1',
+            format: 'rsa-lab-public-v2',
             n: labKey.n,
             e: labKey.e,
             bits: labKey.bits,
@@ -87,7 +88,7 @@ export function KeyStudio(
         <div className="studio-fingerprint">
           <Fingerprint size={20} />
           <span className="mono">
-            {labKey?.fingerprint ?? 'No key generated yet'}
+            {labKey ? groupFingerprint(labKey.fingerprint) : 'No key generated yet'}
             <small>KEY FINGERPRINT</small>
           </span>
         </div>

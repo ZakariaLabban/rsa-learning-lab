@@ -12,9 +12,8 @@
 `app/routes.ts` defines Learn, Break and Tools routes. BrowserRouter supports deep
 links, refresh and back/forward. Vite preview handles static fallback; the existing
 Python frontend server also serves these paths without capturing missing `/api`
-routes. Hosted rewrite configuration is #9. The shell and worked example need no
-backend; existing key generation, encryption and experiments clearly identify
-their local Python dependency. Workbench stays mounted when navigating so message
+routes. Hosted rewrite configuration is #9. The app runs key generation and message operations in browser workers;
+the shell, worked example, key studio and existing experiments need no backend. Workbench stays mounted when navigating so message
 and playback state are preserved. No Python files or launchers are retired here.
 
 Shared controls:
