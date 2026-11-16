@@ -1,0 +1,189 @@
+/* Encrypt / Decrypt page (#13). Theme tokens only, so both themes work. */
+.encrypt-panel {
+  overflow: visible;
+}
+.encrypt-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+}
+.encrypt-tabs .tab {
+  position: relative;
+  height: auto;
+  padding: 15px 0 13px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.encrypt-tabs .tab.active {
+  color: var(--text);
+}
+.encrypt-tabs .tab.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--aqua);
+}
+.encrypt-body {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.encrypt-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+}
+.encrypt-row .recipient-picker {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+.encrypt-panel .helper-text {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.input-mode {
+  justify-self: start;
+}
+.input-mode button {
+  font-size: 12px;
+  padding: 7px 12px;
+}
+.encrypt-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.encrypt-field label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.encrypt-field textarea,
+.encrypt-field input,
+.encrypt-field select {
+  width: 100%;
+  max-width: 100%;
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px 11px;
+  font-size: 14px;
+}
+.encrypt-field textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+.encrypt-field select {
+  max-width: 420px;
+}
+.encrypt-problem,
+.encrypt-notice {
+  border: 1px solid color-mix(in srgb, var(--amber) 55%, var(--line));
+  background: color-mix(in srgb, var(--amber) 10%, var(--surface));
+  color: var(--text);
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.journey-result {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.journey-result .role-panels {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.journey-result .role-card {
+  padding: 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.journey-result .role-card h3 {
+  font-size: 14px;
+}
+.journey-track {
+  overflow-x: auto;
+  min-height: 0;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+:root[data-theme='light'] .journey-track {
+  background-color: var(--surface-raised);
+}
+.step-detail {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  min-width: 0;
+}
+.step-detail h3 {
+  font-size: 16px;
+  color: var(--text);
+}
+.step-detail p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.step-detail .step-formula {
+  color: var(--aqua);
+  font-size: 14px;
+}
+.step-values {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.share-box,
+.decrypt-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.share-box .copy-button {
+  font-size: 12px;
+}
+.educational-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.recovered-box {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--aqua) 50%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--aqua) 6%, var(--surface));
+}
+.recovered-box .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--aqua);
+  font-size: 10px;
+}
+:root[data-theme='light'] .recovered-message {
+  color: var(--text);
+}
+@media (max-width: 760px) {
+  .journey-result .role-panels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
