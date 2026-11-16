@@ -11,6 +11,8 @@ import {
 import { Braces, CircleHelp, Menu, Moon, Sun, X } from 'lucide-react';
 import { ErrorBanner } from '../components/ErrorBanner';
 import { Home } from '../features/home/Home';
+import { EuclidPage } from '../features/euclid/EuclidPage';
+import { KeyWizard } from '../features/keys/KeyWizard';
 import { MyKeys } from '../features/keys/MyKeys';
 import { PlannedPage } from '../features/home/PlannedPage';
 import { Experiments } from '../features/legacy/Experiments';
@@ -265,13 +267,29 @@ function Shell() {
                   <div className="page-heading">
                     <h1>Explore your keys.</h1>
                   </div>
+                  <KeyWizard />
+                  <MyKeys onUse={session.activateKey} />
+                  <h2 className="classic-heading">Key Studio (classic view)</h2>
                   <KeyStudio
                     {...keyProps}
                     history={session.history}
                     setKey={session.setKey}
                     setError={session.setError}
                   />
-                  <MyKeys onUse={session.activateKey} />
+                </>
+              }
+            />
+            <Route
+              path="/learn/euclid"
+              element={
+                <>
+                  <div className="page-heading">
+                    <div>
+                      <span className="eyebrow">LEARN · MODULAR INVERSE</span>
+                      <h1>Extended Euclid.</h1>
+                    </div>
+                  </div>
+                  <EuclidPage />
                 </>
               }
             />
@@ -306,9 +324,13 @@ function Shell() {
             {routes
               .filter(
                 (r) =>
-                  !['/learn/encrypt', '/learn/keys', '/learn/example', '/experiments'].includes(
-                    r.path,
-                  ),
+                  ![
+                    '/learn/encrypt',
+                    '/learn/keys',
+                    '/learn/euclid',
+                    '/learn/example',
+                    '/experiments',
+                  ].includes(r.path),
               )
               .map((r) => (
                 <Route

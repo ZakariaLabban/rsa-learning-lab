@@ -44,7 +44,13 @@ for (const width of [375, 1440])
           await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         ).toBeTruthy();
         if (
-          !['/learn/keys', '/learn/encrypt', '/learn/example', '/experiments'].includes(route.path)
+          ![
+            '/learn/keys',
+            '/learn/encrypt',
+            '/learn/euclid',
+            '/learn/example',
+            '/experiments',
+          ].includes(route.path)
         )
           await expect(page.getByText('PLANNED FEATURE', { exact: true })).toBeVisible();
       }
