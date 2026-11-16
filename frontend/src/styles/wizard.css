@@ -1,0 +1,214 @@
+/* Key Generation Wizard and Extended Euclid (#10). Theme tokens only. */
+.wizard-panel {
+  margin-bottom: 22px;
+}
+.wizard-body,
+.euclid-body {
+  padding: 18px 20px 22px;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.wizard-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wizard-intro .helper-text,
+.euclid-body .helper-text,
+.wizard-step .helper-text {
+  font-size: 12px;
+  line-height: 1.55;
+}
+.wizard-step {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  min-width: 0;
+}
+.wizard-step h3,
+.euclid-body h2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 15px;
+  color: var(--text);
+}
+.step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--aqua);
+  color: var(--aqua);
+  font-size: 12px;
+  flex: none;
+}
+.wizard-source,
+.size-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.size-options legend {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  width: 100%;
+}
+.wizard-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.wizard-radio input {
+  accent-color: var(--aqua);
+}
+.wizard-radio small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.wizard-actions,
+.wizard-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 16px;
+}
+.wizard-save .encrypt-field {
+  flex: 1 1 220px;
+}
+.wizard-typed,
+.euclid-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 16px;
+}
+.wizard-typed .encrypt-field,
+.euclid-inputs .encrypt-field {
+  flex: 1 1 160px;
+}
+.wizard-e {
+  max-width: 260px;
+}
+.e-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.e-suggestions .keyring-badge {
+  cursor: pointer;
+  font-size: 12px;
+}
+.e-suggestions .keyring-badge:hover {
+  border-color: var(--aqua);
+  color: var(--aqua);
+}
+.wizard-how summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--aqua);
+}
+.wizard-how ol {
+  margin: 10px 0 8px;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.wizard-check {
+  font-size: 13px;
+  color: var(--aqua);
+  overflow-wrap: anywhere;
+}
+.key-pair-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.key-pair-card {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  min-width: 0;
+}
+.key-pair-card.private {
+  border-color: color-mix(in srgb, var(--amber) 55%, var(--line));
+}
+.key-pair-card .text-button {
+  justify-self: start;
+  font-size: 12px;
+}
+.key-pair-value {
+  font-size: 15px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.classic-heading {
+  margin: 30px 0 14px;
+  font-size: 15px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.euclid-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.euclid-table {
+  border-collapse: collapse;
+  min-width: 100%;
+  font-size: 13px;
+}
+.euclid-table caption {
+  text-align: left;
+  font-size: 12px;
+  color: var(--muted);
+  padding-bottom: 6px;
+}
+.euclid-table th,
+.euclid-table td {
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  text-align: right;
+  font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
+  color: var(--text);
+  max-width: 260px;
+  overflow-wrap: anywhere;
+}
+.euclid-table th {
+  color: var(--muted);
+  font-weight: 500;
+  background: var(--surface);
+}
+.euclid-table tr.euclid-hit td {
+  background: color-mix(in srgb, var(--aqua) 14%, transparent);
+  font-weight: 600;
+}
+.euclid-answer p {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .key-pair-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

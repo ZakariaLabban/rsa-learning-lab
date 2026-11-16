@@ -73,6 +73,26 @@ the original journey styling.
   the matching key among my keys and the demo characters and explains every failure.
 - "Also sign as me" arrives with #44.
 
+## Key Generation Wizard and Extended Euclid (#10)
+
+The Keys page starts with `KeyWizard` (`features/keys/`), then the keyring, then the
+classic Key Studio (kept until #45). Logic is in `wizardModel.ts`; the Euclid table in
+`features/euclid/` is shared by the wizard and the `/learn/euclid` page.
+
+- **Step 1:** generate p and q in the worker (8/16/32/64 teaching bits, or 1024/2048 bits,
+  with progress and stop), or type p and q (distinct odd primes, n ≤ 64 bits; non-primes
+  are explained with a factor, e.g. 15 = 3 × 5). "How were p and q generated?" explains the
+  random odd number → small-prime check → Miller–Rabin search and shows the candidate count.
+- **Steps 2–5:** n, φ(n), e (teaching keys: typed, validated and with suggested valid values;
+  real keys: fixed 65537), then d = e⁻¹ mod φ(n) with a mini Euclid table, a check line, a
+  link to the Euclid page and a λ(n) side note.
+- **Step 6:** PU = {e, n} and PR = {d, n}, with d hidden until revealed; **Save to my keyring**
+  adds the key under "My keys" and makes it the active key.
+- **Load lecture example:** p = 17, q = 11, e = 7 gives PU = {7, 187}, PR = {23, 187}.
+- **`/learn/euclid`:** a and m (also from `?a=&m=`) → full table (rows r = s·m + t·a, the r = 1
+  row highlighted, long tables summarised), then the inverse with a check line, or
+  "No inverse (gcd = g)" with an explanation.
+
 Theme preference uses localStorage when available and falls back to memory if
 storage is blocked. The full offline app cache is #50; loading a static shell
 without Python does not itself mean it can reopen without a network connection.
