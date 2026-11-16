@@ -3,7 +3,10 @@ import {
   Braces,
   ChevronRight,
   Fingerprint,
+  KeyRound,
+  Lock,
   LockKeyhole,
+  PenLine,
   MessageSquare,
   UnlockKeyhole,
 } from 'lucide-react';
@@ -17,6 +20,9 @@ const ICONS = {
   CIPHERTEXT: Fingerprint,
   ENVELOPE: Fingerprint,
   DECRYPT: UnlockKeyhole,
+  SIGN: PenLine,
+  AES: Lock,
+  WRAP: KeyRound,
 } as const;
 /** Short formulas that fit the small stage cards; the full formula is in the step detail. */
 const TAGS: Record<string, string> = {
@@ -27,6 +33,9 @@ const TAGS: Record<string, string> = {
   CIPHERTEXT: 'C',
   ENVELOPE: 'C',
   DECRYPT: 'Cᵈ mod n',
+  SIGN: 'Sᵈ mod n',
+  AES: 'AES(K, M)',
+  WRAP: 'Kᵉ mod n',
 };
 
 /** The message-journey strip (reuses the original Workbench styling) for the current run. */

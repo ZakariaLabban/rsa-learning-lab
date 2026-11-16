@@ -7,27 +7,65 @@ import { os2ip, type PrivateKey } from '../../engine/math';
 import { toHex, utf8 } from '../../engine/encoding';
 import {
   capabilities,
-  openBasic,
+  openEnvelope,
   sealBasic,
+  sealHybrid,
   textbookDecryptNumber,
   textbookEncryptNumber,
   type BasicMode,
-  type Opened,
+  type KnownSender,
+  type OpenedAny,
   type Sealed,
+  type SealedHybrid,
+  type SignatureResult,
 } from '../../engine/rsa';
 import type { KeyEntry, KeyringState, Recipient } from '../../keyring';
 
 export type InputMode = 'text' | 'number';
-/** UI limit for text so a page action never runs thousands of RSA operations. */
+/** Textbook blocks, OAEP, or hybrid (AES-GCM + RSA-OAEP key wrap, optionally signed). */
+export type PaddingMode = BasicMode | 'hybrid';
+/** UI limit for textbook text so a page action never runs thousands of RSA operations. */
 export const TEXT_LIMIT = 1000;
+/** Hybrid text limit: AES does the bulk work, RSA only wraps the 32-byte key. */
+export const HYBRID_TEXT_LIMIT = 100_000;
 const SHOWN_BLOCKS = 4;
 
 export type EncryptRun =
   | { kind: 'number'; recipient: Recipient; m: bigint; c: bigint }
-  | { kind: 'text'; mode: BasicMode; recipient: Recipient; text: string; sealed: Sealed };
+  | { kind: 'text'; mode: BasicMode; recipient: Recipient; text: string; sealed: Sealed }
+  | {
+      kind: 'hybrid';
+      recipient: Recipient;
+      text: string;
+      sealed: SealedHybrid;
+      /** Set when signed ("Also sign as me"). */
+      signerName?: string;
+    };
 export type DecryptRun =
   | { kind: 'number'; keyName: string; privateKey: PrivateKey; c: bigint; m: bigint }
-  | { kind: 'text'; keyName: string; privateKey: PrivateKey; opened: Opened; text: string };
+  | {
+      kind: 'text';
+      keyName: string;
+      privateKey: PrivateKey;
+      opened: OpenedAny;
+      text: string;
+      /** Hybrid envelopes only. */
+      signature?: SignatureResult;
+    };
+
+/** Keys whose signatures the receiver can check, named as the user knows them. */
+export function knownSenders(entries: readonly KeyEntry[]): KnownSender[] {
+  return entries.map((e) => ({
+    fingerprint: e.fingerprint,
+    key: e.key,
+    name: e.source === 'mine' ? `${e.name} (you)` : e.name,
+  }));
+}
+
+/** Keys that can sign: any 1024/2048-bit key with a private part (mine or demo). */
+export function signingEntries(entries: readonly KeyEntry[]): KeyEntry[] {
+  return entries.filter((e) => e.privateKey && (e.bits === 1024 || e.bits === 2048));
+}
 
 /** Default "To:": the active key, else my newest key, else demo Alice. */
 export function defaultRecipientEntry(state: KeyringState): KeyEntry | undefined {
@@ -56,13 +94,26 @@ export function recipientLimits(recipient: Recipient) {
     oaepProblem: caps.oaep
       ? undefined
       : `OAEP needs a 1024 or 2048-bit key; this is a ${caps.bits}-bit teaching key. Use textbook mode.`,
+    hybridProblem: caps.hybrid
+      ? undefined
+      : `Hybrid encryption and signing need a 1024 or 2048-bit key; this is a ${caps.bits}-bit teaching key.`,
   };
 }
 
 /** Byte count / limit line for the text box, and a problem message when it does not fit. */
-export function textCapacity(recipient: Recipient, mode: BasicMode, text: string) {
+export function textCapacity(recipient: Recipient, mode: PaddingMode, text: string) {
   const { caps } = recipientLimits(recipient);
   const length = utf8.encode(text).length;
+  if (mode === 'hybrid')
+    return {
+      length,
+      max: HYBRID_TEXT_LIMIT,
+      summary: `${length} / ${HYBRID_TEXT_LIMIT} bytes · AES encrypts the text, RSA only the 32-byte AES key`,
+      problem:
+        length > HYBRID_TEXT_LIMIT
+          ? `This page encrypts at most ${HYBRID_TEXT_LIMIT} bytes of text; yours is ${length}. Use file encryption for bigger data.`
+          : undefined,
+    };
   if (mode === 'oaep') {
     const max = caps.oaepMaxBytes;
     return {
@@ -100,11 +151,16 @@ export function parseMessageNumber(input: string, recipient: Recipient): bigint 
   return m;
 }
 
+/**
+ * Encrypts for the recipient. With `signer` ("Also sign as me") the message is signed with
+ * RSA-PSS first and sent in hybrid mode, since a full signature cannot fit in one OAEP block.
+ */
 export async function encrypt(
   recipient: Recipient,
   inputMode: InputMode,
-  mode: BasicMode,
+  mode: PaddingMode,
   input: string,
+  signer?: KeyEntry,
 ): Promise<EncryptRun> {
   const limits = recipientLimits(recipient);
   if (inputMode === 'number') {
@@ -112,11 +168,23 @@ export async function encrypt(
     return { kind: 'number', recipient, m, c: textbookEncryptNumber(recipient.key, m) };
   }
   if (!limits.textAllowed) throw new Error(limits.textProblem);
-  if (mode === 'oaep' && limits.oaepProblem) throw new Error(limits.oaepProblem);
-  const capacity = textCapacity(recipient, mode, input);
+  const effective: PaddingMode = signer ? 'hybrid' : mode;
+  if (effective === 'oaep' && limits.oaepProblem) throw new Error(limits.oaepProblem);
+  if (effective === 'hybrid' && limits.hybridProblem) throw new Error(limits.hybridProblem);
+  const capacity = textCapacity(recipient, effective, input);
   if (capacity.problem) throw new Error(capacity.problem);
-  const sealed = await sealBasic(recipient.key, utf8.encode(input), mode);
-  return { kind: 'text', mode, recipient, text: input, sealed };
+  if (effective === 'hybrid') {
+    if (signer && !signer.privateKey)
+      throw new Error('This key cannot sign: it has no private part.');
+    const sealed = await sealHybrid(
+      recipient.key,
+      { type: 'text', data: utf8.encode(input) },
+      signer?.privateKey,
+    );
+    return { kind: 'hybrid', recipient, text: input, sealed, signerName: signer?.name };
+  }
+  const sealed = await sealBasic(recipient.key, utf8.encode(input), effective);
+  return { kind: 'text', mode: effective, recipient, text: input, sealed };
 }
 
 const decoder = () => new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
@@ -139,7 +207,7 @@ export async function decryptOwnRun(
       c: run.c,
       m: textbookDecryptNumber(entry.privateKey, run.c),
     };
-  return decryptReceived(run.sealed.envelope, [entry]);
+  return decryptReceived(run.sealed.envelope, [entry], entries);
 }
 
 /** Turns engine errors into plain explanations for the decrypt screens. */
@@ -147,29 +215,36 @@ function friendlyOpenError(message: string): string {
   if (message.includes('Legacy v1')) return message;
   if (message.includes('None of your'))
     return 'None of your private keys matches this envelope. It was encrypted for someone else’s key, or you need to import your key pair on the Keys page.';
-  if (message.includes('Hybrid'))
-    return 'This envelope uses hybrid encryption (signed messages or files), which this page can’t open yet.';
   if (message.includes('Invalid') || message.includes('envelope'))
     return 'This isn’t a complete RSA Lab envelope. Paste the whole text, starting with rsa-lab.v2:';
   return 'Decryption failed: the envelope was altered, or it doesn’t match this key.';
 }
 
-/** Decrypts a pasted envelope with whichever of my/demo private keys matches it. */
+/**
+ * Decrypts a pasted envelope with whichever of my/demo private keys matches it. Signatures in
+ * hybrid envelopes are checked against `senders` (my keys, contacts and demo characters).
+ */
 export async function decryptReceived(
   envelope: string,
   entries: readonly KeyEntry[],
+  senders: readonly KeyEntry[] = entries,
 ): Promise<DecryptRun> {
   const holders = entries.filter((e) => e.privateKey);
-  let opened: Opened;
+  let opened: OpenedAny;
   try {
-    opened = await openBasic(
+    opened = await openEnvelope(
       envelope.trim(),
       holders.map((e) => e.privateKey!),
+      knownSenders(senders),
     );
   } catch (error) {
     throw new Error(friendlyOpenError((error as Error).message), { cause: error });
   }
   const entry = holders.find((e) => e.privateKey === opened.key)!;
+  if (opened.kind === 'hybrid' && opened.type === 'file')
+    throw new Error(
+      `This envelope contains the file “${opened.file?.name}”. Open it with file decryption (coming with #17).`,
+    );
   let text: string;
   try {
     text = decoder().decode(opened.bytes);
@@ -178,7 +253,37 @@ export async function decryptReceived(
       'Decrypted, but the result isn’t valid text. Textbook RSA can’t detect changes, so the envelope was probably altered.',
     );
   }
-  return { kind: 'text', keyName: entry.name, privateKey: entry.privateKey!, opened, text };
+  return {
+    kind: 'text',
+    keyName: entry.name,
+    privateKey: entry.privateKey!,
+    opened,
+    text,
+    ...(opened.kind === 'hybrid' ? { signature: opened.signature } : {}),
+  };
+}
+
+/** One plain-language line for a signature check result. */
+export function describeSignature(result: SignatureResult | undefined): {
+  tone: 'good' | 'warn' | 'bad' | 'neutral';
+  text: string;
+} {
+  if (!result || result.status === 'unsigned')
+    return {
+      tone: 'neutral',
+      text: 'Not signed: encryption alone doesn’t prove who sent it. Anyone with the public key could have.',
+    };
+  if (result.status === 'valid')
+    return { tone: 'good', text: `✓ Signed by ${result.name}: the signature is valid.` };
+  if (result.status === 'unknown-sender')
+    return {
+      tone: 'warn',
+      text: `Signed by an unknown key (${result.sender.slice(0, 16)}…). Add the sender’s public key as a contact to check who it is.`,
+    };
+  return {
+    tone: 'bad',
+    text: `✗ Invalid signature: this was not signed by ${result.name}’s key, or it was changed after signing.`,
+  };
 }
 
 export type JourneyStep = {
@@ -205,6 +310,7 @@ export function journeySteps(run: EncryptRun, decrypted?: DecryptRun): JourneySt
     { label: `n (${label}’s modulus)`, value: String(key.n) },
     { label: 'e (public exponent)', value: String(key.e) },
   ];
+  if (run.kind === 'hybrid') return hybridSteps(run, pub, decrypted);
   if (run.kind === 'number') {
     const steps: JourneyStep[] = [
       {
@@ -312,7 +418,7 @@ export function journeySteps(run: EncryptRun, decrypted?: DecryptRun): JourneySt
       values: [{ label: 'Envelope', value: sealed.envelope }],
     },
   ];
-  if (decrypted?.kind === 'text')
+  if (decrypted?.kind === 'text' && decrypted.opened.kind === 'basic')
     steps.push({
       short: 'DECRYPT',
       title: `${label} decrypts with the private key`,
@@ -332,6 +438,102 @@ export function journeySteps(run: EncryptRun, decrypted?: DecryptRun): JourneySt
           label: run.mode === 'oaep' ? 'EM recovered' : `m${i + 1} recovered`,
           value: dec(block),
         })),
+        { label: 'Recovered text', value: decrypted.text || '(empty)' },
+      ],
+    });
+  return steps;
+}
+
+/** Journey for hybrid (optionally signed) messages: sign → AES → wrap the AES key → travel → open. */
+function hybridSteps(
+  run: Extract<EncryptRun, { kind: 'hybrid' }>,
+  pub: JourneyStep['values'],
+  decrypted?: DecryptRun,
+): JourneyStep[] {
+  const { label } = run.recipient;
+  const { sealed } = run;
+  const bytes = utf8.encode(run.text);
+  const steps: JourneyStep[] = [
+    {
+      short: 'MESSAGE',
+      title: 'Bob’s message',
+      formula: 'text → bytes',
+      who: 'Bob',
+      explanation:
+        'Hybrid mode can carry any length: RSA will only ever encrypt a small AES key, never the message itself.',
+      values: [
+        { label: 'Text', value: run.text || '(empty)' },
+        { label: `UTF-8 bytes (${bytes.length})`, value: toHex(bytes) || '(none)' },
+      ],
+    },
+  ];
+  if (sealed.signature)
+    steps.push({
+      short: 'SIGN',
+      title: `${run.signerName ?? 'Bob'} signs with their private key`,
+      formula: 'S = PSS(hash(message))ᵈ mod n',
+      who: 'Bob',
+      explanation:
+        'The signature uses the SENDER’s private key, so anyone with the sender’s public key can check it. It goes inside the encrypted message (the lecture’s “authentication and confidentiality”). The lab signs and encrypts with one key pair; real systems prefer separate keys.',
+      values: [
+        { label: 'Signer fingerprint', value: sealed.signature.sender },
+        {
+          label: `Signature S (${sealed.signature.value.length} bytes, hex)`,
+          value: toHex(sealed.signature.value),
+        },
+      ],
+    });
+  steps.push(
+    {
+      short: 'AES',
+      title: 'Encrypt the message with a fresh AES key',
+      formula: 'AES-256-GCM(K, message)',
+      who: 'Bob',
+      explanation:
+        'A random 32-byte key K encrypts the message with AES-GCM, which is fast and adds a tag that detects any change. K is new for every message.',
+      values: [
+        { label: 'AES key K (hex, secret, used once)', value: toHex(sealed.aesKey) },
+        { label: 'Nonce (hex)', value: toHex(sealed.nonce) },
+        {
+          label: `AES ciphertext + tag (${sealed.ciphertext.length} bytes)`,
+          value:
+            toHex(sealed.ciphertext).slice(0, 160) + (sealed.ciphertext.length > 80 ? '…' : ''),
+        },
+      ],
+    },
+    {
+      short: 'WRAP',
+      title: `Encrypt only K with ${label}’s public key`,
+      formula: 'W = OAEP(K)ᵉ mod n',
+      who: 'Bob',
+      explanation:
+        'RSA encrypts just the 32-byte AES key (with OAEP padding). This is the lecture’s “a session key is encrypted and sent”.',
+      values: [...pub, { label: 'Wrapped key W', value: dec(sealed.wrappedKey) }],
+    },
+    {
+      short: 'ENVELOPE',
+      title: 'The envelope travels',
+      formula: 'rsa-lab.v2:…',
+      who: 'Wire',
+      explanation:
+        'Eve sees W, the nonce and the AES ciphertext. Without the private key she can’t recover K, and changing anything breaks the AES-GCM tag.',
+      values: [{ label: 'Envelope', value: sealed.envelope }],
+    },
+  );
+  if (decrypted?.kind === 'text' && decrypted.opened.kind === 'hybrid')
+    steps.push({
+      short: 'DECRYPT',
+      title: `${label} unwraps K, checks the tag and decrypts`,
+      formula: 'K = Wᵈ mod n → AES-GCM⁻¹',
+      who: 'Alice',
+      explanation: `The private exponent d recovers K. AES-GCM checks the tag before releasing any text, then the signature is checked. ${describeSignature(decrypted.signature).text}`,
+      values: [
+        {
+          label: 'd (private exponent)',
+          value: String(decrypted.privateKey.d),
+          privateValue: true,
+        },
+        { label: 'K recovered (hex)', value: toHex(decrypted.opened.aesKey) },
         { label: 'Recovered text', value: decrypted.text || '(empty)' },
       ],
     });

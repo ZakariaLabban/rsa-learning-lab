@@ -7,10 +7,14 @@ import {
   decryptOwnRun,
   decryptReceived,
   defaultRecipientEntry,
+  describeSignature,
   encrypt,
+  HYBRID_TEXT_LIMIT,
   journeySteps,
+  knownSenders,
   parseMessageNumber,
   recipientLimits,
+  signingEntries,
   textCapacity,
   TEXT_LIMIT,
 } from './model';
@@ -137,5 +141,59 @@ describe('decrypting a received envelope', () => {
     await expect(
       decryptReceived(packEnvelope({ ...value, ciphertext: toBase64(bytes) }), entries),
     ).rejects.toThrow('envelope was altered');
+  });
+});
+
+describe('hybrid and "Also sign as me" (#44)', () => {
+  it('Bob signs, Alice decrypts and sees a valid signature by Bob', async () => {
+    const { kr, alice, bob } = await setup();
+    const entries = kr.getState().entries;
+    const message = 'Signed for Alice · مرحبا ' + 'x'.repeat(500);
+    const run = await encrypt(recipientFromEntry(alice), 'text', 'oaep', message, bob);
+    expect(run.kind).toBe('hybrid');
+    const done = await decryptOwnRun(run, entries);
+    expect(done).toMatchObject({ kind: 'text', text: message, keyName: 'Alice' });
+    expect(done.kind === 'text' && done.signature).toMatchObject({ status: 'valid', name: 'Bob' });
+    expect(describeSignature(done.kind === 'text' ? done.signature : undefined)).toEqual({
+      tone: 'good',
+      text: '✓ Signed by Bob: the signature is valid.',
+    });
+    const steps = journeySteps(run, done);
+    expect(steps.map((s) => s.short)).toEqual([
+      'MESSAGE',
+      'SIGN',
+      'AES',
+      'WRAP',
+      'ENVELOPE',
+      'DECRYPT',
+    ]);
+    expect(steps[5].explanation).toContain('Signed by Bob');
+  });
+  it('a receiver who does not know the signer sees "unknown key"; unsigned is labelled', async () => {
+    const { kr, alice, bob } = await setup();
+    const signed = await encrypt(recipientFromEntry(alice), 'text', 'hybrid', 'hi', bob);
+    if (signed.kind !== 'hybrid') throw new Error('expected hybrid');
+    const onlyAlice = kr.getState().entries.filter((e) => e.id === 'demo-alice');
+    const opened = await decryptReceived(signed.sealed.envelope, onlyAlice);
+    expect(opened.kind === 'text' && opened.signature?.status).toBe('unknown-sender');
+    expect(describeSignature(opened.kind === 'text' ? opened.signature : undefined).tone).toBe(
+      'warn',
+    );
+    const unsigned = await encrypt(recipientFromEntry(alice), 'text', 'hybrid', 'plain');
+    const plain = await decryptOwnRun(unsigned, kr.getState().entries);
+    expect(plain.kind === 'text' && plain.signature).toEqual({ status: 'unsigned' });
+    expect(journeySteps(unsigned, plain).map((s) => s.short)).not.toContain('SIGN');
+  });
+  it('explains limits: teaching keys, long text and signers', async () => {
+    const { kr, alice } = await setup();
+    const to = recipientFromEntry(alice);
+    expect(textCapacity(to, 'hybrid', 'hi').summary).toContain('RSA only the 32-byte AES key');
+    await expect(encrypt(to, 'text', 'hybrid', 'x'.repeat(HYBRID_TEXT_LIMIT + 1))).rejects.toThrow(
+      `at most ${HYBRID_TEXT_LIMIT} bytes`,
+    );
+    const lecture = kr.getState().entries.find((e) => e.id === 'lecture')!;
+    expect(recipientLimits(recipientFromEntry(lecture)).hybridProblem).toContain('teaching key');
+    expect(signingEntries(kr.getState().entries).map((e) => e.name)).toEqual(['Alice', 'Bob']);
+    expect(knownSenders(kr.getState().entries)[0]).toMatchObject({ name: 'Alice' });
   });
 });

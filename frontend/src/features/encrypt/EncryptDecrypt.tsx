@@ -10,21 +10,30 @@ import { Term } from '../../components/Term';
 import { NumberView } from '../../components/NumberView';
 import { Value } from '../../components/Value';
 import { recipientFromEntry, useKeyring, type Recipient } from '../../keyring';
-import type { BasicMode } from '../../engine/rsa';
 import { JourneyTrack } from './JourneyTrack';
 import {
   decryptOwnRun,
   decryptReceived,
   defaultRecipientEntry,
+  describeSignature,
   encrypt,
   journeySteps,
   privateEntryFor,
   recipientLimits,
+  signingEntries,
   textCapacity,
   type DecryptRun,
   type EncryptRun,
   type InputMode,
+  type PaddingMode,
 } from './model';
+
+/** The signature line shown with every decrypted hybrid (or unsigned) message. */
+function SignatureLine({ run }: { run: DecryptRun }) {
+  if (run.kind !== 'text' || run.opened.kind !== 'hybrid') return null;
+  const { tone, text } = describeSignature(run.signature);
+  return <p className={`signature-line ${tone}`}>{text}</p>;
+}
 
 const short = (value: bigint | string) => {
   const text = String(value);
@@ -43,7 +52,9 @@ export function EncryptDecrypt() {
     value: null,
   });
   const [inputMode, setInputMode] = useState<InputMode>('text');
-  const [padding, setPadding] = useState<BasicMode>('oaep');
+  const [padding, setPadding] = useState<PaddingMode>('oaep');
+  const [signing, setSigning] = useState(false);
+  const [signerId, setSignerId] = useState<string | null>(null);
   const [text, setText] = useState('Some things are worth keeping between us.');
   const [numberInput, setNumberInput] = useState('88');
   const [run, setRun] = useState<EncryptRun | null>(null);
@@ -69,7 +80,22 @@ export function EncryptDecrypt() {
         : null;
   const limits = recipient ? recipientLimits(recipient) : undefined;
   const effectiveInput: InputMode = limits && !limits.textAllowed ? 'number' : inputMode;
-  const effectivePadding: BasicMode = limits?.oaepProblem ? 'textbook' : padding;
+  // Signers: my 1024/2048-bit keys first (the active one if possible), then demo characters.
+  const signers = signingEntries(keyring.entries).sort(
+    (a, b) => Number(b.source === 'mine') - Number(a.source === 'mine'),
+  );
+  const signer =
+    signers.find((e) => e.id === signerId) ??
+    signers.find((e) => e.id === keyring.activeId) ??
+    signers.find((e) => e.source === 'mine') ??
+    signers.find((e) => e.id === 'demo-bob');
+  const canSign = !limits?.hybridProblem && !!signer;
+  const signed = signing && canSign && effectiveInput === 'text';
+  const effectivePadding: PaddingMode = limits?.oaepProblem
+    ? 'textbook'
+    : signed
+      ? 'hybrid'
+      : padding;
   const capacity =
     recipient && effectiveInput === 'text'
       ? textCapacity(recipient, effectivePadding, text)
@@ -100,7 +126,13 @@ export function EncryptDecrypt() {
     setDecrypted(null);
     try {
       const input = effectiveInput === 'number' ? numberInput : text;
-      const result = await encrypt(recipient, effectiveInput, effectivePadding, input);
+      const result = await encrypt(
+        recipient,
+        effectiveInput,
+        effectivePadding,
+        input,
+        signed ? signer : undefined,
+      );
       if (id !== runId.current) return;
       setRun(result);
       setStep(0);
@@ -257,8 +289,9 @@ export function EncryptDecrypt() {
               <select
                 id="padding-mode"
                 value={effectivePadding}
+                disabled={signed}
                 onChange={(event) => {
-                  setPadding(event.target.value as BasicMode);
+                  setPadding(event.target.value as PaddingMode);
                   reset();
                 }}
               >
@@ -266,6 +299,9 @@ export function EncryptDecrypt() {
                   OAEP · randomized (secure)
                 </option>
                 <option value="textbook">Textbook · no padding (lecture formula)</option>
+                <option value="hybrid" disabled={!!limits?.hybridProblem}>
+                  Hybrid · AES-GCM + RSA-OAEP (any length)
+                </option>
               </select>
               {limits?.oaepProblem && <span className="helper-text">{limits.oaepProblem}</span>}
               {effectivePadding === 'oaep' && (
@@ -274,11 +310,62 @@ export function EncryptDecrypt() {
                   twice.
                 </span>
               )}
+              {effectivePadding === 'hybrid' && (
+                <span className="helper-text">
+                  A fresh AES key encrypts the message; RSA only encrypts that 32-byte key. This is
+                  how real systems send long messages and files.
+                </span>
+              )}
             </div>
           ) : (
             <p className="helper-text">
               Number mode is raw textbook RSA: C = Mᵉ mod n, no padding.
             </p>
+          )}
+
+          {effectiveInput === 'text' && (
+            <div className="sign-options">
+              <label className="keyring-toggle">
+                <input
+                  type="checkbox"
+                  checked={signed}
+                  disabled={!canSign}
+                  onChange={(event) => {
+                    setSigning(event.target.checked);
+                    reset();
+                  }}
+                />
+                Also sign as me
+              </label>
+              {signed && signer && (
+                <div className="encrypt-field sign-as">
+                  <label htmlFor="sign-as">Sign as</label>
+                  <select
+                    id="sign-as"
+                    value={signer.id}
+                    onChange={(event) => {
+                      setSignerId(event.target.value);
+                      reset();
+                    }}
+                  >
+                    {signers.map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.name} · {e.bits}-bit{e.source === 'demo' ? ' · demo' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <span className="helper-text">
+                {limits?.hybridProblem
+                  ? limits.hybridProblem
+                  : !signer
+                    ? 'Signing needs a 1024/2048-bit key of your own (create one on the Keys page).'
+                    : signed
+                      ? `Signs with ${signer.name}’s private key (RSA-PSS), then sends it in hybrid mode: a signature is too big to fit in one OAEP block.`
+                      : 'Proves to the receiver who sent the message (the lecture’s authentication + confidentiality).'}
+              </span>
+            </div>
           )}
 
           {problem && <p className="encrypt-problem">{problem}</p>}
@@ -357,7 +444,7 @@ export function EncryptDecrypt() {
               </article>
 
               <div className="share-box">
-                {run.kind === 'text' ? (
+                {run.kind !== 'number' ? (
                   <>
                     <CopyButton value={run.sealed.envelope} label="Copy envelope" />
                     <span className="helper-text">
@@ -393,6 +480,7 @@ export function EncryptDecrypt() {
                   <div className="recovered-message">
                     {decrypted.kind === 'number' ? String(decrypted.m) : decrypted.text}
                   </div>
+                  <SignatureLine run={decrypted} />
                 </div>
               )}
             </div>
@@ -433,9 +521,15 @@ export function EncryptDecrypt() {
             <div className="recovered-box">
               <span className="eyebrow">
                 <CheckCheck size={14} /> DECRYPTED WITH {receivedResult.keyName.toUpperCase()}’S
-                PRIVATE KEY · {receivedResult.opened.mode === 'oaep' ? 'OAEP' : 'TEXTBOOK'}
+                PRIVATE KEY ·{' '}
+                {receivedResult.opened.kind === 'hybrid'
+                  ? 'HYBRID'
+                  : receivedResult.opened.mode === 'oaep'
+                    ? 'OAEP'
+                    : 'TEXTBOOK'}
               </span>
               <div className="recovered-message">{receivedResult.text}</div>
+              <SignatureLine run={receivedResult} />
             </div>
           )}
         </div>
