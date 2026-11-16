@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { CheckCheck, Info, LockKeyhole, UnlockKeyhole } from 'lucide-react';
 import { CopyButton } from '../../components/CopyButton';
 import { ErrorBanner } from '../../components/ErrorBanner';
@@ -28,6 +28,10 @@ import {
   type PaddingMode,
 } from './model';
 
+const FilePanel = lazy(() =>
+  import('../files/FilePanel').then((module) => ({ default: module.FilePanel })),
+);
+
 /** The signature line shown with every decrypted hybrid (or unsigned) message. */
 function SignatureLine({ run }: { run: DecryptRun }) {
   if (run.kind !== 'text' || run.opened.kind !== 'hybrid') return null;
@@ -46,7 +50,7 @@ const short = (value: bigint | string) => {
  */
 export function EncryptDecrypt() {
   const keyring = useKeyring();
-  const [tab, setTab] = useState<'encrypt' | 'decrypt'>('encrypt');
+  const [tab, setTab] = useState<'encrypt' | 'decrypt' | 'files'>('encrypt');
   const [selection, setSelection] = useState<{ chosen: boolean; value: Recipient | null }>({
     chosen: false,
     value: null,
@@ -198,9 +202,22 @@ export function EncryptDecrypt() {
         >
           <UnlockKeyhole size={15} /> Decrypt a received envelope
         </button>
+        <button
+          role="tab"
+          aria-selected={tab === 'files'}
+          className={tab === 'files' ? 'tab active' : 'tab'}
+          onClick={() => setTab('files')}
+        >
+          Files
+        </button>
       </div>
 
-      {tab === 'encrypt' ? (
+      {tab === 'files' && (
+        <Suspense fallback={<p role="status">Loading files…</p>}>
+          <FilePanel />
+        </Suspense>
+      )}
+      {tab === 'files' ? null : tab === 'encrypt' ? (
         <div className="encrypt-body">
           <div className="encrypt-row">
             <RecipientPicker value={recipient} onChange={choose} />

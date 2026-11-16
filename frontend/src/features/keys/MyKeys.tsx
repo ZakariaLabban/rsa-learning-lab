@@ -281,7 +281,16 @@ export function MyKeys({ onUse }: { onUse?: (key: PrivateKey) => Promise<void> }
                         <button
                           className="text-button"
                           aria-label={`${entry.verified ? 'Unverify' : 'Mark as verified'} ${entry.name}`}
-                          onClick={() => run(() => keyring.setVerified(entry.id, !entry.verified))}
+                          onClick={() => {
+                            if (
+                              !entry.verified &&
+                              !window.confirm(
+                                `Compare this complete fingerprint with ${entry.name} in person or over a separately trusted channel:\n\n${groupFingerprint(entry.fingerprint)}\n\nHave you compared every group with the owner? A name or QR code alone does not establish identity.`,
+                              )
+                            )
+                              return;
+                            void run(() => keyring.setVerified(entry.id, !entry.verified));
+                          }}
                         >
                           <BadgeCheck size={13} /> {entry.verified ? 'Unverify' : 'Verify'}
                         </button>

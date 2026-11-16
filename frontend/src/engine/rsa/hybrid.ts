@@ -48,6 +48,7 @@ export type HybridTestRandomness = {
 };
 
 export type SealedHybrid = {
+  timings: { rsaMs: number; aesMs: number };
   envelope: string;
   value: HybridEnvelope;
   /** Shown in the teaching journey; never stored or sent. */
@@ -85,7 +86,9 @@ export async function sealHybrid(
   const { key: aesKey, nonce } = test
     ? { key: test.aesKey, nonce: test.nonce }
     : freshAesParameters();
+  const rsaStart = performance.now();
   const wrappedKey = await oaepEncrypt(recipient, aesKey, test?.oaepSeed);
+  const rsaMs = performance.now() - rsaStart;
   const header = {
     v: 2 as const,
     recipient: await fingerprint(recipient),
@@ -96,9 +99,14 @@ export async function sealHybrid(
     contentType: content.type,
     ...(content.type === 'file' ? { file: content.file } : {}),
   };
-  const ciphertext = await aesGcmEncrypt(payloadBytes(payload), aesKey, nonce, hybridAad(header));
+  const encodedPayload = payloadBytes(payload);
+  const aad = hybridAad(header);
+  const aesStart = performance.now();
+  const ciphertext = await aesGcmEncrypt(encodedPayload, aesKey, nonce, aad);
+  const aesMs = performance.now() - aesStart;
   const value: HybridEnvelope = { ...header, ciphertext: toBase64(ciphertext) };
   return {
+    timings: { rsaMs, aesMs },
     envelope: packEnvelope(value),
     value,
     aesKey,
@@ -141,7 +149,7 @@ export async function openHybrid<K extends PrivateKey>(
     if (aesKey.length !== 32) throw new Error();
     // GCM verifies the tag (and the authenticated header) before any plaintext is returned.
     const plaintext = await aesGcmDecrypt(
-      fromBase64(value.ciphertext),
+      fromBase64(value.ciphertext, 40 * 1024 * 1024),
       aesKey,
       fromBase64(value.nonce, 12),
       hybridAad(value),

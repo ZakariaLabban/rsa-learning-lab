@@ -1,0 +1,116 @@
+.feature-page {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.feature-body {
+  padding: 22px;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.feature-body h2,
+.feature-body h3,
+.feature-body p {
+  margin: 0;
+}
+.feature-body p {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.feature-body label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+}
+.feature-body label.keyring-toggle {
+  display: flex;
+}
+.feature-body input:not([type='checkbox']),
+.feature-body textarea,
+.feature-body select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-raised);
+  color: var(--text);
+  padding: 10px;
+  font: inherit;
+}
+.feature-body textarea {
+  resize: vertical;
+}
+.feature-fields {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+.feature-fields legend {
+  padding: 0 6px;
+}
+.feature-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.feature-result {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.fingerprint {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-size: 12px;
+}
+.public-key-qr {
+  width: min(100%, 480px);
+  height: auto;
+  background: white;
+  border-radius: 6px;
+}
+.contact-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 18px;
+}
+.contact-card {
+  border: 1px solid var(--line);
+  padding: 16px;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.qr-scanner {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.qr-scanner video {
+  width: 100%;
+  max-width: 480px;
+  border-radius: 6px;
+}
+.encrypt-tabs {
+  flex-wrap: wrap;
+}
+@media (max-width: 700px) {
+  .feature-body {
+    padding: 16px;
+  }
+  .feature-fields {
+    padding: 12px;
+  }
+}

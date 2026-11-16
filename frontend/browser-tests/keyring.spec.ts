@@ -44,6 +44,7 @@ test('keyring: built-ins, import, verify, persistence rules, use in lab, clear',
   await expect(
     page.getByRole('status').filter({ hasText: 'Added "Contact 1" to Contacts.' }),
   ).toBeVisible();
+  page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: 'Mark as verified Contact 1' }).click();
   await expect(keyring.locator('li', { hasText: 'Contact 1' }).getByText('Verified')).toBeVisible();
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
   BrowserRouter,
   Link,
@@ -22,6 +22,13 @@ import { EncryptDecrypt } from '../features/encrypt/EncryptDecrypt';
 import { Orientation } from './Orientation';
 import { routes } from './routes';
 import { useBrowserSession } from './useBrowserSession';
+
+const Contacts = lazy(() =>
+  import('../features/contacts/Contacts').then((module) => ({ default: module.Contacts })),
+);
+const Signatures = lazy(() =>
+  import('../features/signatures/Signatures').then((module) => ({ default: module.Signatures })),
+);
 
 function Shell() {
   const location = useLocation();
@@ -222,8 +229,8 @@ function Shell() {
             <div className="migration-notice">
               <strong>Your keys stay on this device</strong>
               <span>
-                RSA runs in your browser. Keys are kept in this tab’s memory; refreshing clears
-                them. Use demonstration data.
+                RSA runs in your browser. Private keys stay in tab memory unless you enable
+                “Remember my private keys” on the Keys page. Use demonstration data.
               </span>
               {session.bits === 1024 && (
                 <span>
@@ -258,6 +265,22 @@ function Shell() {
             <EncryptDecrypt />
           </div>
           <Routes>
+            <Route
+              path="/contacts"
+              element={
+                <Suspense fallback={<p role="status">Loading contacts…</p>}>
+                  <Contacts />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/learn/signatures"
+              element={
+                <Suspense fallback={<p role="status">Loading signatures…</p>}>
+                  <Signatures />
+                </Suspense>
+              }
+            />
             <Route path="/" element={<Home />} />
             <Route path="/learn/encrypt" element={null} />
             <Route
@@ -330,6 +353,8 @@ function Shell() {
                     '/learn/euclid',
                     '/learn/example',
                     '/experiments',
+                    '/contacts',
+                    '/learn/signatures',
                   ].includes(r.path),
               )
               .map((r) => (
