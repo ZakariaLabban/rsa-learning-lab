@@ -66,7 +66,7 @@ Plaintext JSON, before hybrid encryption, has ordered fields:
 `v` (2), `type` (`text` or `file`), `data` (base64 bytes), optional `file`,
 optional `signature`. File size must match decoded data length. Unknown fields
 and noncanonical JSON are rejected. File metadata must match the authenticated
-outer metadata when hybrid composition is implemented in #44.
+outer metadata; hybrid composition is implemented in `engine/rsa/hybrid.ts` (#44).
 
 Signature fields: `algorithm` (`RSA-PSS-SHA256`), `sender` (fingerprint), `value`
 (base64 RSA signature, 128 or 256 bytes). Signatures use SHA-256, MGF1-SHA256 and

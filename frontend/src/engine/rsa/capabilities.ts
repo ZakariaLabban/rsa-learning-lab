@@ -59,7 +59,7 @@ export function capabilities(key: PublicKey): Capabilities {
 
 export function requireCapability(
   key: PublicKey,
-  capability: 'textbookText' | 'oaep' | 'pss' | 'teachingSignature',
+  capability: 'textbookText' | 'oaep' | 'pss' | 'teachingSignature' | 'hybrid',
 ): Capabilities {
   const result = capabilities(key);
   if (!result[capability]) throw new RangeError(UNAVAILABLE[capability]);
@@ -71,4 +71,5 @@ const UNAVAILABLE = {
   oaep: 'OAEP requires a 1024/2048-bit key.',
   pss: 'PSS signatures require a 1024/2048-bit key.',
   teachingSignature: 'Teaching signatures are only for teaching keys (n <= 64 bits); use PSS.',
+  hybrid: 'Hybrid encryption requires a 1024/2048-bit recipient key.',
 };

@@ -71,7 +71,11 @@ the original journey styling.
 - **Decrypt** (on the page) uses the recipient's private key if this browser holds it,
   otherwise explains that only the recipient can. **Decrypt a received envelope** picks
   the matching key among my keys and the demo characters and explains every failure.
-- "Also sign as me" arrives with #44.
+- **Hybrid** padding (AES-GCM + RSA-OAEP key wrap, up to 100,000 bytes of text) and **Also sign as me** (#44):
+  choose a 1024/2048-bit signer (my keys first, then the demo characters), sign with RSA-PSS,
+  then send in hybrid mode. Decrypting shows one of: unsigned, valid (named sender), unknown key
+  (add the sender as a contact to check it) or invalid. The journey adds Sign, AES and Wrap steps.
+  The lab signs and encrypts with one key pair for simplicity; real systems prefer separate keys.
 
 ## Key Generation Wizard and Extended Euclid (#10)
 

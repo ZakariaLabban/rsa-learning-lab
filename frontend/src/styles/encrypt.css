@@ -187,3 +187,30 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.sign-options {
+  display: grid;
+  gap: 8px;
+}
+.sign-as {
+  max-width: 420px;
+}
+.signature-line {
+  font-size: 13px;
+  line-height: 1.5;
+  border-radius: 6px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+.signature-line.good {
+  border-color: var(--aqua);
+  color: var(--aqua);
+}
+.signature-line.warn,
+.signature-line.bad {
+  border-color: color-mix(in srgb, var(--amber) 60%, var(--line));
+  background: color-mix(in srgb, var(--amber) 10%, var(--surface));
+}
+.signature-line.bad {
+  border-color: #c0544c;
+}

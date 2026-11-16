@@ -48,7 +48,9 @@ verification need only a public key `{n, e}`; decryption and signing need the pr
 | `oaepEncrypt` / `oaepDecrypt` | RSAES-OAEP (RFC 8017 7.1), SHA-256, empty label; one generic decryption error |
 | `pssSign` / `pssVerifySignature` | RSASSA-PSS (RFC 8017 8.1), SHA-256, MGF1-SHA256, 32-byte salt; verify returns false for any bad input |
 | `teachingSign` / `teachingVerify` | INSECURE s=(SHA-256(m) mod n)^d mod n for teaching keys; tiny n means digest collisions (tests show one) |
-| `sealBasic` / `openBasic` / `selectPrivateKey` | Textbook-block or OAEP v2 envelopes; opening picks the private key whose fingerprint and size match. Hybrid/signed envelopes: #44 |
+| `sealBasic` / `openBasic` / `selectPrivateKey` | Textbook-block or OAEP v2 envelopes; opening picks the private key whose fingerprint and size match |
+| `sealHybrid` / `openHybrid` (#44) | AES-256-GCM payload (outer header as AAD) + OAEP-wrapped 32-byte key; optional RSA-PSS signature over `signingBytes` inside the payload (sign-then-encrypt). Opening verifies the GCM tag before any plaintext, checks outer/inner metadata, then the signature against known senders: `unsigned`, `valid`, `unknown-sender` or `invalid`. Text or file payloads (files: #17) |
+| `openEnvelope` | Opens any v2 envelope (basic or hybrid) |
 
 Only tests pass `testSeed`/`testSalt`; the worker never accepts injected randomness.
 Interoperability runs both ways in CI: the TypeScript operations consume the
