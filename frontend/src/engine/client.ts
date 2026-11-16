@@ -68,6 +68,26 @@ export async function generateKey(
     elapsed_ms: result.elapsed_ms,
   };
 }
+/** Registers an existing private key (for example from the keyring) for this tab's workers. */
+export async function adoptKey(key: PrivateKey): Promise<LabKey> {
+  const identity = await fingerprint(key);
+  const id = crypto.randomUUID();
+  vault.set(id, key);
+  if (vault.size > 8) vault.delete(vault.keys().next().value!);
+  return {
+    id,
+    n: String(key.n),
+    e: String(key.e),
+    bits: bitLength(key.n),
+    fingerprint: identity,
+    candidates: 0,
+    elapsed_ms: 0,
+  };
+}
+/** The full private key behind a tab key id, so it can be added to the keyring. */
+export function privateKeyFor(id: string): PrivateKey {
+  return privateKey(id);
+}
 function privateKey(id: string): PrivateKey {
   const key = vault.get(id);
   if (!key) throw new Error('This private key is no longer in this tab. Generate a new key.');

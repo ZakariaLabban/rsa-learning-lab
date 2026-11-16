@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { generateKey, type LabKey } from '../engine/client';
+import { adoptKey, generateKey, privateKeyFor, type LabKey } from '../engine/client';
+import type { PrivateKey } from '../engine/math';
+import { keyring } from '../keyring';
 
 export function useBrowserSession() {
   const [bits, setBits] = useState(2048),
@@ -36,6 +38,10 @@ export function useBrowserSession() {
       setKey(result);
       setHistory((old) => [...old.slice(-7), result]);
       setCandidates(result.candidates);
+      // Every generated key also appears in the shared keyring under "My keys".
+      keyring
+        .addMine(privateKeyFor(result.id), `Generated ${result.bits}-bit key`)
+        .catch(() => setError('The key works here but could not be added to your keyring.'));
     } catch (error) {
       if (generation.current === controller && !controller.signal.aborted)
         setError((error as Error).message);
@@ -45,6 +51,12 @@ export function useBrowserSession() {
         setGenerating(false);
       }
     }
+  }
+  /** Makes a keyring key (mine, demo or imported) the key used by Key Studio and the Workbench. */
+  async function activateKey(privateKey: PrivateKey) {
+    const result = await adoptKey(privateKey);
+    setKey(result);
+    setHistory((old) => [...old.slice(-7), result]);
   }
   function cancelGeneration() {
     generation.current?.abort();
@@ -64,5 +76,6 @@ export function useBrowserSession() {
     setError,
     createKey,
     cancelGeneration,
+    activateKey,
   };
 }
