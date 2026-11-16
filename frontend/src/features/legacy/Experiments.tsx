@@ -123,12 +123,12 @@ export function Experiments({
         <span>
           <span className={`status-dot ${!labKey ? 'offline' : ''}`} />
           {labKey
-            ? `Active key: RSA-${labKey.bits} آ· ${labKey.fingerprint.slice(0, 8)}`
+            ? `Active key: RSA-${labKey.bits} · ${labKey.fingerprint.slice(0, 8)}`
             : 'Generate a key before running an experiment.'}
         </span>
         {!labKey && (
           <button className="secondary-button" disabled={generating} onClick={createKey}>
-            {generating ? 'Generatingâ€¦' : 'Generate key pair'}
+            {generating ? 'Generating…' : 'Generate key pair'}
             <Plus size={14} />
           </button>
         )}
@@ -163,7 +163,7 @@ export function Experiments({
             disabled={!labKey || busy || generating}
           >
             <Play size={14} />
-            {busy ? 'Computingâ€¦' : 'Run experiment'}
+            {busy ? 'Computing…' : 'Run experiment'}
           </button>
         </div>
         <div className="comparison-grid">
@@ -183,7 +183,7 @@ export function Experiments({
                   <span>RUN 01</span>
                   <code>
                     {result
-                      ? result.first.cipher_hex.slice(0, 48) + 'â€¦'
+                      ? result.first.cipher_hex.slice(0, 48) + '…'
                       : 'Waiting for your experiment'}
                   </code>
                 </div>
@@ -191,7 +191,7 @@ export function Experiments({
                   <span>RUN 02</span>
                   <code>
                     {result
-                      ? result.second.cipher_hex.slice(0, 48) + 'â€¦'
+                      ? result.second.cipher_hex.slice(0, 48) + '…'
                       : 'Waiting for your experiment'}
                   </code>
                 </div>
@@ -247,7 +247,7 @@ export function Experiments({
         <div className="benchmark-body">
           <div>
             <div className="eyebrow">EXPERIMENT / 02</div>
-            <h3>Measure it. Donâ€™t guess.</h3>
+            <h3>Measure it. Don’t guess.</h3>
             <p>
               Five recorded OAEP operations; the first run is discarded. Times come from the browser
               worker and exclude animation and rendering.
@@ -255,7 +255,7 @@ export function Experiments({
             {bench && (
               <>
                 <div className="benchmark-meta mono">
-                  RSA-{bench.bits} آ· median آ· 5 samples آ· custom engine
+                  RSA-{bench.bits} · median · 5 samples · custom engine
                 </div>
                 <div className="benchmark-bar">
                   <span>Encrypt</span>
@@ -276,10 +276,9 @@ export function Experiments({
                   <strong className="mono">{median(bench.decrypt).toFixed(3)} ms</strong>
                 </div>
                 <p className="benchmark-range">
-                  Encryption range {Math.min(...bench.encrypt).toFixed(3)}â€“
-                  {Math.max(...bench.encrypt).toFixed(3)} ms آ· Decryption range{' '}
-                  {Math.min(...bench.decrypt).toFixed(3)}â€“{Math.max(...bench.decrypt).toFixed(3)}{' '}
-                  ms
+                  Encryption range {Math.min(...bench.encrypt).toFixed(3)}–
+                  {Math.max(...bench.encrypt).toFixed(3)} ms · Decryption range{' '}
+                  {Math.min(...bench.decrypt).toFixed(3)}–{Math.max(...bench.decrypt).toFixed(3)} ms
                 </p>
                 <button className="text-button aqua-text" onClick={exportBench}>
                   <Download size={14} />
@@ -289,7 +288,7 @@ export function Experiments({
             )}
           </div>
           <div className="generation-history">
-            <h4>Key generation آ· this session</h4>
+            <h4>Key generation · this session</h4>
             {history.length ? (
               history.slice(-5).map((k, i) => (
                 <div key={k.id}>

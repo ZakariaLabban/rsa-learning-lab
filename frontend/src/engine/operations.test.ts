@@ -8,7 +8,7 @@ for (const fixture of references.keys)
   it(`preserves exact empty, Unicode and zero-prefixed message bytes at ${fixture.bits} bits`, async () => {
     const key = deriveKey(BigInt(fixture.p), BigInt(fixture.q), BigInt(fixture.e));
     for (const mode of ['oaep', 'textbook'] as const)
-      for (const message of ['', '\0\0Hello', 'مرحبا 🔐\n']) {
+      for (const message of ['', '\0\0Hello', '\uFEFFHello', 'مرحبا 🔐\n']) {
         const encrypted = await encryptMessage(key, message, mode);
         const recovered = await decryptMessage(key, encrypted.envelope);
         expect(recovered.message).toBe(message);

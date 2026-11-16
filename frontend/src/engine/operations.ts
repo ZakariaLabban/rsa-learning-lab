@@ -111,7 +111,7 @@ export async function decryptMessage(key: PrivateKey, value: string): Promise<Re
       inputBytes = envelope.blocks.length * width;
     }
     return {
-      message: new TextDecoder('utf-8', { fatal: true }).decode(bytes),
+      message: new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes),
       utf8_hex: toHex(bytes),
       elapsed_ms: performance.now() - start,
       mode: envelope.kind === 'oaep' ? 'oaep' : 'textbook',
