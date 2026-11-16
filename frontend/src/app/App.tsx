@@ -11,6 +11,7 @@ import {
 import { Braces, CircleHelp, Menu, Moon, Sun, X } from 'lucide-react';
 import { ErrorBanner } from '../components/ErrorBanner';
 import { Home } from '../features/home/Home';
+import { MyKeys } from '../features/keys/MyKeys';
 import { PlannedPage } from '../features/home/PlannedPage';
 import { Experiments } from '../features/legacy/Experiments';
 import { KeyStudio } from '../features/legacy/KeyStudio';
@@ -276,6 +277,7 @@ function Shell() {
                     setKey={session.setKey}
                     setError={session.setError}
                   />
+                  <MyKeys onUse={session.activateKey} />
                 </>
               }
             />
