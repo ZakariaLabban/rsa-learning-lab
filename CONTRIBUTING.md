@@ -17,12 +17,11 @@ Do not gate work on whole milestones. Start scaffolding and tests early; use eac
 issue's actual completion dependencies. Preserve the old Python/API workflows
 until browser replacements are accepted in #45.
 
-The intended main-branch policy is one approving reviewer, passing `Frontend checks`
-and `Python reference and API checks`, no force pushes or direct pushes, and squash
-merges. GitHub currently returns HTTP 403 for branch protection on this private
-repository's plan. An owner must enable a plan supporting private-repository
-protection before these rules can be enforced. Until then use PRs and reviews by
-team agreement; CI alone cannot prevent direct pushes.
+The repository is public. Main-branch protection requires a pull request, one
+approving reviewer and passing `Frontend checks` and `Python reference and API checks`
+from GitHub Actions. Branches must be up to date before merging; new commits dismiss
+stale approvals. These rules apply to administrators too. Direct pushes, force
+pushes and branch deletion are blocked. Squash merge approved PRs after CI passes.
 
 The frontend pins a patched minimatch 11 override for the TypeScript ESLint
 dependency tree (GHSA-g3hv-75wg-m249). Revisit the override when the upstream parser
