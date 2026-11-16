@@ -16,7 +16,7 @@ import { PlannedPage } from '../features/home/PlannedPage';
 import { Experiments } from '../features/legacy/Experiments';
 import { KeyStudio } from '../features/legacy/KeyStudio';
 import { MathExplorer } from '../features/legacy/MathExplorer';
-import { Workbench } from '../features/legacy/Workbench';
+import { EncryptDecrypt } from '../features/encrypt/EncryptDecrypt';
 import { Orientation } from './Orientation';
 import { routes } from './routes';
 import { useBrowserSession } from './useBrowserSession';
@@ -28,8 +28,7 @@ function Shell() {
   const isWorkbench = matches('/learn/encrypt');
   const isLegacy = isWorkbench || ['/learn/keys', '/experiments'].some(matches);
   const session = useBrowserSession();
-  const [guide, setGuide] = useState(true),
-    [mobileNav, setMobileNav] = useState(false),
+  const [mobileNav, setMobileNav] = useState(false),
     [help, setHelp] = useState(false);
   const drawerRef = useRef<HTMLElement>(null);
   const navToggleRef = useRef<HTMLButtonElement>(null);
@@ -253,13 +252,8 @@ function Shell() {
                 </div>
               </div>
             )}
-            <Workbench
-              {...keyProps}
-              active={isWorkbench}
-              setError={session.setError}
-              guide={guide}
-              setGuide={setGuide}
-            />
+            {/* Stays mounted while hidden so the message and journey survive navigation. */}
+            <EncryptDecrypt />
           </div>
           <Routes>
             <Route path="/" element={<Home />} />

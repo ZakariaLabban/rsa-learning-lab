@@ -8,12 +8,26 @@ import {
   type EnvelopeV2,
 } from '../encoding';
 import { capabilities } from './capabilities';
-import { oaepDecrypt, oaepEncrypt } from './oaep';
+import { oaepDecryptTrace, oaepEncryptTrace } from './oaep';
 import { textbookDecryptBytes, textbookEncryptBytes } from './textbook';
 
 export type BasicMode = 'textbook' | 'oaep';
-export type Sealed = { envelope: string; value: EnvelopeV2; blocks: Uint8Array[] };
-export type Opened = { bytes: Uint8Array; mode: BasicMode; key: PrivateKey; blocks: Uint8Array[] };
+export type Sealed = {
+  envelope: string;
+  value: EnvelopeV2;
+  /** RSA ciphertext blocks C. */
+  blocks: Uint8Array[];
+  /** What RSA encrypted for each block: the OAEP-padded block EM, or a textbook chunk. */
+  inputs: Uint8Array[];
+};
+export type Opened<K extends PrivateKey = PrivateKey> = {
+  bytes: Uint8Array;
+  mode: BasicMode;
+  key: K;
+  blocks: Uint8Array[];
+  /** What RSA decryption recovered for each block: EM for OAEP, the chunk for textbook. */
+  outputs: Uint8Array[];
+};
 
 /**
  * Encrypts bytes for a recipient's PUBLIC key and packs a v2 envelope.
@@ -26,12 +40,16 @@ export async function sealBasic(
   testSeed?: Uint8Array,
 ): Promise<Sealed> {
   const base = { v: 2 as const, recipient: await fingerprint(key), bits: bitLength(key.n) };
-  let value: EnvelopeV2, blocks: Uint8Array[];
+  let value: EnvelopeV2, blocks: Uint8Array[], inputs: Uint8Array[];
   if (mode === 'oaep') {
-    blocks = [await oaepEncrypt(key, bytes, testSeed)];
-    value = { ...base, kind: 'oaep', ciphertext: toBase64(blocks[0]) };
+    const { encoded, ciphertext } = await oaepEncryptTrace(key, bytes, testSeed);
+    blocks = [ciphertext];
+    inputs = [encoded];
+    value = { ...base, kind: 'oaep', ciphertext: toBase64(ciphertext) };
   } else if (mode === 'textbook') {
     blocks = textbookEncryptBytes(key, bytes);
+    const chunk = capabilities(key).textbookBlockBytes;
+    inputs = blocks.map((_, i) => bytes.slice(i * chunk, (i + 1) * chunk));
     value = {
       ...base,
       kind: 'textbook-blocks',
@@ -39,7 +57,7 @@ export async function sealBasic(
       byteLength: bytes.length,
     };
   } else throw new RangeError('Unsupported encryption mode.');
-  return { envelope: packEnvelope(value), value, blocks };
+  return { envelope: packEnvelope(value), value, blocks, inputs };
 }
 
 /**
@@ -57,24 +75,27 @@ export async function selectPrivateKey<K extends PrivateKey>(
 }
 
 /** Parses an envelope, chooses the matching private key and decrypts textbook/OAEP content. */
-export async function openBasic(
+export async function openBasic<K extends PrivateKey>(
   envelope: string | EnvelopeV2,
-  keys: readonly PrivateKey[],
-): Promise<Opened> {
+  keys: readonly K[],
+): Promise<Opened<K>> {
   const value = typeof envelope === 'string' ? parseEnvelope(envelope) : envelope;
   if (value.kind === 'hybrid')
     throw new Error('Hybrid envelopes are opened by the hybrid engine (#44).');
   const key = await selectPrivateKey(value, keys);
-  const { width } = capabilities(key);
+  const { width, textbookBlockBytes: chunk } = capabilities(key);
   if (value.kind === 'oaep') {
     const blocks = [fromBase64(value.ciphertext, width)];
-    return { bytes: await oaepDecrypt(key, blocks[0]), mode: 'oaep', key, blocks };
+    const { encoded, message } = await oaepDecryptTrace(key, blocks[0]);
+    return { bytes: message, mode: 'oaep', key, blocks, outputs: [encoded] };
   }
   const blocks = value.blocks.map((block) => fromBase64(block, width));
+  const bytes = textbookDecryptBytes(key, blocks, value.byteLength);
   return {
-    bytes: textbookDecryptBytes(key, blocks, value.byteLength),
+    bytes,
     mode: 'textbook',
     key,
     blocks,
+    outputs: blocks.map((_, i) => bytes.slice(i * chunk, (i + 1) * chunk)),
   };
 }

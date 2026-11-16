@@ -13,8 +13,8 @@
 links, refresh and back/forward. Vite preview handles static fallback; the existing
 Python frontend server also serves these paths without capturing missing `/api`
 routes. Hosted rewrite configuration is #9. The app runs key generation and message operations in browser workers;
-the shell, worked example, key studio and existing experiments need no backend. Workbench stays mounted when navigating so message
-and playback state are preserved. No Python files or launchers are retired here.
+the shell, worked example, key studio and existing experiments need no backend. The Encrypt / Decrypt page
+stays mounted when navigating so the message and journey are preserved. No Python files or launchers are retired here.
 
 Shared controls:
 
@@ -50,9 +50,28 @@ format and fields, n=p*q, distinct probable primes, 1<e<n, e*d = 1 mod lambda(n)
 
 `MyKeys` (Keys page) lists all keys with import (file or pasted text), export,
 the remember toggle and clear-all. Keys generated in Key Studio are added to "My
-keys"; **Use** makes a keyring key active and, for 1024/2048-bit keys, loads it into
-Key Studio and the Workbench. `RecipientPicker` (`components/`) is the "To:" field for
-#13: Me, Demo characters (incl. the lecture key), My contacts, or a pasted one-time key.
+keys" and become the active key; **Use** makes a keyring key active and, for
+1024/2048-bit keys, also loads it into Key Studio. `RecipientPicker` (`components/`) is the
+"To:" field: Me, Demo characters (incl. the lecture key), My contacts, or a pasted one-time key.
+
+## Encrypt / Decrypt (`features/encrypt/`, #13)
+
+`/learn/encrypt` replaces the old Workbench (its file stays in `features/legacy/` until #45).
+`model.ts` holds the testable logic; `EncryptDecrypt.tsx` the page; `JourneyTrack.tsx` reuses
+the original journey styling.
+
+- **To:** defaults to the active key, then my newest key, then demo Alice. Encryption needs
+  only the public key, so contacts and pasted keys work too.
+- **Text or Number (M):** text uses textbook blocks or OAEP (per `capabilities`); keys with
+  n < 256 are number-only; number mode is raw C = M^e mod n. Text is limited to 1000 bytes
+  per action. **Load lecture example** = lecture key, M = 88.
+- **Journey:** Bob / Alice / Eve panels and a stepper through the real values of the run
+  (message, blocks or OAEP block EM, encryption, envelope, decryption). Private values
+  stay hidden until revealed.
+- **Decrypt** (on the page) uses the recipient's private key if this browser holds it,
+  otherwise explains that only the recipient can. **Decrypt a received envelope** picks
+  the matching key among my keys and the demo characters and explains every failure.
+- "Also sign as me" arrives with #44.
 
 Theme preference uses localStorage when available and falls back to memory if
 storage is blocked. The full offline app cache is #50; loading a static shell

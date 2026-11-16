@@ -39,8 +39,10 @@ export function useBrowserSession() {
       setHistory((old) => [...old.slice(-7), result]);
       setCandidates(result.candidates);
       // Every generated key also appears in the shared keyring under "My keys".
+      // It also becomes the active key, so Encrypt / Decrypt uses it by default.
       keyring
         .addMine(privateKeyFor(result.id), `Generated ${result.bits}-bit key`)
+        .then((entry) => keyring.setActive(entry.id))
         .catch(() => setError('The key works here but could not be added to your keyring.'));
     } catch (error) {
       if (generation.current === controller && !controller.signal.aborted)
