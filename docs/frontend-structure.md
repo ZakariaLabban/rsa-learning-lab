@@ -77,6 +77,15 @@ the original journey styling.
   (add the sender as a contact to check it) or invalid. The journey adds Sign, AES and Wrap steps.
   The lab signs and encrypts with one key pair for simplicity; real systems prefer separate keys.
 
+## Files, contacts and signatures (#17, #16, #14)
+
+`features/files/` adds the Files tab to Encrypt / Decrypt, a cancellable worker and safe
+download model. `features/contacts/` shares public key text/files/QR and manages verified
+contacts through the existing keyring. `features/signatures/` provides the PSS and teaching
+signature lesson. These feature UIs and QR dependencies load on demand.
+See [files-contacts-signatures.md](files-contacts-signatures.md) for contracts, timing,
+privacy, limits and verification coverage.
+
 ## Key Generation Wizard and Extended Euclid (#10)
 
 The Keys page starts with `KeyWizard` (`features/keys/`), then the keyring, then the

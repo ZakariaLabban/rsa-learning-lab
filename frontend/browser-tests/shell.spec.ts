@@ -50,6 +50,8 @@ for (const width of [375, 1440])
             '/learn/euclid',
             '/learn/example',
             '/experiments',
+            '/contacts',
+            '/learn/signatures',
           ].includes(route.path)
         )
           await expect(page.getByText('PLANNED FEATURE', { exact: true })).toBeVisible();
