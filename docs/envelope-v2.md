@@ -1,6 +1,6 @@
 # RSA Lab envelope v2
 
-Status: implemented and tested in #43; teammate review occurs through the PR.
+Status: implemented and tested in #43; independent AI review occurs through the PR.
 This educational format is not an audited messaging protocol. All cryptographic
 integers use unsigned big-endian bytes; JSON integer fields are bounded counts,
 never RSA components. Base64 is RFC 4648 standard alphabet with canonical padding.

@@ -16,9 +16,10 @@ authentication; previews may retain Vercel authentication protection. Hosted
 checks must include CSP response headers, not just local Vite preview.
 
 The default Vercel URL is sufficient for this issue. A custom domain is #41.
-GitHub main requires a teammate's approving review and passing CI before merge.
-Keep that protection enabled; review deployments can be built from the feature
-branch while its PR waits for approval.
+GitHub main requires a PR and passing CI before merge. A separate AI reviewer
+checks the final changes; actionable findings must be fixed before squash merge.
+Keep PR/check protection enabled. Review deployments can be built from the feature
+branch while independent review runs; no teammate approval is required.
 
 No analytics, storage product, domain purchase or paid build upgrade is required
 for this static deployment. Future Supabase work must explicitly extend CSP

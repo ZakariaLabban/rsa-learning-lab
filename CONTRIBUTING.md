@@ -17,11 +17,14 @@ Do not gate work on whole milestones. Start scaffolding and tests early; use eac
 issue's actual completion dependencies. Preserve the old Python/API workflows
 until browser replacements are accepted in #45.
 
-The repository is public. Main-branch protection requires a pull request, one
-approving reviewer and passing `Frontend checks` and `Python reference and API checks`
-from GitHub Actions. Branches must be up to date before merging; new commits dismiss
-stale approvals. These rules apply to administrators too. Direct pushes, force
-pushes and branch deletion are blocked. Squash merge approved PRs after CI passes.
+The repository is public. Main-branch protection requires a pull request and passing
+`Frontend checks` and `Python reference and API checks` from GitHub Actions.
+Branches must be up to date before merging. These rules apply to administrators too;
+direct pushes, force pushes and branch deletion are blocked.
+
+The review workflow is a separate AI reviewer, fixes for actionable findings, and
+verification of the final commit's passing checks before squash merge. A teammate's
+GitHub approval is not required. Do not bypass CI or weaken the PR requirement.
 
 The frontend pins a patched minimatch 11 override for the TypeScript ESLint
 dependency tree (GHSA-g3hv-75wg-m249). Revisit the override when the upstream parser
