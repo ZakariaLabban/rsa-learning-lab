@@ -1,13 +1,16 @@
 # Animated workshop and Legacy lab
 
-The default entrance is the animated RSA workshop. `/playground` always opens it;
+The default entrance is now the step-by-step [lecture view](lecture-view.md) for visitors
+with no saved choice. `/playground` always opens the animated RSA workshop;
 `/legacy` always opens the previous overview and sidebar. Existing `/learn/*`,
 `/break/*`, `/contacts` and `/experiments` addresses keep their previous screens.
 The workshop's directory now links to animated versions of every lesson and tool
 under `/playground/*`. See [animated-lessons.md](animated-lessons.md).
 
-Use **Legacy lab** or **Animated workshop** in the header to switch. The choice
-is remembered under `rsa-lab-interface` and used on the next visit to `/`.
+Use **Lecture view**, **Legacy lab** or **Animated workshop** in the header to switch. The
+choice is remembered under `rsa-lab-interface` (`lecture`, `workshop` or `legacy`) and used on
+the next visit to `/`; with no saved choice, or with browser storage disabled, `/` shows the
+lecture view.
 Explicit experience URLs still work with browser storage disabled. Switching
 does not change the key-persistence policy or key files.
 After its first visit, the Legacy shell stays mounted and hidden while the

@@ -20,17 +20,22 @@ For the production build, use `npm.cmd run build` followed by `npm.cmd run previ
 No Python server or account is required to use the browser app. After one online
 visit the built app also reopens and works offline; see [offline guest app](docs/offline.md).
 
-## Two interfaces
+## Three interfaces
 
-The animated workshop is the new default, with guided playback, free exploration
-and step-by-step views inside the RSA machines. All lessons and tools now have
-new UI routes under `/playground`, with calculation or protocol animations.
-Use **Legacy lab** in the header
-to return to the previous interface; your choice is remembered. `/playground`
-and `/legacy` always open the corresponding experience, and all existing lesson
-URLs still work. Both views share the same RSA engine. See
-[the workshop guide](docs/animated-workshop.md) for behavior and rollback details.
-See [animated lessons](docs/animated-lessons.md) for the route map, player,
+The **lecture view** is the default for new visitors. `/` opens a course map with
+16 short lessons that follow the lecture slides (chapters 4, 8 and 9): the GCD, Extended
+Euclid, square-and-multiply, Miller-Rabin and CRT tables are filled one row at a time, then
+RSA by hand, signatures, three attacks, keys, contacts, messages and files, and a practice
+quiz. Lessons live under `/lecture/*`. See [the lecture view guide](docs/lecture-view.md).
+
+The animated workshop, with guided playback, free exploration and step-by-step views
+inside the RSA machines, is at `/playground` (all lessons and tools have animated routes
+under `/playground/*`). The previous interface is the **Legacy lab** at `/legacy`.
+The header of each view links to the others. A visitor who already chose the workshop or
+the Legacy lab keeps that choice for `/`; `/lecture`, `/playground` and `/legacy` always open
+the corresponding experience, and all existing lesson URLs still work. All views share the
+same RSA engine. See [the workshop guide](docs/animated-workshop.md) for behavior and
+rollback details, and [animated lessons](docs/animated-lessons.md) for the route map, player,
 private-value handling and seeded Practice questions/progress.
 
 ## Key handling and limitations

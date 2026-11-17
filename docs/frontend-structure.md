@@ -1,7 +1,9 @@
 # Frontend structure during migration
 
-The default UI is now `features/workshop/`: an animated RSA journey with guided
-and free modes. `app/App.tsx` selects it or the preserved `app/LegacyShell.tsx`;
+The default UI is `features/lecture/`: a calm, step-by-step course that follows the lecture
+slides (see [lecture-view.md](lecture-view.md)). `features/workshop/` is the animated RSA journey
+with guided and free modes at `/playground`. `app/App.tsx` selects the lecture view, the workshop
+or the preserved `app/LegacyShell.tsx` (from the URL, then the saved choice);
 `app/LabTheme.tsx` shares the theme. `features/lessons/ModernLab.tsx` provides every
 new lesson/tool route under `/playground/*`; shared lesson components publish
 actual math/protocol traces through the scoped `LessonTrace` player. Existing
@@ -14,6 +16,8 @@ the engine trace boundary and rollback.
 - `content/glossary.ts`: term definitions and chapter references, using the slide notation
   (M/C, PU = {e, n}, PR = {d, n}, φ(n)). Every lesson/tool page uses `Term` for its key
   terms; `browser-tests/glossary.spec.ts` checks each Learn, Break and Tools route.
+- `features/lecture/`: the lecture view (course shell, lessons, calculation model, practice
+  generator, animated SVG diagrams, scoped styles).
 - `features/home/`: landing page and explicitly planned-feature pages.
 - `features/legacy/`: preserved key studio, message journey, math explorer and
   experiments, separated from the old monolithic App.
@@ -29,25 +33,25 @@ stays mounted when navigating so the message and journey are preserved. No Pytho
 
 Shared controls:
 
-| Component | Contract |
-| --- | --- |
-| `NumberView` | `label`, BigInt `value`, optional `privateValue`; dec/hex/base64, copy/expand and explicit private reveal |
-| `Stepper` | Controlled `step`, `count`, `onChange`; previous/next/play/speed/result; reduced motion uses manual steps |
-| `RolePanels` | Array of Alice/Bob/Eve, knowledge and optional action descriptions |
-| `Term` | Glossary key, optional `children` label (e.g. `φ(n)`); tooltip with name, explanation and Ch 8/Ch 9 or standard reference, visible on pointer hover and keyboard focus |
-| `ErrorBanner` | Message and optional dismiss callback |
-| `LectureExampleButton` | Caller-owned `onLoad` and optional label; no baked-in numbers |
+| Component              | Contract                                                                                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NumberView`           | `label`, BigInt `value`, optional `privateValue`; dec/hex/base64, copy/expand and explicit private reveal                                                              |
+| `Stepper`              | Controlled `step`, `count`, `onChange`; previous/next/play/speed/result; reduced motion uses manual steps                                                              |
+| `RolePanels`           | Array of Alice/Bob/Eve, knowledge and optional action descriptions                                                                                                     |
+| `Term`                 | Glossary key, optional `children` label (e.g. `φ(n)`); tooltip with name, explanation and Ch 8/Ch 9 or standard reference, visible on pointer hover and keyboard focus |
+| `ErrorBanner`          | Message and optional dismiss callback                                                                                                                                  |
+| `LectureExampleButton` | Caller-owned `onLoad` and optional label; no baked-in numbers                                                                                                          |
 
 ## Keyring (`src/keyring/`, #8)
 
 One shared store for every key: `keyring` (instance), `useKeyring()` (React hook).
 
-| Source | What | Saved in this browser? | Editable |
-| --- | --- | --- | --- |
-| `mine` | My key pairs (generated, or imported key-pair files) | Only while "Remember my private keys on this device" is on (off by default); turning it off deletes them from storage | Rename, delete, export |
-| `contact` | Other people's public keys, with a verified flag | Always (public data only) | Rename, verify, delete |
-| `demo` | Alice and Bob, bundled 2048-bit keys from `demo-keys.json` (private keys are public) | Never | No |
-| `lecture` | p=17, q=11, e=7, d=23 | Never | No |
+| Source    | What                                                                                 | Saved in this browser?                                                                                                | Editable               |
+| --------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `mine`    | My key pairs (generated, or imported key-pair files)                                 | Only while "Remember my private keys on this device" is on (off by default); turning it off deletes them from storage | Rename, delete, export |
+| `contact` | Other people's public keys, with a verified flag                                     | Always (public data only)                                                                                             | Rename, verify, delete |
+| `demo`    | Alice and Bob, bundled 2048-bit keys from `demo-keys.json` (private keys are public) | Never                                                                                                                 | No                     |
+| `lecture` | p=17, q=11, e=7, d=23                                                                | Never                                                                                                                 | No                     |
 
 Storage key `rsa-lab.keyring`, schema version 1, integers as decimal strings; every
 saved entry is re-validated (and its fingerprint recomputed) on load, and invalid
