@@ -1,5 +1,11 @@
 # Frontend structure during migration
 
+The default UI is now `features/workshop/`: an animated RSA journey with guided
+and free modes. `app/App.tsx` selects it or the preserved `app/LegacyShell.tsx`;
+`app/LabTheme.tsx` shares the theme. Existing lesson routes remain in Legacy.
+See [animated-workshop.md](animated-workshop.md) for switching, session retention,
+the engine trace boundary and rollback.
+
 - `app/`: URL routes, shell, theme, orientation and temporary API session state.
 - `components/`: reusable display, teaching, error and playback controls.
 - `content/glossary.ts`: term definitions and chapter references.
