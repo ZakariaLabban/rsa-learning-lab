@@ -1,0 +1,156 @@
+/* Animated drawings. Motion is short and only shows what changed; it stops for reduced motion. */
+.lecture .art-wrap {
+  margin: 8px 0 24px;
+}
+.lecture svg.art {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 8px 0;
+  border: 1px solid var(--l-line);
+  border-radius: 14px;
+  background: var(--l-surface);
+}
+.lecture svg.art .move {
+  transition:
+    transform 0.9s cubic-bezier(0.45, 0, 0.2, 1),
+    opacity 0.6s ease;
+}
+.lecture svg.art text {
+  fill: var(--l-text);
+  font-family: 'Segoe UI', Inter, Arial, sans-serif;
+}
+.lecture svg.art .art-label {
+  font-size: 13px;
+  fill: var(--l-muted);
+}
+.lecture svg.art .art-name {
+  font-size: 20px;
+  font-weight: 700;
+}
+.lecture svg.art .art-wire {
+  stroke: var(--l-line);
+  stroke-width: 3;
+  stroke-dasharray: 2 9;
+  stroke-linecap: round;
+}
+.lecture svg.art .art-person circle,
+.lecture svg.art .art-person path {
+  fill: var(--l-accent);
+  opacity: 0.9;
+}
+.lecture svg.art .art-person.bob circle,
+.lecture svg.art .art-person.bob path {
+  fill: #2f9e6e;
+}
+.lecture svg.art .art-person.eve circle,
+.lecture svg.art .art-person.eve path {
+  fill: #8a94a6;
+}
+.lecture svg.art .art-key circle,
+.lecture svg.art .art-key path {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lecture svg.art .art-key.public circle,
+.lecture svg.art .art-key.public path {
+  stroke: #e8a317;
+}
+.lecture svg.art .art-key.private circle,
+.lecture svg.art .art-key.private path {
+  stroke: #d6455d;
+}
+.lecture svg.art .art-key .hole {
+  stroke-width: 2;
+}
+.lecture svg.art .art-box {
+  fill: var(--l-bg);
+  stroke: var(--l-text);
+  stroke-width: 3;
+}
+.lecture svg.art .art-msg {
+  font-size: 18px;
+  font-weight: 600;
+  transition: opacity 0.5s ease;
+}
+.lecture svg.art .art-msg.scrambled {
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  fill: var(--l-muted);
+}
+.lecture svg.art .art-padlock .shackle {
+  fill: none;
+  stroke: #e8a317;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.lecture svg.art .art-padlock .body {
+  fill: #e8a317;
+}
+.lecture svg.art .art-padlock .hole {
+  fill: #7a5200;
+}
+.lecture svg.art .art-no {
+  font-size: 17px;
+  font-weight: 700;
+  fill: var(--l-bad-text);
+}
+
+/* The RSA flow */
+.lecture svg.rsaflow .art-token {
+  fill: var(--l-bg);
+  stroke: var(--l-line);
+  stroke-width: 2;
+  transition: opacity 0.5s ease;
+}
+.lecture svg.rsaflow .art-small {
+  font-size: 16px;
+  fill: var(--l-muted);
+}
+.lecture svg.rsaflow .art-big {
+  font-size: 36px;
+  font-weight: 700;
+  transition: opacity 0.5s ease;
+}
+.lecture svg.rsaflow .art-formula {
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  font-size: 17px;
+  font-weight: 700;
+}
+.lecture svg.rsaflow .art-machine rect {
+  fill: var(--l-bg);
+  stroke: var(--l-line);
+  stroke-width: 2;
+}
+.lecture svg.rsaflow .art-arrow {
+  fill: none;
+  stroke: var(--l-line);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lecture svg.rsaflow .art-machine.on rect {
+  stroke: var(--l-accent);
+  stroke-width: 3;
+}
+.lecture svg.rsaflow .art-machine.on .art-arrow {
+  stroke: var(--l-accent);
+}
+.lecture svg.rsaflow .art-packet circle {
+  fill: var(--l-accent);
+}
+.lecture svg.rsaflow .art-packet text {
+  fill: var(--l-accent-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lecture svg.art .move,
+  .lecture svg.art .art-msg,
+  .lecture svg.rsaflow .art-big,
+  .lecture svg.rsaflow .art-token {
+    transition: none !important;
+  }
+}

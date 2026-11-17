@@ -1,10 +1,11 @@
-export type LabInterface = 'workshop' | 'legacy';
+export type LabInterface = 'lecture' | 'workshop' | 'legacy';
 
 export function preferredInterface(): LabInterface {
   try {
-    return localStorage.getItem('rsa-lab-interface') === 'legacy' ? 'legacy' : 'workshop';
+    const saved = localStorage.getItem('rsa-lab-interface');
+    return saved === 'legacy' || saved === 'workshop' ? saved : 'lecture';
   } catch {
-    return 'workshop';
+    return 'lecture';
   }
 }
 

@@ -1,0 +1,482 @@
+/* The lecture view: calm, high-contrast, no motion. Everything is scoped to .lecture. */
+.lecture {
+  --l-bg: #f7f8fa;
+  --l-surface: #ffffff;
+  --l-text: #172033;
+  --l-muted: #536076;
+  --l-line: #cfd6e2;
+  --l-accent: #1456b8;
+  --l-accent-text: #ffffff;
+  --l-current: #fff3c4;
+  --l-answer: #d7f2df;
+  --l-bad: #fde4e1;
+  --l-bad-text: #8a1f14;
+  min-height: 100vh;
+  background: var(--l-bg);
+  color: var(--l-text);
+  font-family: 'Segoe UI', Inter, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.55;
+}
+:root[data-theme='dark'] .lecture {
+  --l-bg: #10161f;
+  --l-surface: #172030;
+  --l-text: #edf1f7;
+  --l-muted: #a3afc2;
+  --l-line: #34425a;
+  --l-accent: #7db4ff;
+  --l-accent-text: #0b1320;
+  --l-current: #4a3f12;
+  --l-answer: #1d4a2c;
+  --l-bad: #4d2420;
+  --l-bad-text: #ffc9c2;
+}
+/* Motion is gentle: only the newest row or card fades in, and never when the system asks for less. */
+@keyframes lecture-in {
+  from {
+    opacity: 0.2;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lecture tr.current,
+  .lecture li.current,
+  .lecture td.current {
+    animation: lecture-in 0.35s ease-out;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lecture * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+.lecture .bar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 12px 24px;
+  background: var(--l-surface);
+  border-bottom: 1px solid var(--l-line);
+}
+.lecture .brand {
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--l-text);
+  text-decoration: none;
+}
+.lecture .theme {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--l-line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--l-text);
+  cursor: pointer;
+}
+.lecture main {
+  flex: 1;
+  min-width: 0;
+  max-width: 940px;
+  padding: 32px 28px 80px;
+}
+.lecture h1 {
+  margin: 4px 0 8px;
+  font-size: 34px;
+  line-height: 1.2;
+}
+.lecture h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+.lecture .eyebrow {
+  margin: 0;
+  color: var(--l-muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+.lecture .lead {
+  margin: 0 0 20px;
+  max-width: 70ch;
+  color: var(--l-muted);
+}
+.lecture .lead.small {
+  font-size: 16px;
+}
+.lecture a {
+  color: var(--l-accent);
+}
+
+/* Inputs */
+.lecture .inputs {
+  margin: 0 0 24px;
+  padding: 16px;
+  background: var(--l-surface);
+  border: 1px solid var(--l-line);
+  border-radius: 12px;
+}
+.lecture .fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.lecture .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 150px;
+  flex: 1 1 150px;
+}
+.lecture .field label {
+  font-weight: 600;
+  font-size: 16px;
+}
+.lecture .field small {
+  color: var(--l-muted);
+  font-size: 14px;
+}
+.lecture input {
+  padding: 9px 11px;
+  border: 1px solid var(--l-line);
+  border-radius: 8px;
+  background: var(--l-bg);
+  color: var(--l-text);
+  font:
+    18px/1.3 'Cascadia Mono',
+    Consolas,
+    monospace;
+}
+.lecture input:focus-visible,
+.lecture button:focus-visible,
+.lecture a:focus-visible,
+.lecture summary:focus-visible {
+  outline: 3px solid var(--l-accent);
+  outline-offset: 2px;
+}
+.lecture .controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+.lecture button {
+  padding: 9px 16px;
+  border: 1px solid var(--l-line);
+  border-radius: 8px;
+  background: var(--l-surface);
+  color: var(--l-text);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+.lecture button:hover:not(:disabled) {
+  border-color: var(--l-accent);
+}
+.lecture button:disabled,
+.lecture button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+.lecture button.primary {
+  background: var(--l-accent);
+  border-color: var(--l-accent);
+  color: var(--l-accent-text);
+  font-weight: 600;
+}
+.lecture .counter {
+  margin-left: auto;
+  color: var(--l-muted);
+  font-size: 15px;
+}
+.lecture .error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--l-bad);
+  color: var(--l-bad-text);
+  font-size: 16px;
+}
+
+/* Tables, drawn like the slides */
+.lecture .table-wrap {
+  overflow-x: auto;
+  margin: 8px 0 16px;
+}
+.lecture table.grid {
+  border-collapse: collapse;
+  background: var(--l-surface);
+  font:
+    18px/1.3 'Cascadia Mono',
+    Consolas,
+    monospace;
+}
+.lecture table.grid th,
+.lecture table.grid td {
+  min-width: 64px;
+  padding: 9px 14px;
+  border: 1px solid var(--l-line);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.lecture table.grid thead th {
+  background: var(--l-bg);
+  font-family: inherit;
+  text-align: center;
+}
+.lecture table.grid.eea .split {
+  border-left: 3px solid var(--l-text);
+}
+.lecture table.grid.horizontal th[scope='row'] {
+  background: var(--l-bg);
+  text-align: center;
+  width: 56px;
+}
+.lecture table.grid.horizontal tr:first-child td,
+.lecture table.grid.horizontal tr:first-child th {
+  border-bottom: 3px solid var(--l-text);
+}
+.lecture table.grid .current {
+  background: var(--l-current);
+}
+.lecture table.grid td.ghost {
+  color: var(--l-muted);
+  text-align: center;
+}
+.lecture table.grid td.answer {
+  background: var(--l-answer);
+  font-weight: 700;
+}
+
+/* Explanations and results */
+.lecture .explain {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-left: 4px solid var(--l-accent);
+  background: var(--l-surface);
+  border-radius: 0 8px 8px 0;
+}
+.lecture .explain p {
+  margin: 4px 0;
+}
+.lecture .note {
+  color: var(--l-muted);
+}
+.lecture .result {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--l-answer);
+}
+.lecture .result.bad {
+  background: var(--l-bad);
+  color: var(--l-bad-text);
+}
+.lecture .result p {
+  margin: 4px 0;
+}
+.lecture .result small {
+  color: inherit;
+  opacity: 0.8;
+}
+.lecture .check {
+  font-size: 16px;
+}
+.lecture ul.lines,
+.lecture ol.lines {
+  margin: 6px 0 12px;
+  padding-left: 24px;
+}
+.lecture ul.lines.plain {
+  list-style: none;
+  padding-left: 4px;
+}
+.lecture ol.lines li {
+  padding: 3px 8px;
+  margin-bottom: 2px;
+  border-radius: 6px;
+}
+.lecture ol.lines li.current {
+  background: var(--l-current);
+}
+.lecture .tag {
+  margin-left: 10px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--l-bg);
+  border: 1px solid var(--l-line);
+  color: var(--l-muted);
+  font-size: 14px;
+}
+.lecture .pow sup,
+.lecture sup {
+  font-size: 0.7em;
+}
+.lecture .num {
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  font-size: 0.95em;
+}
+.lecture .hand p {
+  margin: 8px 0;
+}
+
+/* Tabs and examples */
+.lecture .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 14px;
+  border-bottom: 2px solid var(--l-line);
+}
+.lecture .tabs button {
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  margin-bottom: -2px;
+}
+.lecture .tabs button[aria-selected='true'] {
+  border-bottom-color: var(--l-accent);
+  font-weight: 700;
+}
+.lecture .examples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: -8px 0 20px;
+  color: var(--l-muted);
+  font-size: 15px;
+}
+.lecture .examples button {
+  font-size: 15px;
+  padding: 5px 12px;
+}
+
+/* Miller–Rabin and RSA steps */
+.lecture ol.mr-steps,
+.lecture ol.rsa-steps {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+}
+.lecture ol.mr-steps li {
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: var(--l-surface);
+  border: 1px solid var(--l-line);
+  border-radius: 10px;
+}
+.lecture ol.mr-steps li.current {
+  border-color: var(--l-accent);
+  box-shadow: 0 0 0 2px var(--l-accent);
+}
+.lecture ol.mr-steps p {
+  margin: 4px 0;
+}
+.lecture ol.rsa-steps li {
+  margin-bottom: 10px;
+  padding: 12px 16px;
+  background: var(--l-surface);
+  border: 1px solid var(--l-line);
+  border-radius: 10px;
+}
+.lecture details {
+  margin: 8px 0;
+}
+.lecture summary {
+  cursor: pointer;
+  color: var(--l-accent);
+}
+.lecture .calc {
+  margin: 12px 0;
+  padding: 14px 16px;
+  background: var(--l-surface);
+  border: 1px solid var(--l-line);
+  border-radius: 10px;
+}
+.lecture .formula {
+  margin: 4px 0 10px;
+  font-weight: 600;
+}
+.lecture .see-row {
+  margin: 10px 0 0;
+  font-size: 16px;
+}
+.lecture .see {
+  font-size: 16px;
+}
+
+/* Home */
+.lecture ol.cards {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+  padding: 0;
+  list-style: none;
+}
+.lecture ol.cards a {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  background: var(--l-surface);
+  border: 1px solid var(--l-line);
+  border-radius: 12px;
+  color: var(--l-text);
+  text-decoration: none;
+}
+.lecture ol.cards a:hover {
+  border-color: var(--l-accent);
+}
+.lecture ol.cards .number {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--l-accent);
+  color: var(--l-accent-text);
+  font-weight: 700;
+}
+.lecture ol.cards strong {
+  display: block;
+  font-size: 20px;
+}
+.lecture ol.cards small {
+  display: block;
+  color: var(--l-muted);
+  font-size: 14px;
+}
+.lecture ol.cards .text {
+  color: var(--l-muted);
+}
+.lecture .more {
+  color: var(--l-muted);
+  font-size: 16px;
+}
+
+@media (max-width: 640px) {
+  .lecture {
+    font-size: 17px;
+  }
+  .lecture main {
+    padding: 20px 14px 60px;
+  }
+  .lecture h1 {
+    font-size: 27px;
+  }
+  .lecture .counter {
+    margin-left: 0;
+    width: 100%;
+  }
+}
