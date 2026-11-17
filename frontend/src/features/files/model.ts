@@ -48,6 +48,12 @@ export type FileResult =
       rsaMs: number;
       aesMs: number;
       rsaOnlyEstimateMs: number;
+      publicTrace?: {
+        nonce: string;
+        wrappedKey: string;
+        ciphertextPrefix: string;
+        ciphertextChars: number;
+      };
     }
   | {
       type: 'opened';
@@ -76,6 +82,12 @@ export async function runFileJob(job: FileJob): Promise<FileResult> {
       rsaMs: result.timings.rsaMs,
       aesMs: result.timings.aesMs,
       rsaOnlyEstimateMs: Math.ceil(job.bytes.length / caps.oaepMaxBytes) * result.timings.rsaMs,
+      publicTrace: {
+        nonce: result.value.nonce,
+        wrappedKey: result.value.wrappedKey,
+        ciphertextPrefix: result.value.ciphertext.slice(0, 96),
+        ciphertextChars: result.value.ciphertext.length,
+      },
     };
   }
   if (job.envelope.length > MAX_ENVELOPE_CHARS) throw new Error('The envelope file is too large.');

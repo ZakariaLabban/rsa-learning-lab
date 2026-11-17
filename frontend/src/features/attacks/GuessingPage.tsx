@@ -1,5 +1,8 @@
+import { LessonLink as Link } from '../lessons/LessonLink';
+import { LessonTrace } from '../lessons/LessonTrace';
+import { guessingFrames } from '../lessons/protocolTraces';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+
 import { RolePanels } from '../../components/RolePanels';
 import { Value } from '../../components/Value';
 import { toHex } from '../../engine/encoding';
@@ -82,6 +85,11 @@ export function GuessingPage() {
         {work.error && <p role="alert">{work.error}</p>}
         {value && (
           <>
+            <LessonTrace
+              title="Vote guessing machine"
+              frames={guessingFrames(value)}
+              resetKey={toHex(value.oaep[0].ciphertext)}
+            />
             <Value label="Public modulus n" value={String(value.key.n)} />
             <Value label="Public exponent e" value={String(value.key.e)} />
             <section className="feature-result" aria-label="Textbook guessing comparison">

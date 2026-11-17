@@ -1,3 +1,5 @@
+import { LessonTrace } from '../lessons/LessonTrace';
+import { powerFrames } from '../lessons/mathTraces';
 import { useState } from 'react';
 import { Stepper } from '../../components/Stepper';
 import { Value } from '../../components/Value';
@@ -79,6 +81,11 @@ export function PowerPage() {
         <WorkStatus {...work} />
         {value && (
           <>
+            <LessonTrace
+              title="Square-and-multiply machine"
+              frames={powerFrames(value)}
+              resetKey={`${value.a}-${value.b}-${value.n}`}
+            />
             <Value label="Binary exponent b" value={value.binary} />
             <p className="mono">
               Normalized base: {String(value.normalizedBase)}; initial c = 0, f ={' '}

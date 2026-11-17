@@ -291,9 +291,10 @@ export function MachineCutaway({
               value={speed}
               onChange={(e) => onSpeed(Number(e.target.value))}
             >
-              <option value={0.6}>0.6×</option>
+              <option value={0.5}>0.5×</option>
               <option value={1}>1×</option>
               <option value={2}>2×</option>
+              <option value={4}>4×</option>
             </select>
           </label>
         </div>

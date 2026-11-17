@@ -102,7 +102,7 @@ test('Legacy lab is retained, remembers the choice and keeps unsaved keys during
   await page.getByRole('button', { name: 'Use Alice', exact: true }).click();
   await expect(page.locator('.history-row')).toHaveCount(1);
   await page.getByRole('link', { name: 'Animated workshop', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'A secret. A little machinery.' })).toBeVisible();
+  await expect(page.locator('#lesson-title')).toHaveText('Keys');
   await page.getByRole('link', { name: 'Legacy lab', exact: true }).click();
   await page.getByRole('link', { name: 'Keys', exact: true }).click();
   await expect(page.locator('.history-row')).toHaveCount(1);
@@ -136,7 +136,7 @@ for (const theme of ['light', 'dark'])
       await page.getByRole('button', { name: 'Back to workshop' }).click();
       await page.getByText('Explore all lessons and tools', { exact: false }).click();
       await page.getByRole('link', { name: 'Square-and-Multiply', exact: true }).click();
-      await expect(page.getByRole('heading', { name: 'Square-and-multiply.' })).toBeVisible();
+      await expect(page.locator('#lesson-title')).toHaveText('Square-and-Multiply');
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     }
   });

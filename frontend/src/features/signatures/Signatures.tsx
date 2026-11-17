@@ -1,3 +1,5 @@
+import { LessonTrace } from '../lessons/LessonTrace';
+import { signingFrames, verificationFrames } from '../lessons/protocolTraces';
 import { useRef, useState } from 'react';
 import { ErrorBanner } from '../../components/ErrorBanner';
 import { RecipientPicker } from '../../components/RecipientPicker';
@@ -165,6 +167,13 @@ export function Signatures() {
         {signed && (
           <div className="feature-result">
             <h2>Alice’s signing calculation</h2>
+            {signer && (
+              <LessonTrace
+                title="Signature creation machine"
+                frames={signingFrames(signed, signer.key.n)}
+                resetKey={signed.signature}
+              />
+            )}
             {signed.hash && (
               <>
                 <p>SHA-256 of the message at signing:</p>
@@ -270,6 +279,13 @@ export function Signatures() {
               a trusted channel before trusting their identity.
             </p>
           </div>
+        )}
+        {verdict && verifier && (
+          <LessonTrace
+            title="Signature verification machine"
+            frames={verificationFrames(verdict, signature, verifier.key.e, verifier.key.n)}
+            resetKey={`${signature}-${message}-${verifier.fingerprint}`}
+          />
         )}
         <ErrorBanner message={error} onDismiss={() => setError('')} />
       </section>

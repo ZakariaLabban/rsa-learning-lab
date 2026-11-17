@@ -4,14 +4,14 @@ import { LabThemeProvider } from './LabTheme';
 import { preferredInterface } from './interfacePreference';
 
 const LegacyShell = lazy(() => import('./LegacyShell'));
-const Workshop = lazy(() =>
-  import('../features/workshop/Workshop').then((module) => ({ default: module.Workshop })),
+const ModernLab = lazy(() =>
+  import('../features/lessons/ModernLab').then((module) => ({ default: module.ModernLab })),
 );
 
 function Experiences() {
   const { pathname } = useLocation();
   const workshop =
-    Boolean(matchPath('/playground', pathname)) ||
+    Boolean(matchPath('/playground/*', pathname)) ||
     (Boolean(matchPath('/', pathname)) && preferredInterface() !== 'legacy');
   const [visitedLegacy, setVisitedLegacy] = useState(!workshop);
   useEffect(() => {
@@ -22,7 +22,7 @@ function Experiences() {
       {workshop && (
         <div className="workshop-host">
           <Suspense fallback={<p role="status">Opening the workshop…</p>}>
-            <Workshop />
+            <ModernLab />
           </Suspense>
         </div>
       )}

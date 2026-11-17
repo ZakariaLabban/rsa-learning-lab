@@ -22,11 +22,15 @@ No Python server or account is required to use the browser app.
 ## Two interfaces
 
 The animated workshop is the new default, with guided playback, free exploration
-and step-by-step views inside the RSA machines. Use **Legacy lab** in the header
+and step-by-step views inside the RSA machines. All lessons and tools now have
+new UI routes under `/playground`, with calculation or protocol animations.
+Use **Legacy lab** in the header
 to return to the previous interface; your choice is remembered. `/playground`
 and `/legacy` always open the corresponding experience, and all existing lesson
 URLs still work. Both views share the same RSA engine. See
 [the workshop guide](docs/animated-workshop.md) for behavior and rollback details.
+See [animated lessons](docs/animated-lessons.md) for the route map, player,
+private-value handling and seeded Practice questions/progress.
 
 ## Key handling and limitations
 

@@ -63,7 +63,9 @@ test('an unknown signer becomes verified after adding their public key', async (
   await sender.getByLabel('To', { exact: true }).selectOption('demo-alice');
   await sender.getByLabel('Also sign as me').check();
   await expect(sender.getByLabel('Sign as', { exact: true })).toHaveValue(/.+/);
-  await expect(sender.locator('#sign-as option:checked')).toContainText('Sami laptop');
+  await expect(
+    sender.getByLabel('Sign as', { exact: true }).locator('option:checked'),
+  ).toContainText('Sami laptop');
   await sender.getByLabel('Message to encrypt').fill('From Sami, signed');
   await sender.getByRole('button', { name: 'Encrypt message', exact: true }).click();
   const envelope = await envelopeText(sender);

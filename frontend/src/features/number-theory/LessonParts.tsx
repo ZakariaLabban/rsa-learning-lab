@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useId } from 'react';
+import { TraceDetails } from '../lessons/TraceDetails';
 
 export function IntegerField({
   label,
@@ -54,11 +55,13 @@ export function WorkStatus({
 }
 export function LessonTable({ caption, children }: { caption: string; children: ReactNode }) {
   return (
-    <div className="lesson-table-wrap" role="region" aria-label={caption} tabIndex={0}>
-      <table className="lesson-table">
-        <caption>{caption}</caption>
-        {children}
-      </table>
-    </div>
+    <TraceDetails title={`Inspect table: ${caption}`}>
+      <div className="lesson-table-wrap" role="region" aria-label={caption} tabIndex={0}>
+        <table className="lesson-table">
+          <caption>{caption}</caption>
+          {children}
+        </table>
+      </div>
+    </TraceDetails>
   );
 }

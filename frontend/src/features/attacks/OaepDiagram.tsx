@@ -1,3 +1,5 @@
+import { LessonTrace } from '../lessons/LessonTrace';
+import { oaepFrames } from '../lessons/protocolTraces';
 import { useState } from 'react';
 import { Value } from '../../components/Value';
 import { toHex } from '../../engine/encoding';
@@ -8,6 +10,11 @@ export function OaepDiagram({ trace }: { trace: OaepDemonstration }) {
   return (
     <section className="feature-result" aria-label="OAEP sender-side teaching diagram">
       <h3>How this OAEP block was built</h3>
+      <LessonTrace
+        title="OAEP encoding machine"
+        frames={oaepFrames(trace, revealed)}
+        resetKey={`${toHex(trace.ciphertext)}-${revealed}`}
+      />
       <ol className="oaep-flow">
         <li>DB = SHA-256(empty label) || zero padding || 01 || message</li>
         <li>A fresh 32-byte seed → MGF1-SHA256 → dbMask</li>

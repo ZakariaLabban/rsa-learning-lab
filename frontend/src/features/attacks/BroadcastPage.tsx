@@ -1,3 +1,5 @@
+import { LessonTrace } from '../lessons/LessonTrace';
+import { broadcastFrames } from '../lessons/protocolTraces';
 import { useState } from 'react';
 import { RolePanels } from '../../components/RolePanels';
 import { Value } from '../../components/Value';
@@ -114,6 +116,11 @@ export function BroadcastPage() {
         {work.error && <p role="alert">{work.error}</p>}
         {value && (
           <>
+            <LessonTrace
+              title="Broadcast reconstruction machine"
+              frames={broadcastFrames(value)}
+              resetKey={`${value.mode}-${value.scenario}-${value.ciphertexts.join(',')}`}
+            />
             <p>
               Alice confirms that all three intended recipients decrypted their own messages
               correctly.
