@@ -73,18 +73,19 @@ export function FactoringPage() {
             className="primary-button"
             disabled={work.busy}
             onClick={() =>
-              work.run({ fixture, budgetMs }, (value) =>
+              work.run({ fixture, budgetMs }, (value) => {
+                const id = nextId.current++;
                 setPoints((previous) => [
                   ...previous.slice(-11),
                   {
-                    id: nextId.current++,
+                    id,
                     bits: value.bits,
                     elapsedMs: value.elapsedMs,
                     attempts: value.attempts,
                     status: value.status,
                   },
-                ]),
-              )
+                ]);
+              })
             }
           >
             Let Eve factor the key

@@ -16,7 +16,7 @@ export function OaepDiagram({ trace }: { trace: OaepDemonstration }) {
         <li>EM = 00 || maskedSeed || maskedDB → RSA public operation → ciphertext</li>
       </ol>
       <p className="keyring-warning">
-        Alice’s local teaching view only: revealing the seed and encoded block exposes information
+        Sender’s local teaching view only: revealing the seed and encoded block exposes information
         Eve’s guessing experiment does not receive. Never send this trace alongside a real message.
         These values are generated fresh, stay in memory, and are not logged or saved.
       </p>

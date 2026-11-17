@@ -26,6 +26,15 @@ Arithmetic expectations use Python built-in `pow` and `math.gcd`. Fixed-base
 Miller-Rabin examples are deterministic. Vectors include both 1024/2048-bit keys,
 non-coprime messages, phi/lambda exponents, OAEP ciphertexts and PSS signatures.
 
+## Public attack fixtures (#15, #46, #47)
+
+`python -m reference.generate_attack_fixtures --check` validates the committed public
+attack fixtures without changing keys. CI checks deterministic tiny semiprimes and uses
+OpenSSL to validate the RSA key relationships/prime factors, sizes and coprimality.
+Running the command without `--check` intentionally regenerates the public broadcast
+keys and replaces that fixture file. Never use these demonstration keys for real data.
+See [attack-lessons.md](../docs/attack-lessons.md) for lesson limits and verification.
+
 ## Interoperability in both directions (#6)
 
 - **Python -> TypeScript:** `frontend/src/engine/rsa/rsa.test.ts` decrypts the
