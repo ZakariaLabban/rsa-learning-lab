@@ -59,9 +59,31 @@ test('Miller–Rabin lecture traces, liars, random evidence and small/invalid in
 });
 
 test('worker cancellation and edits discard stale Miller–Rabin results', async ({ page }) => {
+  // Hold the first worker script so fast machines cannot finish the bounded search
+  // before the cancellation button receives a click. Later searches use the real worker.
+  let held = false;
+  let release: (() => void) | undefined;
+  let requested: (() => void) | undefined;
+  const started = new Promise<void>((resolve) => {
+    requested = resolve;
+  });
+  await page.route(/\/assets\/worker-[^/]+\.js$/, async (route) => {
+    if (held) {
+      await route.continue();
+      return;
+    }
+    held = true;
+    await new Promise<void>((resolve) => {
+      release = resolve;
+      requested?.();
+    });
+    await route.abort();
+  });
   await page.goto('/learn/miller-rabin?n=9973');
   await page.getByRole('button', { name: 'Find passing bases' }).click();
+  await started;
   await page.getByRole('button', { name: 'Cancel calculation' }).click();
+  release?.();
   await expect(page.getByRole('alert')).toHaveText('Calculation cancelled.');
   await expect(page.locator('.lesson-list')).toHaveCount(0);
   await page.getByLabel('Candidate n', { exact: true }).fill('221');
