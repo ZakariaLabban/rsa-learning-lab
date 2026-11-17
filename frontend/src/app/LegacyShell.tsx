@@ -215,7 +215,7 @@ export default function LegacyShell({ active }: { active: boolean }) {
           <div className="topbar-right">
             <Link
               className="workshop-switch"
-              to="/playground"
+              to={current ? `/playground${current.path}` : '/playground'}
               onClick={() => rememberInterface('workshop')}
             >
               Animated workshop

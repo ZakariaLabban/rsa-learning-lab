@@ -1,4 +1,7 @@
-import { lazy, Suspense, useRef, useState } from 'react';
+import { LessonTrace } from '../lessons/LessonTrace';
+import { useLessonExperience } from '../lessons/LessonExperience';
+import { journeyFrames } from '../lessons/protocolTraces';
+import { lazy, Suspense, useId, useRef, useState } from 'react';
 import { CheckCheck, Info, LockKeyhole, UnlockKeyhole } from 'lucide-react';
 import { CopyButton } from '../../components/CopyButton';
 import { ErrorBanner } from '../../components/ErrorBanner';
@@ -49,6 +52,8 @@ const short = (value: bigint | string) => {
  * Alice-and-Bob simulation; with a contact or pasted key it produces an envelope to send.
  */
 export function EncryptDecrypt() {
+  const { modern } = useLessonExperience();
+  const instanceId = useId();
   const keyring = useKeyring();
   const [tab, setTab] = useState<'encrypt' | 'decrypt' | 'files'>('encrypt');
   const [selection, setSelection] = useState<{ chosen: boolean; value: Recipient | null }>({
@@ -263,9 +268,9 @@ export function EncryptDecrypt() {
 
           {effectiveInput === 'text' ? (
             <div className="encrypt-field">
-              <label htmlFor="message-to-encrypt">Message to encrypt</label>
+              <label htmlFor={instanceId + '-message-to-encrypt'}>Message to encrypt</label>
               <textarea
-                id="message-to-encrypt"
+                id={instanceId + '-message-to-encrypt'}
                 rows={3}
                 value={text}
                 onChange={(event) => {
@@ -281,9 +286,9 @@ export function EncryptDecrypt() {
             </div>
           ) : (
             <div className="encrypt-field">
-              <label htmlFor="message-number">Message number (M)</label>
+              <label htmlFor={instanceId + '-message-number'}>Message number (M)</label>
               <input
-                id="message-number"
+                id={instanceId + '-message-number'}
                 inputMode="numeric"
                 className="mono"
                 value={numberInput}
@@ -302,9 +307,9 @@ export function EncryptDecrypt() {
 
           {effectiveInput === 'text' ? (
             <div className="encrypt-field">
-              <label htmlFor="padding-mode">Padding</label>
+              <label htmlFor={instanceId + '-padding-mode'}>Padding</label>
               <select
-                id="padding-mode"
+                id={instanceId + '-padding-mode'}
                 value={effectivePadding}
                 disabled={signed}
                 onChange={(event) => {
@@ -356,9 +361,9 @@ export function EncryptDecrypt() {
               </label>
               {signed && signer && (
                 <div className="encrypt-field sign-as">
-                  <label htmlFor="sign-as">Sign as</label>
+                  <label htmlFor={instanceId + '-sign-as'}>Sign as</label>
                   <select
-                    id="sign-as"
+                    id={instanceId + '-sign-as'}
                     value={signer.id}
                     onChange={(event) => {
                       setSignerId(event.target.value);
@@ -433,6 +438,12 @@ export function EncryptDecrypt() {
                   },
                 ]}
               />
+              <LessonTrace
+                title="Message protocol machine"
+                frames={journeyFrames(steps)}
+                onStep={setStep}
+                resetKey={`${run.kind}-${run.kind === 'number' ? run.c : run.sealed.envelope}-${Boolean(decrypted)}`}
+              />
               <JourneyTrack steps={steps} step={step} onSelect={setStep} />
               <Stepper step={step} count={steps.length} onChange={setStep} label="Journey steps" />
               <article className="step-detail" aria-live="polite">
@@ -445,7 +456,14 @@ export function EncryptDecrypt() {
                 <p>{current.explanation}</p>
                 <div className="step-values">
                   {current.values.map((v) =>
-                    v.privateValue ? (
+                    v.protocolPrivate && modern ? (
+                      <Value
+                        key={v.label}
+                        label={v.label}
+                        value="Hidden in the new interface"
+                        note="Sensitive protocol material stays local and is not displayed in this view."
+                      />
+                    ) : v.privateValue ? (
                       // Private values stay hidden until the user reveals them.
                       <NumberView
                         key={`${run.recipient.fingerprint}-${v.label}`}
@@ -510,9 +528,9 @@ export function EncryptDecrypt() {
             your keys and the demo characters automatically.
           </p>
           <div className="encrypt-field">
-            <label htmlFor="received-envelope">Envelope to decrypt</label>
+            <label htmlFor={instanceId + '-received-envelope'}>Envelope to decrypt</label>
             <textarea
-              id="received-envelope"
+              id={instanceId + '-received-envelope'}
               className="mono"
               rows={5}
               placeholder="rsa-lab.v2:…"

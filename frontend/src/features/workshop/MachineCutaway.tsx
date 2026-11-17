@@ -270,8 +270,9 @@ export function MachineCutaway({
           </button>
           <button
             className="action"
-            disabled={playback.index === 0 && playback.elapsed === 0}
+            aria-disabled={playback.index === 0 && playback.elapsed === 0}
             onClick={() =>
+              (playback.index !== 0 || playback.elapsed !== 0) &&
               jump(playback.elapsed > 0 ? playback.index : Math.max(0, playback.index - 1))
             }
           >
@@ -279,8 +280,10 @@ export function MachineCutaway({
           </button>
           <button
             className="action"
-            disabled={playback.playing || finished}
-            onClick={() => play(true)}
+            aria-disabled={playback.playing || finished}
+            onClick={() => {
+              if (!playback.playing && !finished) play(true);
+            }}
           >
             Next step
           </button>
@@ -291,9 +294,10 @@ export function MachineCutaway({
               value={speed}
               onChange={(e) => onSpeed(Number(e.target.value))}
             >
-              <option value={0.6}>0.6×</option>
+              <option value={0.5}>0.5×</option>
               <option value={1}>1×</option>
               <option value={2}>2×</option>
+              <option value={4}>4×</option>
             </select>
           </label>
         </div>

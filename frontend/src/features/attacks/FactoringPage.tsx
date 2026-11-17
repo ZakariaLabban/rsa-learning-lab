@@ -1,3 +1,5 @@
+import { LessonTrace } from '../lessons/LessonTrace';
+import { factoringFrames } from '../lessons/protocolTraces';
 import { useRef, useState } from 'react';
 import { RolePanels } from '../../components/RolePanels';
 import { Value } from '../../components/Value';
@@ -106,6 +108,11 @@ export function FactoringPage() {
         {work.error && <p role="alert">{work.error}</p>}
         {result && (
           <section className="feature-result" aria-label="Factoring outcome">
+            <LessonTrace
+              title="Factoring attack machine"
+              frames={factoringFrames(result)}
+              resetKey={`${result.n}-${result.attempts}-${result.status}`}
+            />
             {result.status === 'timeout' ? (
               <p role="status">
                 Search timed out after {result.elapsedMs.toFixed(1)} ms. No factors were recovered;

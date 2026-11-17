@@ -1,3 +1,5 @@
+import { LessonTrace } from '../lessons/LessonTrace';
+import { fileFrames } from '../lessons/protocolTraces';
 import { useEffect, useRef, useState } from 'react';
 import { RecipientPicker } from '../../components/RecipientPicker';
 import { ErrorBanner } from '../../components/ErrorBanner';
@@ -209,6 +211,13 @@ export function FilePanel() {
             Cancel file operation
           </button>
         </div>
+      )}
+      {result && (
+        <LessonTrace
+          title="Hybrid file machine"
+          frames={fileFrames(result)}
+          resetKey={`${result.type}-${result.elapsedMs}`}
+        />
       )}
       <ErrorBanner message={error} onDismiss={() => setError('')} />
       {result?.type === 'sealed' && (

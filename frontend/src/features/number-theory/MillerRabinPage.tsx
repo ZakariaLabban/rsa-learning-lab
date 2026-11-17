@@ -1,5 +1,8 @@
+import { LessonLink as Link } from '../lessons/LessonLink';
+import { LessonTrace } from '../lessons/LessonTrace';
+import { primalityFrames, liarFrames } from '../lessons/mathTraces';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Stepper } from '../../components/Stepper';
 import { Value } from '../../components/Value';
 import { IntegerField, LessonTable, WorkStatus } from './LessonParts';
@@ -120,6 +123,12 @@ export function MillerRabinPage() {
         <WorkStatus {...test} />
         {result && (
           <section className="feature-result" aria-label="Miller–Rabin result">
+            <LessonTrace
+              title="Prime witness machine"
+              frames={primalityFrames(result, round)}
+              onStep={setStep}
+              resetKey={`${result.n}-${row?.base}-${row?.sequence.join(',')}`}
+            />
             {result.special === 'below-two' ? (
               <p role="status">
                 {n} is not prime: primes are at least 2. No random rounds were run.
@@ -242,6 +251,11 @@ export function MillerRabinPage() {
         <WorkStatus {...liars} />
         {liarResult && (
           <div className="feature-result" role="status">
+            <LessonTrace
+              title="Strong liar enumeration machine"
+              frames={liarFrames(liarResult)}
+              resetKey={String(liarResult.n)}
+            />
             <p>
               {liarResult.prime
                 ? `${liarResult.n} is prime; these passing bases are not liars.`

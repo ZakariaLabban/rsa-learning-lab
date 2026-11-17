@@ -1,5 +1,8 @@
+import { LessonLink as Link } from '../lessons/LessonLink';
+import { LessonTrace } from '../lessons/LessonTrace';
+import { crtFrames, benchmarkFrames } from '../lessons/mathTraces';
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+
 import { generateKey, privateKeyFor } from '../../engine/client';
 import type { PrivateKey } from '../../engine/math';
 import { useKeyring } from '../../keyring';
@@ -133,6 +136,11 @@ export function CrtPage() {
         <WorkStatus {...calculator} />
         {value && (
           <div className="feature-result">
+            <LessonTrace
+              title="CRT reconstruction machine"
+              frames={crtFrames(value)}
+              resetKey={`${value.modulus}-${value.residues.join(',')}`}
+            />
             <p className="lesson-answer" role="status">
               A ≡ {String(value.value)} (mod {String(value.modulus)}) ↔ (
               {value.residues.map(String).join(', ')})
@@ -268,6 +276,11 @@ export function CrtPage() {
               this is not file encryption or a production security benchmark.
             </p>
             <Value label="Public ciphertext C = M^e mod n" value={String(bench.ciphertext)} />
+            <LessonTrace
+              title="Private CRT decryption machine"
+              frames={benchmarkFrames(bench, measuredKey, revealed)}
+              resetKey={`${bench.ciphertext}-${bench.directMedian}-${revealed}`}
+            />
             <div className="lesson-comparison">
               <div>
                 <h3>Ordinary RSA</h3>

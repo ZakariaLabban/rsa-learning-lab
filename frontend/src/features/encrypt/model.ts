@@ -292,7 +292,13 @@ export type JourneyStep = {
   formula: string;
   who: 'Bob' | 'Wire' | 'Alice';
   explanation: string;
-  values: { label: string; value: string; note?: string; privateValue?: boolean }[];
+  values: {
+    label: string;
+    value: string;
+    note?: string;
+    privateValue?: boolean;
+    protocolPrivate?: boolean;
+  }[];
 };
 
 const dec = (bytes: Uint8Array) => String(os2ip(bytes));
@@ -382,8 +388,12 @@ export function journeySteps(run: EncryptRun, decrypted?: DecryptRun): JourneySt
           explanation:
             'OAEP mixes the bytes with fresh randomness into one block EM. Encrypting the same text twice gives different ciphertexts.',
           values: [
-            { label: 'EM (padded block, hex)', value: toHex(sealed.inputs[0]) },
-            { label: 'EM as a number', value: dec(sealed.inputs[0]) },
+            {
+              label: 'EM (padded block, hex)',
+              value: toHex(sealed.inputs[0]),
+              protocolPrivate: true,
+            },
+            { label: 'EM as a number', value: dec(sealed.inputs[0]), protocolPrivate: true },
           ],
         }
       : {
@@ -437,6 +447,7 @@ export function journeySteps(run: EncryptRun, decrypted?: DecryptRun): JourneySt
         ...limited(decrypted.opened.outputs, (block, i) => ({
           label: run.mode === 'oaep' ? 'EM recovered' : `m${i + 1} recovered`,
           value: dec(block),
+          protocolPrivate: run.mode === 'oaep',
         })),
         { label: 'Recovered text', value: decrypted.text || '(empty)' },
       ],
@@ -492,7 +503,11 @@ function hybridSteps(
       explanation:
         'A random 32-byte key K encrypts the message with AES-GCM, which is fast and adds a tag that detects any change. K is new for every message.',
       values: [
-        { label: 'AES key K (hex, secret, used once)', value: toHex(sealed.aesKey) },
+        {
+          label: 'AES key K (hex, secret, used once)',
+          value: toHex(sealed.aesKey),
+          protocolPrivate: true,
+        },
         { label: 'Nonce (hex)', value: toHex(sealed.nonce) },
         {
           label: `AES ciphertext + tag (${sealed.ciphertext.length} bytes)`,
@@ -533,7 +548,11 @@ function hybridSteps(
           value: String(decrypted.privateKey.d),
           privateValue: true,
         },
-        { label: 'K recovered (hex)', value: toHex(decrypted.opened.aesKey) },
+        {
+          label: 'K recovered (hex)',
+          value: toHex(decrypted.opened.aesKey),
+          protocolPrivate: true,
+        },
         { label: 'Recovered text', value: decrypted.text || '(empty)' },
       ],
     });

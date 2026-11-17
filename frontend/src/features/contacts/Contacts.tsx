@@ -1,3 +1,5 @@
+import { LessonTrace } from '../lessons/LessonTrace';
+import { contactFrames } from '../lessons/protocolTraces';
 import { useEffect, useState } from 'react';
 import { CopyButton } from '../../components/CopyButton';
 import { downloadBlob } from '../../components/download';
@@ -176,6 +178,11 @@ export function Contacts() {
         )}
         {entry && (
           <>
+            <LessonTrace
+              title="Public-key sharing machine"
+              frames={contactFrames(entry, text)}
+              resetKey={`${entry.fingerprint}-${entry.verified}`}
+            />
             <p className="mono fingerprint">{groupFingerprint(entry.fingerprint)}</p>
             <CopyButton value={entry.fingerprint} label="Copy my fingerprint" />
             <textarea

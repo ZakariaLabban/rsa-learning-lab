@@ -1,3 +1,5 @@
+import { LessonTrace } from '../lessons/LessonTrace';
+import { euclidFrames } from '../lessons/mathTraces';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { LectureExampleButton } from '../../components/LectureExampleButton';
@@ -73,6 +75,11 @@ export function EuclidPage() {
         ) : (
           result && (
             <>
+              <LessonTrace
+                title="Extended Euclid machine"
+                frames={euclidFrames(result)}
+                resetKey={`${result.a}-${result.m}`}
+              />
               <EuclidTable result={result} />
               <p className="helper-text">
                 Each row: q = previous r ÷ r (whole part), then the next r, s and t are “two rows up

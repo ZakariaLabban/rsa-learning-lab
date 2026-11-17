@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Moon, Pause, Play, RotateCcw, Sun } from 'lucide-react';
-import { useReducedMotion } from 'motion/react';
+import { useLessonExperience } from '../lessons/LessonExperience';
 import { useLabTheme } from '../../app/LabTheme';
 import { rememberInterface } from '../../app/interfacePreference';
-import { routes } from '../../app/routes';
+import { lessonRoutes as routes } from '../lessons/lessonRoutes';
 import { MachineCutaway } from './MachineCutaway';
 import { WorkshopScene } from './WorkshopScene';
 import {
@@ -14,23 +14,18 @@ import {
   messageJourney,
   readMessage,
   type Journey,
-  type LearningMode,
   type Station,
 } from './model';
 import { usePlayback } from './usePlayback';
 
 export function Workshop() {
-  const [mode, setMode] = useState<LearningMode>('guided');
+  const { mode, setMode, speed, setSpeed, reduced, toggleMotion } = useLessonExperience();
   const [message, setMessage] = useState(88n),
     [input, setInput] = useState('88');
   const [error, setError] = useState(''),
     [altered, setAltered] = useState(false);
   const [selected, setSelected] = useState<Station>('sender');
   const [journey, setJourney] = useState<Journey>(initialJourney);
-  const [speed, setSpeed] = useState(1);
-  const systemReduced = useReducedMotion();
-  const [motionChoice, setMotionChoice] = useState<boolean | null>(null);
-  const reduced = motionChoice ?? Boolean(systemReduced);
   const { theme, setTheme } = useLabTheme();
   useEffect(() => {
     document.title = 'Animated workshop · RSA Lab';
@@ -200,7 +195,7 @@ export function Workshop() {
             altered={altered}
             selected={selected}
             onInspect={inspect}
-            onReduce={() => setMotionChoice(!reduced)}
+            onReduce={toggleMotion}
           />
         )}
       </section>
@@ -282,9 +277,10 @@ export function Workshop() {
                 value={speed}
                 onChange={(e) => setSpeed(Number(e.target.value))}
               >
-                <option value={0.6}>0.6×</option>
+                <option value={0.5}>0.5×</option>
                 <option value={1}>1×</option>
                 <option value={2}>2×</option>
+                <option value={4}>4×</option>
               </select>
             </label>
           </div>
@@ -430,7 +426,7 @@ export function Workshop() {
       )}
       <details className="lesson-directory">
         <summary>
-          Explore all lessons and tools <span>Open in the Legacy lab</span>
+          Explore all lessons and tools <span>Animated lessons · same RSA engine</span>
         </summary>
         <nav aria-label="All lessons">
           {['Learn', 'Break', 'Tools'].map((group) => (
@@ -439,7 +435,7 @@ export function Workshop() {
               {routes
                 .filter((route) => route.group === group)
                 .map((route) => (
-                  <Link key={route.path} to={route.path}>
+                  <Link key={route.path} to={`/playground${route.path}`}>
                     {route.label}
                     <ArrowRight size={13} />
                   </Link>

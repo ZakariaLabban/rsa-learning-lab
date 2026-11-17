@@ -3,7 +3,8 @@
 The default entrance is the animated RSA workshop. `/playground` always opens it;
 `/legacy` always opens the previous overview and sidebar. Existing `/learn/*`,
 `/break/*`, `/contacts` and `/experiments` addresses keep their previous screens.
-The workshop's lesson directory links to every existing lesson and tool.
+The workshop's directory now links to animated versions of every lesson and tool
+under `/playground/*`. See [animated-lessons.md](animated-lessons.md).
 
 Use **Legacy lab** or **Animated workshop** in the header to switch. The choice
 is remembered under `rsa-lab-interface` and used on the next visit to `/`.
@@ -31,7 +32,8 @@ The keys are the deliberately insecure lecture example `p=17`, `q=11`, `e=7`,
 `n=187`, `d=23`. Messages are bounded integers `0..186`. This is textbook RSA;
 there is no OAEP or integrity protection in the workshop. Eve's +1 operation
 changes the real ciphertext and the actual decrypted result. The practical
-encryption, file exchange, signatures and other lessons remain in Legacy.
+encryption, file exchange, signatures and other lessons are available in both
+interfaces; the home workshop itself deliberately uses the small lecture key.
 
 ## Implementation and rollback
 

@@ -58,17 +58,31 @@ export async function verifyLesson(
   message: string,
   signature: string,
 ) {
-  if ((mode === 'pss') !== capabilities(key).pss) return { valid: false };
+  if ((mode === 'pss') !== capabilities(key).pss)
+    return { valid: false, mode, stage: 'capability' as const };
   if (mode === 'pss') {
     const input = bytes(message);
     const hash = toHex(await sha256(input));
-    if (!/^[a-f0-9]{256}$|^[a-f0-9]{512}$/i.test(signature)) return { valid: false, hash };
-    return { valid: await pssVerifySignature(key, input, fromHex(signature)), hash };
+    if (!/^[a-f0-9]{256}$|^[a-f0-9]{512}$/i.test(signature))
+      return { valid: false, hash, mode, stage: 'format' as const };
+    const encodedSignature = fromHex(signature);
+    if (encodedSignature.length !== capabilities(key).width)
+      return { valid: false, hash, mode, stage: 'format' as const };
+    if (os2ip(encodedSignature) >= key.n)
+      return { valid: false, hash, mode, stage: 'range' as const };
+    return {
+      valid: await pssVerifySignature(key, input, encodedSignature),
+      hash,
+      mode,
+      stage: 'verified' as const,
+    };
   }
   const expected =
     mode === 'number' ? number(message, key.n) : os2ip(await sha256(bytes(message))) % key.n;
-  if (!/^[0-9]{1,20}$/.test(signature) || BigInt(signature) >= key.n)
-    return { valid: false, digest: String(expected) };
+  if (!/^[0-9]{1,20}$/.test(signature))
+    return { valid: false, digest: String(expected), mode, stage: 'format' as const };
+  if (BigInt(signature) >= key.n)
+    return { valid: false, digest: String(expected), mode, stage: 'range' as const };
   const s = BigInt(signature);
   if (mode === 'hash') {
     const result = await teachingVerify(key, bytes(message), s);
@@ -77,8 +91,16 @@ export async function verifyLesson(
       digest: String(result.digest),
       hash: toHex(result.hash),
       recovered: String(result.recovered),
+      mode,
+      stage: 'verified' as const,
     };
   }
   const recovered = modexp(s, key.e, key.n);
-  return { valid: expected === recovered, digest: String(expected), recovered: String(recovered) };
+  return {
+    valid: expected === recovered,
+    digest: String(expected),
+    recovered: String(recovered),
+    mode,
+    stage: 'verified' as const,
+  };
 }

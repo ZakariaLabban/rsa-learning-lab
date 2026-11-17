@@ -2,7 +2,10 @@
 
 The default UI is now `features/workshop/`: an animated RSA journey with guided
 and free modes. `app/App.tsx` selects it or the preserved `app/LegacyShell.tsx`;
-`app/LabTheme.tsx` shares the theme. Existing lesson routes remain in Legacy.
+`app/LabTheme.tsx` shares the theme. `features/lessons/ModernLab.tsx` provides every
+new lesson/tool route under `/playground/*`; shared lesson components publish
+actual math/protocol traces through the scoped `LessonTrace` player. Existing
+unprefixed lesson routes remain in Legacy. See [animated-lessons.md](animated-lessons.md).
 See [animated-workshop.md](animated-workshop.md) for switching, session retention,
 the engine trace boundary and rollback.
 

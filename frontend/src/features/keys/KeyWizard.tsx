@@ -1,5 +1,8 @@
+import { LessonLink as Link } from '../lessons/LessonLink';
+import { LessonTrace } from '../lessons/LessonTrace';
+import { keyFrames } from '../lessons/mathTraces';
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+
 import { Eye, EyeOff, KeyRound, Save, Sparkles } from 'lucide-react';
 import { ErrorBanner } from '../../components/ErrorBanner';
 import { LectureExampleButton } from '../../components/LectureExampleButton';
@@ -136,6 +139,13 @@ export function KeyWizard() {
         </div>
       </div>
       <div className="wizard-body">
+        {key && (
+          <LessonTrace
+            title="Key assembly machine"
+            frames={keyFrames(key, revealed)}
+            resetKey={`${key.n}-${key.e}-${revealed}`}
+          />
+        )}
         <div className="wizard-intro">
           <p className="helper-text">
             Follow the lecture’s recipe: two primes → n and φ(n) → e → d. Small teaching keys let

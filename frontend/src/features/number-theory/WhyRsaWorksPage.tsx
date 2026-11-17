@@ -1,3 +1,5 @@
+import { LessonTrace } from '../lessons/LessonTrace';
+import { proofFrames, residueFrames } from '../lessons/mathTraces';
 import { useState } from 'react';
 import { IntegerField, LessonTable, WorkStatus } from './LessonParts';
 import { useLesson } from './useLesson';
@@ -80,6 +82,11 @@ export function WhyRsaWorksPage() {
         <WorkStatus {...proof} />
         {value && (
           <section className="feature-result" aria-label="RSA correctness proof">
+            <LessonTrace
+              title="RSA correctness machine"
+              frames={proofFrames(value)}
+              resetKey={`${value.key.n}-${value.key.e}-${value.original}`}
+            />
             <p className="mono">
               n = {String(value.key.n)}, φ(n) = {String(value.key.phi)}, d = {String(value.key.d)}
             </p>
@@ -176,6 +183,11 @@ export function WhyRsaWorksPage() {
         <WorkStatus {...explorer} />
         {cycle && (
           <>
+            <LessonTrace
+              title="Residue cycle machine"
+              frames={residueFrames(cycle)}
+              resetKey={`${cycle.a}-${cycle.n}`}
+            />
             <p role="status">
               φ({String(cycle.n)}) = {String(cycle.phi)}; gcd(a,n) = {String(cycle.common)}; a^φ(n)
               mod n = {String(cycle.value)}.

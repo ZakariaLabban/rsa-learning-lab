@@ -1,5 +1,8 @@
+import { LessonLink as Link } from '../lessons/LessonLink';
+import { LessonTrace } from '../lessons/LessonTrace';
+import { frame, datum } from '../lessons/traceTypes';
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+
 import { Activity, CircleHelp, Layers, Play, Plus, Sparkles } from 'lucide-react';
 import {
   encryptMessage,
@@ -107,6 +110,38 @@ export function Experiments({
             {busy ? 'Computing…' : 'Run experiment'}
           </button>
         </div>
+        {comparison.length > 0 && (
+          <LessonTrace
+            title="Repeated encryption machine"
+            frames={comparison.flatMap((r) => [
+              frame(
+                `${r.mode}: first run`,
+                'Ciphertext from the first real encryption.',
+                [datum('message', message)],
+                r.mode,
+                datum('ciphertext', r.first.cipher_hex),
+              ),
+              frame(
+                `${r.mode}: second run`,
+                'A second independent encryption uses the same key and message.',
+                [datum('message', message)],
+                r.mode,
+                datum('ciphertext', r.second.cipher_hex),
+              ),
+              frame(
+                `${r.mode}: compare`,
+                'Compare the actual ciphertexts, then verify the second roundtrip.',
+                [datum('first', r.first.cipher_hex), datum('second', r.second.cipher_hex)],
+                'equality',
+                datum(
+                  'equal / roundtrip',
+                  `${r.first.cipher_hex === r.second.cipher_hex} / ${r.recovered}`,
+                ),
+              ),
+            ])}
+            resetKey={comparison.map((r) => r.second.cipher_hex).join('-')}
+          />
+        )}
         <div className="comparison-grid">
           {(['textbook', 'oaep'] as Mode[]).map((mode) => {
             const result = comparison.find((r) => r.mode === mode);
