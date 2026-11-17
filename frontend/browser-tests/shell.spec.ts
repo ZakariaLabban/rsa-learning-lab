@@ -52,6 +52,10 @@ for (const width of [375, 1440])
             '/experiments',
             '/contacts',
             '/learn/signatures',
+            '/learn/miller-rabin',
+            '/learn/why-rsa-works',
+            '/learn/square-and-multiply',
+            '/learn/crt',
           ].includes(route.path)
         )
           await expect(page.getByText('PLANNED FEATURE', { exact: true })).toBeVisible();

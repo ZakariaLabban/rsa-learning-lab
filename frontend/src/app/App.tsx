@@ -29,6 +29,24 @@ const Contacts = lazy(() =>
 const Signatures = lazy(() =>
   import('../features/signatures/Signatures').then((module) => ({ default: module.Signatures })),
 );
+const MillerRabinPage = lazy(() =>
+  import('../features/number-theory/MillerRabinPage').then((module) => ({
+    default: module.MillerRabinPage,
+  })),
+);
+const WhyRsaWorksPage = lazy(() =>
+  import('../features/number-theory/WhyRsaWorksPage').then((module) => ({
+    default: module.WhyRsaWorksPage,
+  })),
+);
+const SquareMultiplyPage = lazy(() =>
+  import('../features/number-theory/PowerPage').then((module) => ({
+    default: module.PowerPage,
+  })),
+);
+const CrtPage = lazy(() =>
+  import('../features/number-theory/CrtPage').then((module) => ({ default: module.CrtPage })),
+);
 
 function Shell() {
   const location = useLocation();
@@ -266,6 +284,38 @@ function Shell() {
           </div>
           <Routes>
             <Route
+              path="/learn/miller-rabin"
+              element={
+                <Suspense fallback={<p role="status">Loading prime testing…</p>}>
+                  <MillerRabinPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/learn/why-rsa-works"
+              element={
+                <Suspense fallback={<p role="status">Loading RSA proof…</p>}>
+                  <WhyRsaWorksPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/learn/square-and-multiply"
+              element={
+                <Suspense fallback={<p role="status">Loading exponentiation…</p>}>
+                  <SquareMultiplyPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/learn/crt"
+              element={
+                <Suspense fallback={<p role="status">Loading CRT…</p>}>
+                  <CrtPage />
+                </Suspense>
+              }
+            />
+            <Route
               path="/contacts"
               element={
                 <Suspense fallback={<p role="status">Loading contacts…</p>}>
@@ -355,6 +405,10 @@ function Shell() {
                     '/experiments',
                     '/contacts',
                     '/learn/signatures',
+                    '/learn/miller-rabin',
+                    '/learn/why-rsa-works',
+                    '/learn/square-and-multiply',
+                    '/learn/crt',
                   ].includes(r.path),
               )
               .map((r) => (

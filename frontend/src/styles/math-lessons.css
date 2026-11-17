@@ -1,0 +1,100 @@
+.lesson-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  min-width: 0;
+}
+.lesson-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.lesson-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.lesson-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.lesson-table caption {
+  text-align: left;
+  padding: 12px;
+  font-weight: 600;
+}
+.lesson-table td,
+.lesson-table th {
+  padding: 10px 12px;
+  text-align: left;
+  border-top: 1px solid var(--line);
+  white-space: nowrap;
+}
+.lesson-table th {
+  background: var(--surface-raised);
+}
+.lesson-current {
+  background: color-mix(in srgb, var(--aqua) 14%, var(--surface));
+}
+.lesson-current td:first-child {
+  box-shadow: inset 3px 0 var(--aqua);
+}
+.lesson-list {
+  max-height: 250px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  padding: 12px;
+  border-radius: 6px;
+}
+.lesson-proof {
+  display: grid;
+  gap: 12px;
+  padding-left: 22px;
+  overflow-wrap: anywhere;
+}
+.lesson-proof-prime,
+.lesson-private {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.lesson-proof-prime {
+  padding: 14px;
+  border-left: 3px solid var(--aqua);
+  background: var(--surface-raised);
+}
+.lesson-answer {
+  color: var(--aqua);
+  font-weight: 600;
+}
+.lesson-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.lesson-comparison > div {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  padding: 14px;
+  border-radius: 6px;
+  min-width: 0;
+}
+.math-lessons .stepper {
+  flex-wrap: wrap;
+}
+@media (max-width: 700px) {
+  .lesson-comparison {
+    grid-template-columns: 1fr;
+  }
+  .lesson-inputs {
+    grid-template-columns: 1fr;
+  }
+  .lesson-table td,
+  .lesson-table th {
+    padding: 8px;
+  }
+}

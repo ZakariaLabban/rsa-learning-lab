@@ -77,6 +77,14 @@ the original journey styling.
   (add the sender as a contact to check it) or invalid. The journey adds Sign, AES and Wrap steps.
   The lab signs and encrypts with one key pair for simplicity; real systems prefer separate keys.
 
+## Number theory lessons (#11, #12)
+
+`features/number-theory/` provides Miller–Rabin, Why RSA Works, square-and-multiply and CRT
+pages with a typed cancellable worker and bounded teaching inputs. The old OAEP benchmark
+now links to the ordinary/CRT decryption comparison; existing experiments and generation
+history remain. See [number-theory-lessons.md](number-theory-lessons.md) for the math
+conditions, input limits, lecture examples, timing methodology and verification.
+
 ## Files, contacts and signatures (#17, #16, #14)
 
 `features/files/` adds the Files tab to Encrypt / Decrypt, a cancellable worker and safe
