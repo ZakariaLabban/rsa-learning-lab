@@ -1342,7 +1342,7 @@
 .rsa-playground .operand-b {
   left: auto;
   right: 15%;
-  transform: translateX(calc(-1 * var(--operand-move, 0px))) scale(var(--operand-scale, 1));
+  transform: translateX(calc(-1 * var(--operand-b-move, 0px))) scale(var(--operand-scale, 1));
   background: var(--peach);
   box-shadow: 4px 6px 0 color-mix(in srgb, var(--peach), #243955 30%);
 }

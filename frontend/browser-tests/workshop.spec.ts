@@ -141,6 +141,37 @@ for (const theme of ['light', 'dark'])
     }
   });
 
+test('operands reach the multiplier on both phone and desktop layouts', async ({ page }) => {
+  for (const width of [375, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto('/playground');
+    await page.getByRole('button', { name: 'Open the encryption machine' }).click();
+    await page.getByRole('button', { name: 'Play calculations', exact: true }).click();
+    await expect
+      .poll(async () =>
+        Number(
+          await page
+            .locator('.operand')
+            .first()
+            .evaluate((el) => getComputedStyle(el).opacity),
+        ),
+      )
+      .toBeLessThan(0.6);
+    await page.getByRole('button', { name: 'Pause calculations', exact: true }).click();
+    const centers = await page.locator('.calculation-track').evaluate((track) => {
+      const center = (selector: string) => {
+        const rect = track.querySelector(selector)!.getBoundingClientRect();
+        return rect.left + rect.width / 2;
+      };
+      return [
+        center('.operand') - center('.multiply-chamber'),
+        center('.operand-b') - center('.multiply-chamber'),
+      ];
+    });
+    for (const delta of centers) expect(Math.abs(delta)).toBeLessThan(1);
+  }
+});
+
 test('explicit experience routes work when browser storage is unavailable', async ({ page }) => {
   await page.addInitScript(() => {
     Storage.prototype.getItem = () => {

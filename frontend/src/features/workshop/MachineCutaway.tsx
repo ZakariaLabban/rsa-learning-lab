@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { machineTrace, teachingKey, type MachineKind } from './model';
 import { usePlayback } from './usePlayback';
 
@@ -42,15 +50,27 @@ export function MachineCutaway({
   const [followJourney, setFollowJourney] = useState(automatic);
   const heading = useRef<HTMLHeadingElement>(null);
   const track = useRef<HTMLDivElement>(null);
-  const [trackWidth, setTrackWidth] = useState(0);
+  const operandA = useRef<HTMLDivElement>(null);
+  const operandB = useRef<HTMLDivElement>(null);
+  const [travel, setTravel] = useState({ a: 0, b: 0 });
   useEffect(() => {
     heading.current?.focus({ preventScroll: true });
   }, []);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = track.current;
-    if (!element) return;
-    const observer = new ResizeObserver(() => setTrackWidth(element.clientWidth));
+    const a = operandA.current,
+      b = operandB.current;
+    if (!element || !a || !b) return;
+    const measure = () =>
+      setTravel({
+        a: element.clientWidth / 2 - a.offsetLeft - a.offsetWidth / 2,
+        b: b.offsetLeft + b.offsetWidth / 2 - element.clientWidth / 2,
+      });
+    const observer = new ResizeObserver(measure);
     observer.observe(element);
+    observer.observe(a);
+    observer.observe(b);
+    measure();
     return () => observer.disconnect();
   }, []);
   const advance = useCallback(
@@ -88,7 +108,8 @@ export function MachineCutaway({
       : `Store ${step.remainder}. It becomes the running result for the next calculation.`,
   ][phase];
   const style = {
-    '--operand-move': `${(trackWidth * 0.35 - 43) * clamp(p / 0.25)}px`,
+    '--operand-move': `${travel.a * clamp(p / 0.25)}px`,
+    '--operand-b-move': `${travel.b * clamp(p / 0.25)}px`,
     '--operand-scale': 1 - clamp(p / 0.25) * 0.45,
     '--operand-opacity': 1 - product,
     '--product-opacity': product * (1 - clamp((p - 0.62) / 0.16)),
@@ -167,14 +188,14 @@ export function MachineCutaway({
             </span>
           </div>
           <div className="calculation-track" ref={track} aria-hidden="true">
-            <div className="operand">
+            <div className="operand" ref={operandA}>
               <span>RUNNING RESULT</span>
               <strong>{String(step.a)}</strong>
             </div>
             <div className="multiply-chamber">
               <span className="chamber-teeth" />×
             </div>
-            <div className="operand operand-b">
+            <div className="operand operand-b" ref={operandB}>
               <span>{step.type === 'Square' ? 'SAME RESULT' : 'ORIGINAL INPUT'}</span>
               <strong>{String(step.b)}</strong>
             </div>
