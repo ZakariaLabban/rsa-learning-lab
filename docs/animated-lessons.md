@@ -74,5 +74,10 @@ Progress uses localStorage key `rsa-lab-practice.v1`, version 1: attempts, corre
 first attempts, current/best streak, per-topic attempts/correct and the last 128
 graded IDs. Rechecking an ID does not add points. The UI highlights weak topics.
 Invalid/unknown stored schemas are ignored, and storage failure leaves practice
-usable in memory. No account or cloud sync is added. Every generated question
-type has tests checking its answer; deterministic seeds are reproducible.
+usable in memory. No account or cloud sync is added. Deterministic seeds are
+reproducible. `practiceAnswers.test.ts` proves every question type for 256 seeds
+per difficulty (including 0 and 4294967295): it re-derives each answer from the
+prompt text with independent brute-force/BigInt oracles (primality, φ by counting,
+inverse and e·d ≡ 1 checks, modular powers, a strong-probable-prime test, CRT by
+search), and checks that prompts and answers stay hand-solvable (< 10,000) and
+that every worked solution ends at the graded answer.
