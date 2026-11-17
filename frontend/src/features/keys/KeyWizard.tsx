@@ -376,7 +376,7 @@ export function KeyWizard() {
               </p>
               <p className="helper-text">
                 <Link to={`/learn/euclid?a=${e}&m=${phi}`}>Open this in Extended Euclid</Link>. Side
-                note: many libraries use λ(n) = lcm(p − 1, q − 1) ={' '}
+                note: many libraries use <Term term="carmichael" /> = lcm(p − 1, q − 1) ={' '}
                 {String(lcm(key.p - 1n, key.q - 1n)).slice(0, 24)}
                 {String(lcm(key.p - 1n, key.q - 1n)).length > 24 ? '…' : ''} instead of φ(n), giving
                 d = {String(built.dLambda).slice(0, 24)}

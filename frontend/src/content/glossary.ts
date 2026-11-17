@@ -12,13 +12,13 @@ export const glossary = {
   },
   publicKey: {
     name: 'Public key',
-    explanation: 'The pair (n, e), shared to encrypt a message or verify a signature.',
+    explanation: 'The pair PU = {e, n}, shared to encrypt a message or verify a signature.',
     reference: 'Ch 9 · RSA',
   },
   privateKey: {
     name: 'Private key',
     explanation:
-      'The private exponent d and secret factors p and q. These allow decryption and signing.',
+      'PR = {d, n}; the secret factors p and q must stay private too. It allows decryption and signing.',
     reference: 'Ch 9 · RSA',
   },
   oaep: {
@@ -30,7 +30,7 @@ export const glossary = {
   probablePrime: {
     name: 'Probable prime',
     explanation:
-      'A number that passes primality tests. Passing random Miller-Rabin rounds gives evidence rather than a proof.',
+      'A number that passes primality tests. Passing random Miller–Rabin rounds gives evidence rather than a proof.',
     reference: 'Ch 8 · primality testing',
   },
   plaintext: {
@@ -66,7 +66,7 @@ export const glossary = {
     name: 'λ(n)',
     explanation:
       'Carmichael’s function, lcm(p−1, q−1) for RSA. A d computed modulo λ(n) is also valid and can be smaller.',
-    reference: 'Ch 9 · RSA; RFC 8017 §3.2',
+    reference: 'RFC 8017 §3.1 · an alternative to φ(n)',
   },
   gcd: {
     name: 'gcd',
@@ -99,7 +99,7 @@ export const glossary = {
   euler: {
     name: 'Euler’s theorem',
     explanation:
-      'If gcd(a, n) = 1, then a^φ(n) ≡ 1 (mod n). It is why decryption undoes encryption.',
+      'If gcd(a, n) = 1, then a^φ(n) ≡ 1 (mod n). It is the core of why decryption undoes encryption.',
     reference: 'Ch 8 · Euler’s theorem',
   },
   millerRabin: {
@@ -147,7 +147,7 @@ export const glossary = {
   broadcastAttack: {
     name: 'Broadcast attack',
     explanation:
-      'With e = 3 and the same unpadded M sent to three people, CRT gives M³ exactly and a cube root reveals M.',
+      'Same unpadded M < every n, e = 3, three coprime moduli: CRT gives M³ exactly, so a cube root reveals M.',
     reference: 'Ch 9 · security of RSA',
   },
   digitalSignature: {

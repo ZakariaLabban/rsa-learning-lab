@@ -4,7 +4,7 @@ import { glossary } from './glossary';
 describe('glossary', () => {
   const entries = Object.entries(glossary);
 
-  it('gives every term a name, a full-sentence explanation and a reference', () => {
+  it('gives every term a name, a short explanation ending in punctuation and a reference', () => {
     for (const [key, entry] of entries) {
       expect(entry.name.trim(), key).not.toBe('');
       expect(entry.explanation, key).toMatch(/^[A-Z0-9a-zφλ].*[.)]$/s);
@@ -39,6 +39,8 @@ describe('glossary', () => {
   it('keeps the slide notation', () => {
     expect(glossary.totient.name).toBe('φ(n)');
     expect(glossary.totient.explanation).toContain('(p−1)(q−1)');
+    expect(glossary.publicKey.explanation).toContain('PU = {e, n}');
+    expect(glossary.privateKey.explanation).toContain('PR = {d, n}');
     expect(glossary.publicExponent.explanation).toContain('PU = {e, n}');
     expect(glossary.privateExponent.explanation).toContain('PR = {d, n}');
     expect(glossary.ciphertext.explanation).toContain('C = M^e mod n');

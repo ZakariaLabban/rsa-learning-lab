@@ -36,6 +36,7 @@ for (const width of [375, 1440])
     const box = await tooltip.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.y).toBeGreaterThanOrEqual(0);
     expect(box!.x + box!.width).toBeLessThanOrEqual(width);
     await page.keyboard.press('Tab');
     await expect(tooltip).toBeHidden();
