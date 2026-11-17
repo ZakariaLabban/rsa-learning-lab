@@ -47,6 +47,15 @@ const SquareMultiplyPage = lazy(() =>
 const CrtPage = lazy(() =>
   import('../features/number-theory/CrtPage').then((module) => ({ default: module.CrtPage })),
 );
+const FactoringPage = lazy(() =>
+  import('../features/attacks/FactoringPage').then((module) => ({ default: module.FactoringPage })),
+);
+const GuessingPage = lazy(() =>
+  import('../features/attacks/GuessingPage').then((module) => ({ default: module.GuessingPage })),
+);
+const BroadcastPage = lazy(() =>
+  import('../features/attacks/BroadcastPage').then((module) => ({ default: module.BroadcastPage })),
+);
 
 function Shell() {
   const location = useLocation();
@@ -284,6 +293,30 @@ function Shell() {
           </div>
           <Routes>
             <Route
+              path="/break/factoring"
+              element={
+                <Suspense fallback={<p role="status">Loading factoring lesson…</p>}>
+                  <FactoringPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/break/yes-or-no"
+              element={
+                <Suspense fallback={<p role="status">Loading guessing lesson…</p>}>
+                  <GuessingPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/break/small-e"
+              element={
+                <Suspense fallback={<p role="status">Loading broadcast lesson…</p>}>
+                  <BroadcastPage />
+                </Suspense>
+              }
+            />
+            <Route
               path="/learn/miller-rabin"
               element={
                 <Suspense fallback={<p role="status">Loading prime testing…</p>}>
@@ -409,6 +442,9 @@ function Shell() {
                     '/learn/why-rsa-works',
                     '/learn/square-and-multiply',
                     '/learn/crt',
+                    '/break/factoring',
+                    '/break/yes-or-no',
+                    '/break/small-e',
                   ].includes(r.path),
               )
               .map((r) => (

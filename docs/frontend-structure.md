@@ -77,6 +77,13 @@ the original journey styling.
   (add the sender as a contact to check it) or invalid. The journey adds Sign, AES and Wrap steps.
   The lab signs and encrypts with one key pair for simplicity; real systems prefer separate keys.
 
+## Attack lessons (#15, #46, #47)
+
+`features/attacks/` contains public demo fixtures, bounded worker jobs and the Factoring
+Race, YES/NO and Small-e Broadcast pages. Attack traces remain in memory and are isolated
+from personal keys and practical-message APIs. See [attack-lessons.md](attack-lessons.md)
+for algorithm limits, OAEP trace disclosure, measured timings, fixture provenance and tests.
+
 ## Number theory lessons (#11, #12)
 
 `features/number-theory/` provides Miller–Rabin, Why RSA Works, square-and-multiply and CRT
