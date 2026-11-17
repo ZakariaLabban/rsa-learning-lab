@@ -66,6 +66,8 @@ export async function verifyLesson(
     if (!/^[a-f0-9]{256}$|^[a-f0-9]{512}$/i.test(signature))
       return { valid: false, hash, mode, stage: 'format' as const };
     const encodedSignature = fromHex(signature);
+    if (encodedSignature.length !== capabilities(key).width)
+      return { valid: false, hash, mode, stage: 'format' as const };
     if (os2ip(encodedSignature) >= key.n)
       return { valid: false, hash, mode, stage: 'range' as const };
     return {

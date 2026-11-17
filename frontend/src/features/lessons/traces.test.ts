@@ -146,6 +146,7 @@ describe('lesson animations render actual computation', () => {
     for (const question of practiceQuestions(7)) {
       expect(question.frames.length).toBeGreaterThan(0);
       expect(question.answer).toBeGreaterThanOrEqual(0n);
+      expect(question.frames.at(-1)!.output.value).toBe(String(question.answer));
     }
     for (const difficulty of ['intro', 'exam'] as const)
       for (const seed of [0, 1, 632, 0xffffffff]) {
@@ -199,5 +200,18 @@ describe('lesson animations render actual computation', () => {
     expect(parseProgress(JSON.stringify(next))).toEqual(next);
     expect(parseProgress('{"version":2}')).toEqual(emptyProgress());
     expect(parseProgress(JSON.stringify({ ...next, attempts: -1 }))).toEqual(emptyProgress());
+  });
+  it('rejects PSS signature lengths belonging to the other key size before claiming verification', async () => {
+    for (const bits of [1024, 2048] as const) {
+      const key = guessingKey(bits),
+        signature = '00'.repeat(bits === 1024 ? 256 : 128);
+      const verdict = await verifyLesson(key, 'pss', 'Wrong-sized signature', signature);
+      expect(verdict.stage).toBe('format');
+      expect(
+        verificationFrames(verdict, signature, key.e, key.n).some(
+          (f) => f.operation === 'RSA-PSS verify',
+        ),
+      ).toBe(false);
+    }
   });
 });

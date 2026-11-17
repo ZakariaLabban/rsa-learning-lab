@@ -108,14 +108,14 @@ export function practiceQuestions(
       'modulus',
       `For p=${p} and q=${q}, what is n?`,
       key.n,
-      keyFrames(key, true),
+      [keyFrames(key, true)[0]],
       'Multiply the two primes.',
     ),
     make(
       'totient',
       `For p=${p} and q=${q}, what is φ(n)?`,
       key.phi,
-      keyFrames(key, true),
+      [keyFrames(key, true)[1]],
       'Use (p−1)(q−1).',
     ),
     make(
