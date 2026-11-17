@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { signingFrames, verificationFrames } from '../lessons/protocolTraces';
 import { useRef, useState } from 'react';
@@ -66,8 +67,10 @@ export function Signatures() {
       </div>
       <section className="panel feature-body">
         <p>
-          Alice signs with a private key. Bob checks with the corresponding public key. Signing
-          proves a relationship to a key; it does not hide the message.
+          Alice makes a <Term term="digitalSignature">digital signature</Term> with a{' '}
+          <Term term="privateKey">private key</Term>. Bob checks it with the corresponding{' '}
+          <Term term="publicKey">public key</Term>. Signing proves a relationship to a key; it does
+          not hide the message.
         </p>
         <label>
           Alice’s signing key
@@ -312,8 +315,9 @@ export function Signatures() {
       <section className="panel feature-body">
         <h2>Why hash first?</h2>
         <p>
-          Messages can be longer than an RSA modulus. SHA-256 maps the message to 32 bytes. PSS then
-          encodes that hash with a random salt and checks its structure during verification.
+          Messages can be longer than an RSA modulus. <Term term="hash" /> maps the message to 32
+          bytes. <Term term="pss" /> then encodes that hash with a random salt and checks its
+          structure during verification.
         </p>
         <p>
           For the tiny lecture modulus n = 187, both “16” and “46” have SHA-256 interpreted as an

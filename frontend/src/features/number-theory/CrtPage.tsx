@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonLink as Link } from '../lessons/LessonLink';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { crtFrames, benchmarkFrames } from '../lessons/mathTraces';
@@ -79,8 +80,9 @@ export function CrtPage() {
       <section className="panel feature-body">
         <h2>One number, several residues</h2>
         <p>
-          For pairwise-coprime moduli m_i, CRT reconstructs a unique residue A modulo N = ∏m_i.
-          Moduli need not be prime: the lecture example uses 37 and 49, with N = 1813.
+          For pairwise-<Term term="coprime">coprime</Term> moduli m_i, <Term term="crt">CRT</Term>{' '}
+          reconstructs a unique residue A modulo N = ∏m_i. Moduli need not be prime: the lecture
+          example uses 37 and 49, with N = 1813.
         </p>
         <IntegerField
           label="CRT moduli (comma separated)"
@@ -200,9 +202,11 @@ export function CrtPage() {
       <section className="panel feature-body">
         <h2>Alice’s private decryption: ordinary RSA versus CRT</h2>
         <p>
-          Both methods recover the same M from the same C. Ordinary RSA computes C^d mod n. CRT
-          computes two smaller powers modulo p and q, then recombines them. This panel requires
-          Alice’s private key, including p and q; a contact’s public key is insufficient.
+          Both methods recover the same <Term term="plaintext">M</Term> from the same{' '}
+          <Term term="ciphertext">C</Term>. Ordinary RSA computes C^d mod n. CRT computes two
+          smaller powers modulo p and q, then recombines them. This panel requires Alice’s{' '}
+          <Term term="privateKey">private key</Term>, including p and q; a contact’s public key is
+          insufficient.
         </p>
         <fieldset className="feature-fields" disabled={comparison.busy || generating}>
           <legend>Private-key experiment</legend>

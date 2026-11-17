@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { powerFrames } from '../lessons/mathTraces';
 import { useState } from 'react';
@@ -26,8 +27,9 @@ export function PowerPage() {
       <section className="panel feature-body">
         <h2>Compute a^b mod n</h2>
         <p>
-          Read the exponent from its most significant bit. Start with c=0 and f=1 mod n. For every
-          bit, square f; for a 1 bit, also multiply by a. The invariant is f ≡ a^c (mod n).
+          <Term term="squareAndMultiply" /> is how RSA computes M^e and C^d quickly. Read the
+          exponent from its most significant bit. Start with c=0 and f=1 mod n. For every bit,
+          square f; for a 1 bit, also multiply by a. The invariant is f ≡ a^c (mod n).
         </p>
         <div className="lesson-inputs">
           <IntegerField

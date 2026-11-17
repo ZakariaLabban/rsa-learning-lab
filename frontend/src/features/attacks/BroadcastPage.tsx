@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { broadcastFrames } from '../lessons/protocolTraces';
 import { useState } from 'react';
@@ -27,9 +28,10 @@ export function BroadcastPage() {
       <section className="panel feature-body">
         <h2>One message, three recipients</h2>
         <p>
-          Textbook RSA with e=3 can expose a common message sent to three pairwise-coprime
-          recipients. Eve combines the three ciphertexts with CRT, then takes an exact integer cube
-          root.
+          <Term term="textbookRsa">Textbook RSA</Term> with e=3 can expose a common message sent to
+          three pairwise-<Term term="coprime">coprime</Term> recipients: a{' '}
+          <Term term="broadcastAttack">broadcast attack</Term>. Eve combines the three ciphertexts
+          with <Term term="crt">CRT</Term>, then takes an exact integer cube root.
         </p>
         <p className="keyring-warning">
           The normal fixture uses three distinct 1024-bit demonstration moduli with e=3. Their

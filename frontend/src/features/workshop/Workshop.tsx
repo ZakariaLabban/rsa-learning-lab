@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Moon, Pause, Play, RotateCcw, Sun } from 'lucide-react';
@@ -360,8 +361,9 @@ export function Workshop() {
                   <div>
                     <h2>Meet the person on the wire.</h2>
                     <p className="inspect-copy">
-                      Eve sees ciphertext {String(wire)}. Alter it to see why textbook RSA alone
-                      does not detect tampering. Tiny keys are easy to break too.
+                      Eve sees <Term term="ciphertext">ciphertext</Term> {String(wire)}. Alter it to
+                      see why <Term term="textbookRsa">textbook RSA</Term> alone does not detect
+                      tampering. Tiny keys are easy to break too.
                     </p>
                   </div>
                   <button

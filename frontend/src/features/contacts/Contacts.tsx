@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { contactFrames } from '../lessons/protocolTraces';
 import { useEffect, useState } from 'react';
@@ -158,7 +159,11 @@ export function Contacts() {
       </div>
       <section className="panel feature-body">
         <h2>Share my public key</h2>
-        <p>Share only the public key. Your private values d, p and q are never included.</p>
+        <p>
+          Share only the <Term term="publicKey">public key</Term>. Your{' '}
+          <Term term="privateKey">private values</Term> d, p and q are never included. Others
+          compare its <Term term="fingerprint">fingerprint</Term> to confirm it is yours.
+        </p>
         <label>
           Key to share
           <select value={entry?.id ?? ''} onChange={(e) => setShareId(e.target.value)}>

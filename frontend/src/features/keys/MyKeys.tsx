@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { useRef, useState } from 'react';
 import { BadgeCheck, Download, KeyRound, Trash2, Upload, Users } from 'lucide-react';
 import { ErrorBanner } from '../../components/ErrorBanner';
@@ -79,8 +80,8 @@ export function MyKeys({ onUse }: { onUse?: (key: PrivateKey) => Promise<void> }
       </div>
       <div className="keyring-body">
         <p className="keyring-intro">
-          Every key the lab uses: your key pairs, other people’s public keys and the built-in demo
-          keys. Nothing is uploaded.
+          Every key the lab uses: your key pairs, other people’s{' '}
+          <Term term="publicKey">public keys</Term> and the built-in demo keys. Nothing is uploaded.
         </p>
         <ErrorBanner message={error} onDismiss={() => setError('')} />
         {state.storageProblem && <p className="keyring-warning">{state.storageProblem}</p>}

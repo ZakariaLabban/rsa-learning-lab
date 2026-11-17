@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonLink as Link } from '../lessons/LessonLink';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { guessingFrames } from '../lessons/protocolTraces';
@@ -24,8 +25,9 @@ export function GuessingPage() {
       <section className="panel feature-body">
         <h2>Can Eve guess the vote?</h2>
         <p>
-          There are only two possible messages. With deterministic textbook RSA, Eve can encrypt
-          both using the public key and compare them with the intercepted ciphertext.
+          There are only two possible messages. With <Term term="deterministic">deterministic</Term>{' '}
+          <Term term="textbookRsa">textbook RSA</Term>, Eve can encrypt both using the public key
+          and compare them with the intercepted ciphertext.
         </p>
         <p className="keyring-warning">
           Controlled lesson with public demonstration private keys. The vote and sender’s internal
@@ -184,8 +186,8 @@ export function GuessingPage() {
       <section className="panel feature-body">
         <h2>The lesson</h2>
         <p>
-          Correct RSA arithmetic alone is not enough for private messaging. Randomized padding
-          matters when the possible messages are easy to guess.
+          Correct RSA arithmetic alone is not enough for private messaging. Randomized padding such
+          as <Term term="oaep" /> matters when the possible messages are easy to guess.
         </p>
         <Link to="/experiments">Try the existing repeated-message experiment</Link>
         <p className="helper-text">
