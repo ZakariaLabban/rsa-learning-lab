@@ -13,6 +13,7 @@ export const SERVICE_WORKER_URL = '/sw.js';
 
 export function OfflineStatus({ enabled = import.meta.env.PROD }: { enabled?: boolean }) {
   const [online, setOnline] = useState(() => navigator.onLine);
+  const [offlineDismissed, setOfflineDismissed] = useState(false);
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
   const [updatedElsewhere, setUpdatedElsewhere] = useState(false);
   // True once this page is controlled by the worker, i.e. every guest file is cached.
@@ -23,7 +24,10 @@ export function OfflineStatus({ enabled = import.meta.env.PROD }: { enabled?: bo
 
   useEffect(() => {
     const up = () => setOnline(true),
-      down = () => setOnline(false);
+      down = () => {
+        setOnline(false);
+        setOfflineDismissed(false);
+      };
     addEventListener('online', up);
     addEventListener('offline', down);
     return () => {
@@ -74,18 +78,22 @@ export function OfflineStatus({ enabled = import.meta.env.PROD }: { enabled?: bo
     };
   }, [enabled]);
 
-  if (!online)
+  if (!online && !offlineDismissed)
     return (
       <div className="offline-status" role="status">
         {installed
           ? 'You are offline. RSA Lab is saved in this browser, so guest tools keep working.'
-          : 'You are offline. RSA Lab has not finished saving for offline use, so pages that have not loaded yet need a connection.'}
+          : 'You are offline. RSA Lab has not finished saving for offline use, so pages that have not loaded yet need a connection.'}{' '}
+        <button type="button" onClick={() => setOfflineDismissed(true)}>
+          Dismiss
+        </button>
       </div>
     );
   if (updatedElsewhere)
     return (
       <div className="offline-status" role="status">
-        RSA Lab was updated in another tab.{' '}
+        RSA Lab was updated in another tab. Pages you have not opened here may fail until you
+        reload.{' '}
         <button type="button" onClick={() => location.reload()}>
           Reload to finish
         </button>
@@ -98,6 +106,11 @@ export function OfflineStatus({ enabled = import.meta.env.PROD }: { enabled?: bo
         <button
           type="button"
           onClick={() => {
+            // A newer version may have replaced this one; a plain reload then picks it up.
+            if (waiting.state === 'redundant') {
+              location.reload();
+              return;
+            }
             requested.current = true;
             waiting.postMessage(SKIP_WAITING_MESSAGE);
           }}

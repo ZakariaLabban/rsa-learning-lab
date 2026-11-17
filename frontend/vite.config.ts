@@ -16,8 +16,13 @@ function offlineServiceWorker(): Plugin {
     generateBundle(_options, bundle) {
       const worker = bundle['sw.js'];
       if (!worker || worker.type !== 'chunk') throw new Error('sw.js was not built.');
+      // register('/sw.js') loads a classic script: it must not import shared chunks.
+      if (worker.imports.length || worker.dynamicImports.length || worker.exports.length)
+        throw new Error('sw.js must be a standalone script; do not share modules with the app.');
       const files = precacheList(Object.keys(bundle));
       const hash = createHash('sha256');
+      // The worker's own logic is part of the version, as well as every cached file.
+      hash.update(worker.code);
       for (const file of files) {
         const output = bundle[file.slice(1)];
         hash.update(file);

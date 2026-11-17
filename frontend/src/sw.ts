@@ -59,11 +59,11 @@ scope.addEventListener('fetch', (event) => {
   const handling = classify(event.request, scope.location.origin, precached);
   if (handling === 'network') return;
   if (handling === 'navigate') {
+    // App-shell: every page load uses the index.html of the version that controls
+    // this page, so the code that runs always matches this cache. A new deploy is
+    // picked up only when its worker activates (after "Reload now").
     event.respondWith(
-      fetch(event.request).catch(async () => {
-        const shell = await caches.match(SHELL_PATH, { cacheName: CACHE });
-        return shell ?? Response.error();
-      }),
+      caches.match(SHELL_PATH, { cacheName: CACHE }).then((shell) => shell ?? fetch(event.request)),
     );
     return;
   }

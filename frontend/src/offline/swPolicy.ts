@@ -14,8 +14,9 @@ export type RequestInfoLike = { url: string; method: string; mode: string };
 export type Handling = 'navigate' | 'precached' | 'network';
 
 /**
- * - `navigate`: same-origin page loads. Network first (never stored); offline falls
- *   back to the cached shell so deep links and reloads work.
+ * - `navigate`: same-origin page loads. Served from this version's cached
+ *   index.html (network only if it is missing), so deep links and reloads work
+ *   offline and a page never runs a build its cache does not hold.
  * - `precached`: a build file listed in the manifest. Served from the cache.
  * - `network`: everything else, including `/api`, cross-origin, non-GET, blob/data
  *   and unknown paths. The worker does not intercept these at all.

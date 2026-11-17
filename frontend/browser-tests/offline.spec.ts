@@ -11,6 +11,8 @@ import { preview, type PreviewServer } from 'vite';
  * shut it down to make the site genuinely unreachable.
  */
 
+test.use({ serviceWorkers: 'allow' });
+
 const DIST = resolve('dist');
 const PORT = 4183;
 const ORIGIN = `http://127.0.0.1:${PORT}`;
@@ -31,7 +33,10 @@ test.afterEach(async () => {
   for (const dir of temporary.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-/** Copy of the build whose service worker reports a different version. */
+/**
+ * Copy of the build as a new deploy: its service worker reports a different version
+ * and its index.html carries a marker, so a test can tell which build a page runs.
+ */
 function buildWithNewVersion(version: string) {
   const dir = mkdtempSync(join(tmpdir(), 'rsa-lab-sw-'));
   temporary.push(dir);
@@ -40,8 +45,15 @@ function buildWithNewVersion(version: string) {
   const versions = script.match(/"[0-9a-f]{16}"/g) ?? [];
   expect(versions).toHaveLength(1);
   writeFileSync(join(dir, 'sw.js'), script.replace(versions[0], `"${version}"`));
+  const html = readFileSync(join(dir, 'index.html'), 'utf8');
+  expect(html).toContain('<head>');
+  writeFileSync(
+    join(dir, 'index.html'),
+    html.replace('<head>', '<head><meta name="rsa-lab-build" content="next" />'),
+  );
   return dir;
 }
+const newBuildMarkers = (page: Page) => page.locator('meta[name="rsa-lab-build"]').count();
 
 /**
  * Waits until the page is controlled and the active version's cache holds every
@@ -151,12 +163,22 @@ test('a new version waits for the user, then replaces the old cache without user
     ),
   ).toBe('installed');
 
+  // Online reloads and new routes keep running the old build from the old cache,
+  // so the page never mixes builds and the old version stays fully offline-ready.
+  await page.reload();
+  expect(await newBuildMarkers(page)).toBe(0);
+  await page.goto(`${ORIGIN}/playground/learn/signatures`);
+  await expect(page.getByRole('heading', { name: 'Why hash first?' })).toBeVisible();
+  expect(await newBuildMarkers(page)).toBe(0);
+  await expect(notice).toBeVisible();
+
   await Promise.all([
     page.waitForEvent('load'),
     page.getByRole('button', { name: 'Reload now', exact: true }).click(),
   ]);
   await waitForOfflineInstall(page);
   await expect(notice).toHaveCount(0);
+  expect(await newBuildMarkers(page)).toBe(1);
   expect(await shellCaches(page)).toEqual(['rsa-lab-shell-00000000feedbeef']);
   const cached = await page.evaluate(async () => {
     const cache = await caches.open('rsa-lab-shell-00000000feedbeef');
