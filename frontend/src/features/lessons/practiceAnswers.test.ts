@@ -65,6 +65,12 @@ const difficulties: Difficulty[] = ['intro', 'exam'];
 describe('practice answers are proven independently for every question type', () => {
   for (const difficulty of difficulties)
     it(`${difficulty}: ${seeds.length} seeds`, () => {
+      const reached = {
+        keys: new Set<string>(),
+        candidates: new Set<bigint>(),
+        verdicts: new Set<bigint>(),
+        phiInputs: new Set<bigint>(),
+      };
       for (const seed of seeds) {
         const questions = practiceQuestions(seed, difficulty);
         const q = byTopic(questions);
@@ -114,6 +120,9 @@ describe('practice answers are proven independently for every question type', ()
           /does base (\d+) pass for n=(\d+)\?/,
         );
         expect(q['miller-rabin'].answer, at).toBe(passesBase(candidate, witnessBase) ? 1n : 0n);
+        reached.keys.add(`${p},${qq},${e}`);
+        reached.candidates.add(candidate);
+        reached.verdicts.add(q['miller-rabin'].answer);
 
         // CRT: the unique solution in [0, m1·m2).
         const [r1, m1, r2, m2, bound] = numbers(
@@ -129,7 +138,15 @@ describe('practice answers are proven independently for every question type', ()
         // Totient of a composite by counting.
         const [phiInput] = numbers(q.phi.prompt, /Compute φ\((\d+)\)\./);
         expect(q.phi.answer, at).toBe(phiByCounting(phiInput));
+        reached.phiInputs.add(phiInput);
       }
+      // The sweep must reach every generator branch, so each proof above is exercised.
+      expect(reached.candidates.size).toBe(4);
+      expect(reached.verdicts).toEqual(new Set([0n, 1n]));
+      expect(reached.phiInputs.size).toBe(6);
+      if (difficulty === 'intro') expect([...reached.keys]).toEqual(['17,11,7']);
+      // 30 ordered (p, q) pairs from six primes, each with at least one valid e.
+      else expect(new Set([...reached.keys].map((k) => k.split(',', 2).join(','))).size).toBe(30);
     });
 
   it('keeps every question hand-solvable and its worked solution consistent', () => {
