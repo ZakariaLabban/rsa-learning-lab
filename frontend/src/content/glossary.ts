@@ -18,7 +18,7 @@ export const glossary = {
   privateKey: {
     name: 'Private key',
     explanation:
-      'PR = {d, n}; the secret factors p and q must stay private too. It allows decryption and signing.',
+      'PR = {d, n} allows decryption and signing; the secret factors p and q must stay private too.',
     reference: 'Ch 9 · RSA',
   },
   oaep: {
@@ -147,7 +147,7 @@ export const glossary = {
   broadcastAttack: {
     name: 'Broadcast attack',
     explanation:
-      'Same unpadded M < every n, e = 3, three coprime moduli: CRT gives M³ exactly, so a cube root reveals M.',
+      'Same unpadded M < every n, e = 3, three pairwise-coprime moduli: CRT gives M³ exactly, so a cube root reveals M.',
     reference: 'Ch 9 · security of RSA',
   },
   digitalSignature: {
