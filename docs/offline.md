@@ -52,6 +52,11 @@ no-cache` (the catch-all rule), so browsers check for updates on each visit. The
 CSP's `worker-src 'self'` covers it. Development (`npm run dev`) does not register
 the worker.
 
+To retire or reset the worker (for example after shipping a broken shell), deploy
+a `sw.js` that deletes the `rsa-lab-shell-*` caches and calls
+`self.registration.unregister()`. Until then, users keep the version they have
+cached.
+
 ## Local fallback without hosting
 
 `npm ci`, `npm run build`, then `npm run preview` serves the same static app on

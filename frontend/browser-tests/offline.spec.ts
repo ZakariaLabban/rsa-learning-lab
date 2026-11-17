@@ -12,6 +12,8 @@ import { preview, type PreviewServer } from 'vite';
  */
 
 test.use({ serviceWorkers: 'allow' });
+// Both tests share one fixed preview port.
+test.describe.configure({ mode: 'serial' });
 
 const DIST = resolve('dist');
 const PORT = 4183;
