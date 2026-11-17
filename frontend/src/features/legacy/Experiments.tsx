@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Activity, CircleHelp, Cpu, Download, Layers, Play, Plus, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Activity, CircleHelp, Layers, Play, Plus, Sparkles } from 'lucide-react';
 import {
   encryptMessage,
   decryptEnvelope,
@@ -25,17 +26,10 @@ export function Experiments({
   const [message, setMessage] = useState('The same message. A different mystery.');
   const [busy, setBusy] = useState(false);
   const [comparison, setComparison] = useState<CompareResult[]>([]);
-  const [bench, setBench] = useState<{
-    encrypt: number[];
-    decrypt: number[];
-    bits: number;
-    fingerprint: string;
-  }>();
   const version = useRef(0);
   useEffect(() => {
     version.current++;
     setComparison([]);
-    setBench(undefined);
   }, [labKey?.id]);
   useEffect(
     () => () => {
@@ -63,59 +57,6 @@ export function Experiments({
     } finally {
       setBusy(false);
     }
-  }
-  async function benchmark() {
-    if (!labKey) return;
-    const id = ++version.current;
-    setBusy(true);
-    setError('');
-    try {
-      const encrypt: number[] = [],
-        decrypt: number[] = [];
-      for (let i = 0; i < 6; i++) {
-        const c = await encryptMessage(labKey.id, 'RSA Lab benchmark', 'oaep');
-        const m = await decryptEnvelope(labKey.id, c.envelope);
-        if (i > 0) {
-          encrypt.push(c.elapsed_ms);
-          decrypt.push(m.elapsed_ms);
-        }
-      }
-      if (id === version.current)
-        setBench({ encrypt, decrypt, bits: labKey.bits, fingerprint: labKey.fingerprint });
-    } catch (e) {
-      if (id === version.current) setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  function median(values: number[]) {
-    return [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
-  }
-  function exportBench() {
-    if (!bench) return;
-    const blob = new Blob(
-      [
-        JSON.stringify(
-          {
-            ...bench,
-            backend: 'Custom browser RSA + OAEP-SHA256',
-            samples: 5,
-            discarded_runs: 1,
-            units: 'ms',
-            browser: navigator.userAgent,
-            note: 'Browser worker computation time; excludes animation and rendering. Single key; not a cross-machine study.',
-          },
-          null,
-          2,
-        ),
-      ],
-      { type: 'application/json' },
-    );
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'rsa-lab-benchmark.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
   }
   return (
     <>
@@ -235,57 +176,19 @@ export function Experiments({
             <Activity size={16} />
             <h2>How much work does RSA do?</h2>
           </div>
-          <button
-            className="secondary-button"
-            onClick={benchmark}
-            disabled={!labKey || busy || generating}
-          >
-            <Cpu size={14} />
-            Measure active key
-          </button>
+          <Link className="secondary-button" to="/learn/crt">
+            Compare ordinary / CRT decryption
+          </Link>
         </div>
         <div className="benchmark-body">
           <div>
             <div className="eyebrow">EXPERIMENT / 02</div>
             <h3>Measure it. Don’t guess.</h3>
             <p>
-              Five recorded OAEP operations; the first run is discarded. Times come from the browser
-              worker and exclude animation and rendering.
+              The CRT lesson now compares ordinary and CRT private-key arithmetic on the same
+              ciphertext, using five recorded samples after a discarded warm-up. It replaces the old
+              OAEP timing experiment.
             </p>
-            {bench && (
-              <>
-                <div className="benchmark-meta mono">
-                  RSA-{bench.bits} · median · 5 samples · custom engine
-                </div>
-                <div className="benchmark-bar">
-                  <span>Encrypt</span>
-                  <div>
-                    <i
-                      style={{
-                        width: `${Math.max(2, (median(bench.encrypt) / median(bench.decrypt)) * 100)}%`,
-                      }}
-                    />
-                  </div>
-                  <strong className="mono">{median(bench.encrypt).toFixed(3)} ms</strong>
-                </div>
-                <div className="benchmark-bar">
-                  <span>Decrypt</span>
-                  <div>
-                    <i style={{ width: '100%' }} />
-                  </div>
-                  <strong className="mono">{median(bench.decrypt).toFixed(3)} ms</strong>
-                </div>
-                <p className="benchmark-range">
-                  Encryption range {Math.min(...bench.encrypt).toFixed(3)}–
-                  {Math.max(...bench.encrypt).toFixed(3)} ms · Decryption range{' '}
-                  {Math.min(...bench.decrypt).toFixed(3)}–{Math.max(...bench.decrypt).toFixed(3)} ms
-                </p>
-                <button className="text-button aqua-text" onClick={exportBench}>
-                  <Download size={14} />
-                  Export measurements
-                </button>
-              </>
-            )}
           </div>
           <div className="generation-history">
             <h4>Key generation · this session</h4>
