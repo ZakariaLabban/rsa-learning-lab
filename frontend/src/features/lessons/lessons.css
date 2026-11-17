@@ -326,11 +326,19 @@
   padding: 10px 0;
   cursor: pointer;
 }
-.lesson-studio .panel:has(.lesson-machine) .stepper {
+.lesson-studio:has(.lesson-machine) .stepper {
   display: none;
 }
 .lesson-studio [aria-label='Current exponentiation step'] {
   display: none;
+}
+.lesson-studio .journey-track {
+  display: none;
+}
+.rsa-playground .lesson-playback button[aria-disabled='true'],
+.rsa-playground .calc-controls button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* A single visible operation. Values move between input, operation and output. */

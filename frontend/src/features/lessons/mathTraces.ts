@@ -98,6 +98,7 @@ export function powerFrames(value: ReturnType<typeof exponentiation>): TraceFram
   value.result.rows.forEach((row, i) => {
     const product = before * before;
     frames.push({
+      sourceIndex: i,
       ...frame(
         `Bit ${i + 1}: square`,
         row.bit
@@ -112,6 +113,7 @@ export function powerFrames(value: ReturnType<typeof exponentiation>): TraceFram
     });
     if (row.bit)
       frames.push({
+        sourceIndex: i,
         ...frame(
           `Bit ${i + 1}: multiply`,
           'A 1 bit multiplies the squared result by the normalized base.',
@@ -196,7 +198,10 @@ export function primalityFrames(value: ReturnType<typeof primality>, round: numb
       'compare',
       datum('verdict', row.passed ? 'Base passes' : 'Composite witness'),
     ),
-  ];
+  ].map((item, index) => ({
+    ...item,
+    sourceIndex: Math.max(0, Math.min(row.sequence.length - 1, index - 1)),
+  }));
 }
 
 export function crtFrames(value: ReturnType<typeof crtLesson>): TraceFrame[] {

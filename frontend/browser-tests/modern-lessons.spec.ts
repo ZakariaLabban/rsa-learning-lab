@@ -132,6 +132,62 @@ test('shared player pauses, steps backward, scrubs and explores a calculation ma
   await expect(machine.locator('.lesson-output-register strong')).not.toHaveText('…');
 });
 
+test('keyboard stepping retains focus in both calculation players and source captions follow the animation', async ({
+  page,
+}) => {
+  const machine = await run(
+    page,
+    '/learn/square-and-multiply',
+    'Trace exponentiation',
+    'Square-and-multiply machine',
+  );
+  await machine.getByLabel('Animation speed').selectOption('4');
+  const next = machine.getByRole('button', { name: 'Next calculation', exact: true });
+  await next.focus();
+  for (let i = 0; i < 2; i++) {
+    await page.keyboard.press('Enter');
+    await expect(next).toBeFocused();
+    await expect(next).toBeEnabled();
+    await expect(next).toBeFocused();
+  }
+  await expect(machine.locator('.lesson-machine-count')).toHaveText('2 / 13');
+  const prime = await run(page, '/learn/miller-rabin', 'Test candidate', 'Prime witness machine');
+  await map(prime);
+  await prime.getByRole('button', { name: /Square residue 1/ }).click();
+  await finish(prime);
+  await expect(prime.locator('.lesson-output-register strong')).toHaveText('28');
+  await expect(page.getByText('Step 2: x = 28 (n−1)', { exact: true })).toBeVisible();
+  await page.goto('/playground');
+  await page.getByRole('button', { name: 'Open the encryption machine' }).click();
+  await page.getByLabel('Calculation speed').selectOption('4');
+  const nextStep = page.getByRole('button', { name: 'Next step', exact: true });
+  await nextStep.focus();
+  await page.keyboard.press('Enter');
+  await expect(nextStep).toBeFocused();
+  await expect(nextStep).toBeEnabled();
+  await expect(nextStep).toBeFocused();
+});
+
+test('hybrid protocol hides session secrets and invalid raw signatures show validation rather than PSS', async ({
+  page,
+}) => {
+  await page.goto(path('/learn/encrypt'));
+  await page.getByLabel('Padding', { exact: true }).selectOption('hybrid');
+  await page.getByRole('button', { name: 'Encrypt message', exact: true }).click();
+  const protocol = page.getByRole('region', { name: 'Message protocol machine animation' });
+  await map(protocol);
+  await protocol.getByRole('button', { name: /Encrypt the message with a fresh AES key/ }).click();
+  await expect(page.locator('.step-values')).toContainText('Hidden in the new interface');
+  await expect(protocol).not.toContainText('AES key K (hex');
+  await page.goto(path('/learn/signatures'));
+  await page.getByRole('button', { name: 'Load number example' }).click();
+  await page.getByLabel('Signature (decimal)', { exact: true }).fill('abc');
+  await page.getByRole('button', { name: 'Bob verifies', exact: true }).click();
+  const verify = page.getByRole('region', { name: 'Signature verification machine animation' });
+  await expect(verify).toContainText('Reject before RSA');
+  await expect(verify).not.toContainText('PSS');
+});
+
 test('factoring, vote guessing, OAEP and broadcast expose real attack steps', async ({ page }) => {
   const factor = await run(
     page,

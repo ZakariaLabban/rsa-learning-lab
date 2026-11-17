@@ -1,4 +1,5 @@
 import { LessonTrace } from '../lessons/LessonTrace';
+import { useLessonExperience } from '../lessons/LessonExperience';
 import { journeyFrames } from '../lessons/protocolTraces';
 import { lazy, Suspense, useId, useRef, useState } from 'react';
 import { CheckCheck, Info, LockKeyhole, UnlockKeyhole } from 'lucide-react';
@@ -51,6 +52,7 @@ const short = (value: bigint | string) => {
  * Alice-and-Bob simulation; with a contact or pasted key it produces an envelope to send.
  */
 export function EncryptDecrypt() {
+  const { modern } = useLessonExperience();
   const instanceId = useId();
   const keyring = useKeyring();
   const [tab, setTab] = useState<'encrypt' | 'decrypt' | 'files'>('encrypt');
@@ -439,6 +441,7 @@ export function EncryptDecrypt() {
               <LessonTrace
                 title="Message protocol machine"
                 frames={journeyFrames(steps)}
+                onStep={setStep}
                 resetKey={`${run.kind}-${run.kind === 'number' ? run.c : run.sealed.envelope}-${Boolean(decrypted)}`}
               />
               <JourneyTrack steps={steps} step={step} onSelect={setStep} />
@@ -453,7 +456,14 @@ export function EncryptDecrypt() {
                 <p>{current.explanation}</p>
                 <div className="step-values">
                   {current.values.map((v) =>
-                    v.privateValue ? (
+                    v.protocolPrivate && modern ? (
+                      <Value
+                        key={v.label}
+                        label={v.label}
+                        value="Hidden in the new interface"
+                        note="Sensitive protocol material stays local and is not displayed in this view."
+                      />
+                    ) : v.privateValue ? (
                       // Private values stay hidden until the user reveals them.
                       <NumberView
                         key={`${run.recipient.fingerprint}-${v.label}`}

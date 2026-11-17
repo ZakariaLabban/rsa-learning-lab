@@ -1,5 +1,6 @@
 export type TraceValue = { label: string; value: string };
 export type TraceFrame = {
+  sourceIndex?: number;
   title: string;
   detail: string;
   inputs: TraceValue[];

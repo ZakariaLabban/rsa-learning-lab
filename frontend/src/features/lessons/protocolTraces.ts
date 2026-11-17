@@ -285,41 +285,71 @@ export function verificationFrames(
   e: bigint,
   n: bigint,
 ): TraceFrame[] {
-  const frames = [
-    frame(
-      'Receive public evidence',
-      'Verification needs the public key and signature, not the signer’s private key.',
-      [datum('signature', signature), datum('e', e), datum('n', n)],
-      'public RSA',
-      datum(
-        'recovered representative',
-        'recovered' in verdict
-          ? (verdict.recovered ?? 'Rejected encoding')
-          : 'PSS encoded block checked by engine',
-      ),
-    ),
-  ];
+  const frames: TraceFrame[] = [];
   if ('hash' in verdict && verdict.hash)
     frames.push(
       frame(
         'Hash the current message',
-        'Changing the message changes the value being checked.',
-        [datum('operation', 'SHA-256 of the current verification message')],
+        'This hash was actually computed for the current verification message.',
+        [datum('operation', 'SHA-256')],
         'hash',
         datum('message hash', verdict.hash),
       ),
     );
+  if (verdict.stage !== 'verified') {
+    frames.push(
+      frame(
+        'Reject before RSA',
+        `The ${verdict.mode} signature failed the ${verdict.stage} input check; verification stopped at validation.`,
+        [datum('signature', signature), datum('modulus n', n)],
+        'validate input',
+        datum('reason', verdict.stage),
+      ),
+    );
+  } else if (verdict.mode === 'pss') {
+    frames.push(
+      frame(
+        'Check RSA-PSS',
+        'The engine applies public RSA and checks the complete PSS encoding/hash structure. Internal encoding bytes are not retained by this view.',
+        [datum('signature', signature), datum('e', e), datum('n', n)],
+        'RSA-PSS verify',
+        datum('encoding valid', String(verdict.valid)),
+      ),
+    );
+  } else {
+    frames.push(
+      frame(
+        'Recover the representative',
+        'The engine completed the public RSA operation on this valid signature integer.',
+        [datum('signature', signature), datum('e', e), datum('n', n)],
+        'public RSA',
+        datum(
+          'recovered representative',
+          'recovered' in verdict ? (verdict.recovered ?? 'Not recovered') : 'Not recovered',
+        ),
+      ),
+    );
+    frames.push(
+      frame(
+        'Compare expected and recovered',
+        'Teaching modes compare the current message representative with the recovered signature representative.',
+        [
+          datum(
+            'expected digest',
+            'digest' in verdict ? (verdict.digest ?? 'Not computed') : 'Not computed',
+          ),
+        ],
+        'compare',
+        datum('match', String(verdict.valid)),
+      ),
+    );
+  }
   frames.push(
     frame(
-      'Compare the evidence',
-      'Teaching modes compare representatives; RSA-PSS verifies the complete encoding and hash structure.',
-      [
-        datum(
-          'expected digest',
-          'digest' in verdict ? (verdict.digest ?? 'PSS structure') : 'PSS structure',
-        ),
-      ],
-      'verify',
+      'Verification verdict',
+      'This verdict is from the actual verification result.',
+      [datum('scheme', verdict.mode)],
+      'verdict',
       datum('verdict', verdict.valid ? 'Signature valid' : 'Signature invalid'),
     ),
   );
@@ -413,7 +443,7 @@ export function fileFrames(value: FileResult): TraceFrame[] {
 
 export function journeyFrames(steps: JourneyStep[]): TraceFrame[] {
   return steps.map((step) => {
-    const values = step.values.filter((value) => !value.privateValue);
+    const values = step.values.filter((value) => !value.privateValue && !value.protocolPrivate);
     return frame(
       step.title,
       step.explanation,

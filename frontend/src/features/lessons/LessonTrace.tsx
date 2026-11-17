@@ -1,4 +1,4 @@
-import { useCallback, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
 import { usePlayback } from '../workshop/usePlayback';
 import { useLessonExperience } from './LessonExperience';
@@ -32,6 +32,9 @@ function TracePlayer({
   usePlayback(playback.playing, speed, advance);
   const index = Math.min(playback.index, frames.length - 1),
     step = frames[index];
+  useEffect(() => {
+    onStep?.(step.sourceIndex ?? index);
+  }, [index, onStep, step.sourceIndex]);
   const raw = Math.min(1, playback.time),
     p = reduced ? Math.floor(raw * 4) / 4 : raw;
   const phase = p < 0.3 ? 0 : p < 0.65 ? 1 : p < 0.9 ? 2 : 3;
@@ -39,7 +42,6 @@ function TracePlayer({
     value.length > 50 ? `${value.slice(0, 26)}…${value.slice(-16)}` : value;
   const select = (next: number) => {
     setPlayback({ index: next, time: 0, playing: false, single: false });
-    onStep?.(next);
   };
   function play(single: boolean) {
     setPlayback((old) => {
@@ -152,15 +154,19 @@ function TracePlayer({
         </button>
         <button
           className="action"
-          disabled={index === 0 && raw === 0}
-          onClick={() => select(raw > 0 ? index : Math.max(0, index - 1))}
+          aria-disabled={index === 0 && raw === 0}
+          onClick={() => {
+            if (index !== 0 || raw !== 0) select(raw > 0 ? index : Math.max(0, index - 1));
+          }}
         >
           Previous calculation
         </button>
         <button
           className="action"
-          disabled={playback.playing || (index === frames.length - 1 && raw === 1)}
-          onClick={() => play(true)}
+          aria-disabled={playback.playing || (index === frames.length - 1 && raw === 1)}
+          onClick={() => {
+            if (!playback.playing && !(index === frames.length - 1 && raw === 1)) play(true);
+          }}
         >
           Next calculation
         </button>

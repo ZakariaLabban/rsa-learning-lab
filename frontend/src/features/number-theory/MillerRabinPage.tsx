@@ -126,6 +126,7 @@ export function MillerRabinPage() {
             <LessonTrace
               title="Prime witness machine"
               frames={primalityFrames(result, round)}
+              onStep={setStep}
               resetKey={`${result.n}-${row?.base}-${row?.sequence.join(',')}`}
             />
             {result.special === 'below-two' ? (

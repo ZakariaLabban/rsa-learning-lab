@@ -84,6 +84,7 @@ export function PowerPage() {
             <LessonTrace
               title="Square-and-multiply machine"
               frames={powerFrames(value)}
+              onStep={setStep}
               resetKey={`${value.a}-${value.b}-${value.n}`}
             />
             <Value label="Binary exponent b" value={value.binary} />

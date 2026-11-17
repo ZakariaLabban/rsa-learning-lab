@@ -3,6 +3,7 @@ import { useReducedMotion } from 'motion/react';
 import type { LearningMode } from '../workshop/model';
 
 type Experience = {
+  modern: boolean;
   enabled: boolean;
   mode: LearningMode;
   setMode: (mode: LearningMode) => void;
@@ -12,6 +13,7 @@ type Experience = {
   toggleMotion: () => void;
 };
 const LessonExperience = createContext<Experience>({
+  modern: false,
   enabled: false,
   mode: 'guided',
   setMode: () => {},
@@ -29,6 +31,7 @@ export function LessonExperienceProvider({ children }: { children: ReactNode }) 
   return (
     <LessonExperience.Provider
       value={{
+        modern: true,
         enabled: true,
         mode,
         setMode,

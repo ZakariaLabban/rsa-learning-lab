@@ -15,6 +15,11 @@ import { oaepDemonstration } from '../attacks/oaepTrace';
 import { guessingKey } from '../attacks/keys';
 import { practiceQuestions } from './practiceModel';
 import { emptyProgress, parseProgress, recordAnswer } from './practiceProgress';
+import { Keyring, recipientFromEntry } from '../../keyring';
+import { encrypt, decryptOwnRun, journeySteps } from '../encrypt/model';
+import { toHex } from '../../engine/encoding';
+import { verifyLesson } from '../signatures/model';
+import { verificationFrames } from './protocolTraces';
 
 describe('lesson animations render actual computation', () => {
   it('keeps every expanded power operation consistent with engine residues', () => {
@@ -87,6 +92,36 @@ describe('lesson animations render actual computation', () => {
       },
     ]);
     expect(JSON.stringify(frames)).not.toContain('secret-exponent');
+  });
+  it('redacts actual hybrid AES keys and practical OAEP blocks before and after decryption', async () => {
+    const kr = new Keyring(null);
+    await kr.ready;
+    const alice = kr.getState().entries.find((entry) => entry.id === 'demo-alice')!;
+    const recipient = recipientFromEntry(alice);
+    const hybrid = await encrypt(recipient, 'text', 'hybrid', 'Check real secret fields');
+    expect(hybrid.kind).toBe('hybrid');
+    if (hybrid.kind !== 'hybrid') throw Error('Expected hybrid');
+    const opened = await decryptOwnRun(hybrid, kr.getState().entries);
+    const json = JSON.stringify(journeyFrames(journeySteps(hybrid, opened)));
+    expect(json).not.toContain(toHex(hybrid.sealed.aesKey));
+    const oaep = await encrypt(recipient, 'text', 'oaep', 'Padding stays local');
+    if (oaep.kind !== 'text') throw Error('Expected text');
+    const recovered = await decryptOwnRun(oaep, kr.getState().entries);
+    const padded = toHex(oaep.sealed.inputs[0]);
+    expect(JSON.stringify(journeyFrames(journeySteps(oaep, recovered)))).not.toContain(padded);
+  });
+  it('does not invent RSA/PSS operations for invalid signature formats', async () => {
+    for (const mode of ['number', 'pss'] as const) {
+      const key = mode === 'number' ? buildKey(17n, 11n, 7n).key : guessingKey(1024);
+      const verdict = await verifyLesson(key, mode, mode === 'number' ? '88' : 'Message', 'abc!');
+      expect(verdict.stage).toBe('format');
+      const frames = verificationFrames(verdict, 'abc!', key.e, key.n);
+      expect(
+        frames.some((f) => f.operation === 'public RSA' || f.operation === 'RSA-PSS verify'),
+      ).toBe(false);
+      expect(frames.at(-1)!.output.value).toBe('Signature invalid');
+      if (mode === 'number') expect(JSON.stringify(frames)).not.toContain('PSS');
+    }
   });
   it('uses bounded file metadata rather than reparsing an enormous envelope', () => {
     const frames = fileFrames({
