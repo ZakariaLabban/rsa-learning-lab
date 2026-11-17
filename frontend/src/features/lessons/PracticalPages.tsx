@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import type { PrivateKey } from '../../engine/math';
 import { KeyWizard } from '../keys/KeyWizard';
 import { MyKeys } from '../keys/MyKeys';
@@ -17,8 +18,9 @@ export function FilesLesson() {
     <section className="panel feature-body">
       <h2>A file’s protected journey</h2>
       <p>
-        AES-GCM protects the file. RSA-OAEP wraps the small AES key. Follow the actual envelope
-        fields after running the operation.
+        <Term term="aesGcm" /> protects the file. RSA-
+        <Term term="oaep" /> wraps the small AES key. Follow the actual envelope fields after
+        running the operation.
       </p>
       <FilePanel />
     </section>

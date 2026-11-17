@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { factoringFrames } from '../lessons/protocolTraces';
 import { useRef, useState } from 'react';
@@ -26,8 +27,10 @@ export function FactoringPage() {
       </div>
       <section className="panel feature-body">
         <p>
-          Eve knows n, e and the intercepted ciphertext. A deliberately tiny modulus lets her try
-          divisors until she finds p and q, rebuilds the private exponent, and decrypts.
+          Eve knows the <Term term="modulus">modulus</Term> n, e and the intercepted{' '}
+          <Term term="ciphertext">ciphertext</Term>. A deliberately tiny modulus lets her try
+          divisors until she finds p and q (a <Term term="factoring">factoring attack</Term>),
+          rebuilds the <Term term="privateExponent">private exponent</Term>, and decrypts.
         </p>
         <p className="keyring-warning">
           Educational fixtures only. These keys and sample messages are public. Default: 16 bits,

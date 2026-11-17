@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonLink as Link } from '../lessons/LessonLink';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { frame, datum } from '../lessons/traceTypes';
@@ -86,7 +87,10 @@ export function Experiments({
             <br />
             <span>Same ciphertext?</span>
           </h2>
-          <p>Encrypt twice with each mode, then compare the results.</p>
+          <p>
+            Encrypt twice with <Term term="textbookRsa">textbook RSA</Term> and with{' '}
+            <Term term="oaep" />, then compare the results.
+          </p>
         </div>
         <div className="experiment-input">
           <label className="sr-only" htmlFor="experiment-message">

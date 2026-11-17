@@ -1,4 +1,5 @@
 import { Stepper } from '../../components/Stepper';
+import { Term } from '../../components/Term';
 import { LectureExampleButton } from '../../components/LectureExampleButton';
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -173,7 +174,9 @@ export function MathExplorer() {
         </div>
         {traceOpen && (
           <div className="trace-table">
-            <p>Square-and-multiply · exponent 17 = binary 10001 · read left to right</p>
+            <p>
+              <Term term="squareAndMultiply" /> · exponent 17 = binary 10001 · read left to right
+            </p>
             <table>
               <thead>
                 <tr>
@@ -200,9 +203,9 @@ export function MathExplorer() {
       <div className="insight-strip">
         <CircleHelp size={20} />
         <p>
-          <strong>Small enough to understand. Too small to protect anything.</strong> This example
-          demonstrates RSA’s mathematics. The Workbench generates the actual 1024-bit and 2048-bit
-          keys required for the project.
+          <strong>Small enough to understand. Too small to protect anything.</strong> This{' '}
+          <Term term="textbookRsa">textbook RSA</Term> example demonstrates RSA’s mathematics. The
+          Workbench generates the actual 1024-bit and 2048-bit keys required for the project.
         </p>
       </div>
     </>

@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonLink as Link } from '../lessons/LessonLink';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { primalityFrames, liarFrames } from '../lessons/mathTraces';
@@ -42,8 +43,9 @@ export function MillerRabinPage() {
       </div>
       <section className="panel feature-body">
         <p>
-          Search for evidence that n is composite. A failing witness proves compositeness; one
-          passing base is evidence, not proof of primality.
+          <Term term="millerRabin" /> searches for evidence that n is composite. A failing witness
+          proves compositeness; one passing base is evidence, not proof: n is then a{' '}
+          <Term term="probablePrime">probable prime</Term>.
         </p>
         <div className="lesson-inputs">
           <IntegerField
@@ -242,8 +244,9 @@ export function MillerRabinPage() {
       <section className="panel feature-body">
         <h2>Find the strong liars</h2>
         <p>
-          For an odd composite, a strong liar is a base that passes despite the number being
-          composite. Search every base from 2 to n−2 for an odd n from 5 to 10,000.
+          For an odd composite, a <Term term="strongLiar">strong liar</Term> is a base that passes
+          despite the number being composite. Search every base from 2 to n−2 for an odd n from 5 to
+          10,000.
         </p>
         <button className="secondary-button" disabled={liars.busy} onClick={() => liars.run({ n })}>
           Find passing bases

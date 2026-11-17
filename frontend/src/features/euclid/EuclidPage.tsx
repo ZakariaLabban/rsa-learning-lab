@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { euclidFrames } from '../lessons/mathTraces';
 import { useState } from 'react';
@@ -38,9 +39,11 @@ export function EuclidPage() {
       <div className="euclid-body">
         <h2 id="euclid-title">Find a⁻¹ mod m</h2>
         <p className="helper-text">
-          RSA needs d = e⁻¹ mod φ(n): the number with e·d ≡ 1 (mod φ(n)). Extended Euclid finds it
-          by running Euclid’s gcd algorithm and keeping track of how each remainder is built from m
-          and a.
+          RSA needs the <Term term="privateExponent">private exponent</Term> d ={' '}
+          <Term term="modularInverse">e⁻¹ mod φ(n)</Term>: the number with e·d ≡ 1 (mod{' '}
+          <Term term="totient" />
+          ). <Term term="extendedEuclid" /> finds it by running Euclid’s <Term term="gcd" />{' '}
+          algorithm and keeping track of how each remainder is built from m and a.
         </p>
         <div className="euclid-inputs">
           <div className="encrypt-field">

@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { useState } from 'react';
 import { deriveKey } from '../../engine/math';
 import { exponentiation } from '../number-theory/model';
@@ -32,8 +33,9 @@ export function WorkedExampleLesson() {
     <section className="panel feature-body">
       <h2>One complete RSA example</h2>
       <p>
-        Public teaching key: p=61, q=53, e=17, d=2753, n=3233. Start with 65, the byte for “A”, or
-        choose your own integer.
+        Public teaching key: p=61, q=53, <Term term="publicExponent">e</Term>=17,{' '}
+        <Term term="privateExponent">d</Term>=2753, <Term term="modulus">n</Term>=3233. Start with
+        65, the byte for “A”, or choose your own integer.
       </p>
       <label>
         Your message integer

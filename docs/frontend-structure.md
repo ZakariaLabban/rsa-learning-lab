@@ -11,7 +11,9 @@ the engine trace boundary and rollback.
 
 - `app/`: URL routes, shell, theme, orientation and temporary API session state.
 - `components/`: reusable display, teaching, error and playback controls.
-- `content/glossary.ts`: term definitions and chapter references.
+- `content/glossary.ts`: term definitions and chapter references, using the slide notation
+  (M/C, PU = {e, n}, PR = {d, n}, φ(n)). Every lesson/tool page uses `Term` for its key
+  terms; `browser-tests/glossary.spec.ts` checks each Learn, Break and Tools route.
 - `features/home/`: landing page and explicitly planned-feature pages.
 - `features/legacy/`: preserved key studio, message journey, math explorer and
   experiments, separated from the old monolithic App.
@@ -32,7 +34,7 @@ Shared controls:
 | `NumberView` | `label`, BigInt `value`, optional `privateValue`; dec/hex/base64, copy/expand and explicit private reveal |
 | `Stepper` | Controlled `step`, `count`, `onChange`; previous/next/play/speed/result; reduced motion uses manual steps |
 | `RolePanels` | Array of Alice/Bob/Eve, knowledge and optional action descriptions |
-| `Term` | Glossary key; tooltip visible on pointer hover and keyboard focus |
+| `Term` | Glossary key, optional `children` label (e.g. `φ(n)`); tooltip with name, explanation and Ch 8/Ch 9 or standard reference, visible on pointer hover and keyboard focus |
 | `ErrorBanner` | Message and optional dismiss callback |
 | `LectureExampleButton` | Caller-owned `onLoad` and optional label; no baked-in numbers |
 

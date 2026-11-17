@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { fileFrames } from '../lessons/protocolTraces';
 import { useEffect, useRef, useState } from 'react';
@@ -99,7 +100,10 @@ export function FilePanel() {
   return (
     <div className="feature-body file-panel">
       <h2>Encrypt and decrypt files</h2>
-      <p>Files stay in your browser. Up to 25 MiB per file. Use demonstration data.</p>
+      <p>
+        Files stay in your browser and use <Term term="hybridEncryption">hybrid encryption</Term>.
+        Up to 25 MiB per file. Use demonstration data.
+      </p>
       <fieldset disabled={busy} className="feature-fields">
         <legend>Encrypt a file</legend>
         <RecipientPicker

@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { LessonTrace } from '../lessons/LessonTrace';
 import { proofFrames, residueFrames } from '../lessons/mathTraces';
 import { useState } from 'react';
@@ -23,8 +24,10 @@ export function WhyRsaWorksPage() {
       <section className="panel feature-body">
         <h2>Prove it with your numbers</h2>
         <p>
-          Use distinct odd primes and an exponent coprime to φ(n). This teaching proof computes d
-          modulo φ(n); typed keys are limited to a 64-bit modulus.
+          Use distinct odd primes and a <Term term="publicExponent">public exponent</Term>{' '}
+          <Term term="coprime">coprime</Term> to <Term term="totient" />. This teaching proof
+          computes the <Term term="privateExponent">private exponent</Term> d modulo φ(n); typed
+          keys are limited to a 64-bit modulus.
         </p>
         <div className="lesson-inputs">
           {(
@@ -152,8 +155,10 @@ export function WhyRsaWorksPage() {
       <section className="panel feature-body">
         <h2>Fermat / Euler residue explorer</h2>
         <p>
-          Try a small modulus (2…10,000) and inspect repeated multiplication by a. The theorem
-          applies only when gcd(a,n)=1.
+          Try a small modulus (2…10,000) and inspect repeated multiplication by a.{' '}
+          <Term term="fermat">Fermat’s</Term> and <Term term="euler">Euler’s</Term> theorems apply
+          only when <Term term="gcd" />
+          (a,n)=1.
         </p>
         <div className="lesson-inputs">
           <IntegerField

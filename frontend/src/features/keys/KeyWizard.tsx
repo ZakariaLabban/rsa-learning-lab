@@ -307,7 +307,8 @@ export function KeyWizard() {
 
             <article className="wizard-step">
               <h3>
-                <span className="step-number">3</span> Compute φ(n) = (p − 1)(q − 1)
+                <span className="step-number">3</span> Compute <Term term="totient" /> = (p − 1)(q −
+                1)
               </h3>
               <Value
                 label="φ(n)"

@@ -1,3 +1,4 @@
+import { Term } from '../../components/Term';
 import { useMemo, useState } from 'react';
 import { LessonTrace } from './LessonTrace';
 import { practiceQuestions, type Difficulty } from './practiceModel';
@@ -40,8 +41,11 @@ export function PracticeLesson() {
     <section className="panel feature-body practice-lesson">
       <h2>Try it, then open the machine.</h2>
       <p>
-        Ten reproducible exercises cover key setup, encryption/decryption, inverse, modular powers,
-        Miller–Rabin, CRT and totients. Progress is saved on this device when storage is available.
+        Ten reproducible exercises cover key setup, encryption/decryption,{' '}
+        <Term term="modularInverse">inverse</Term>,{' '}
+        <Term term="squareAndMultiply">modular powers</Term>, <Term term="millerRabin" />,{' '}
+        <Term term="crt">CRT</Term> and <Term term="totient">totients</Term>. Progress is saved on
+        this device when storage is available.
       </p>
       <div className="lesson-inputs">
         <label>
