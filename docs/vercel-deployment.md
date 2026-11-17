@@ -16,6 +16,8 @@ authentication; previews may retain Vercel authentication protection. Hosted
 checks must include CSP response headers, not just local Vite preview.
 
 The default Vercel URL is sufficient for this issue. A custom domain is #41.
+The offline service worker is served as `/sw.js` with the catch-all `no-cache`
+header; see [offline.md](offline.md).
 GitHub main requires a PR and passing CI before merge. A separate AI reviewer
 checks the final changes; actionable findings must be fixed before squash merge.
 Keep PR/check protection enabled. Review deployments can be built from the feature
