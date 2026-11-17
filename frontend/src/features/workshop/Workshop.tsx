@@ -65,15 +65,14 @@ export function Workshop() {
         progress: station === 'sender' ? 0 : station === 'eve' ? 45 : 100,
       });
   }
-  const continueJourney = useCallback(
-    () =>
-      setJourney((old) => ({
-        ...initialJourney,
-        progress: old.machine === 'encrypt' ? 39 : 87,
-        playing: true,
-      })),
-    [],
-  );
+  const continueJourney = useCallback(() => {
+    focusAfterClose.current = true;
+    setJourney((old) => ({
+      ...initialJourney,
+      progress: old.machine === 'encrypt' ? 39 : 87,
+      playing: true,
+    }));
+  }, []);
   const closeMachine = useCallback(() => {
     focusAfterClose.current = true;
     setJourney((old) => ({ ...old, machine: null, playing: false, automatic: false }));

@@ -44,8 +44,8 @@ export function MachineCutaway({
   const track = useRef<HTMLDivElement>(null);
   const [trackWidth, setTrackWidth] = useState(0);
   useEffect(() => {
-    if (!automatic) heading.current?.focus({ preventScroll: true });
-  }, [automatic]);
+    heading.current?.focus({ preventScroll: true });
+  }, []);
   useEffect(() => {
     const element = track.current;
     if (!element) return;

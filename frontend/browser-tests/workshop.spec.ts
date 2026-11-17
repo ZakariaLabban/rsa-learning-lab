@@ -11,6 +11,7 @@ test('guided journey opens both machines, animates real arithmetic and delivers 
   await page.getByLabel('Journey speed').selectOption('2');
   await page.getByRole('button', { name: 'Play journey', exact: true }).click();
   await expect(page.getByLabel('Inside the RSA machine')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Small steps. Real machinery.' })).toBeFocused();
   await expect(page.getByRole('button', { name: 'Pause calculations' })).toBeVisible();
   await expect(page.getByText('INSIDE / DECRYPTION', { exact: true })).toBeVisible({
     timeout: 45000,
@@ -19,6 +20,7 @@ test('guided journey opens both machines, animates real arithmetic and delivers 
     timeout: 45000,
   });
   await expect(page.locator('.receipt strong')).toHaveText('88');
+  await expect(page.getByRole('button', { name: 'Replay journey', exact: true })).toBeFocused();
   expect(errors).toEqual([]);
 });
 
@@ -52,6 +54,10 @@ test('calculation controls pause, step, move backward and explain zero bits', as
     timeout: 7000,
   });
   await expect(page.locator('.division-line')).toHaveText('1210=6 × 187+88');
+  await page.getByRole('button', { name: 'Continue journey', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pause journey', exact: true })).toBeFocused();
+  await page.getByRole('button', { name: 'Pause journey', exact: true }).click();
+  await page.getByRole('button', { name: 'Open the decryption machine' }).click();
   await page.getByRole('button', { name: 'Back to workshop' }).click();
   await expect(page.getByRole('button', { name: 'Play journey', exact: true })).toBeFocused();
 });
