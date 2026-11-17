@@ -17,7 +17,8 @@ npm.cmd run dev
 ```
 
 For the production build, use `npm.cmd run build` followed by `npm.cmd run preview`.
-No Python server or account is required to use the browser app.
+No Python server or account is required to use the browser app. After one online
+visit the built app also reopens and works offline; see [offline guest app](docs/offline.md).
 
 ## Two interfaces
 
