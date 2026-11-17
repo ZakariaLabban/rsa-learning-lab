@@ -131,6 +131,13 @@ export function Workshop() {
           <span className="prototype">THE LEARNING LAB</span>
         </Link>
         <div className="world-links">
+          <Link
+            className="legacy-switch"
+            to="/lecture"
+            onClick={() => rememberInterface('lecture')}
+          >
+            Lecture view
+          </Link>
           <Link className="legacy-switch" to="/legacy" onClick={() => rememberInterface('legacy')}>
             Legacy lab <ArrowRight size={14} />
           </Link>

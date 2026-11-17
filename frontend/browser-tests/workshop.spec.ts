@@ -6,7 +6,7 @@ test('guided journey opens both machines, animates real arithmetic and delivers 
   test.setTimeout(90000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto('/');
+  await page.goto('/playground');
   await expect(page.getByRole('heading', { name: 'A secret. A little machinery.' })).toBeVisible();
   await page.getByLabel('Journey speed').selectOption('2');
   await page.getByRole('button', { name: 'Play journey', exact: true }).click();
@@ -91,7 +91,7 @@ test('free exploration supports changed messages, validation and ciphertext inte
 test('Legacy lab is retained, remembers the choice and keeps unsaved keys during switching', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/playground');
   await page.getByRole('link', { name: 'Legacy lab', exact: true }).click();
   await expect(page).toHaveURL(/\/legacy$/);
   await page.reload();
@@ -107,7 +107,7 @@ test('Legacy lab is retained, remembers the choice and keeps unsaved keys during
   await page.getByRole('link', { name: 'Keys', exact: true }).click();
   await expect(page.locator('.history-row')).toHaveCount(1);
   await page.getByRole('link', { name: 'Animated workshop', exact: true }).click();
-  await page.goto('/');
+  await page.goto('/playground');
   await expect(page.getByRole('heading', { name: 'A secret. A little machinery.' })).toBeVisible();
 });
 
@@ -181,7 +181,7 @@ test('explicit experience routes work when browser storage is unavailable', asyn
       throw new Error('Storage disabled');
     };
   });
-  await page.goto('/');
+  await page.goto('/playground');
   await expect(page.getByRole('button', { name: 'Play journey', exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Legacy lab', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Animated workshop', exact: true })).toBeVisible();

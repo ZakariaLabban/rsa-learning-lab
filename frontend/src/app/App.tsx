@@ -4,21 +4,36 @@ import { LabThemeProvider } from './LabTheme';
 import { preferredInterface } from './interfacePreference';
 
 const LegacyShell = lazy(() => import('./LegacyShell'));
+const LectureShell = lazy(() =>
+  import('../features/lecture/LectureShell').then((module) => ({ default: module.LectureShell })),
+);
 const ModernLab = lazy(() =>
   import('../features/lessons/ModernLab').then((module) => ({ default: module.ModernLab })),
 );
 
 function Experiences() {
   const { pathname } = useLocation();
+  const atRoot = Boolean(matchPath('/', pathname));
+  const lecture =
+    Boolean(matchPath('/lecture/*', pathname)) ||
+    Boolean(matchPath('/lecture', pathname)) ||
+    (atRoot && preferredInterface() === 'lecture');
   const workshop =
-    Boolean(matchPath('/playground/*', pathname)) ||
-    (Boolean(matchPath('/', pathname)) && preferredInterface() !== 'legacy');
-  const [visitedLegacy, setVisitedLegacy] = useState(!workshop);
+    !lecture &&
+    (Boolean(matchPath('/playground/*', pathname)) ||
+      (atRoot && preferredInterface() === 'workshop'));
+  const classic = !lecture && !workshop;
+  const [visitedLegacy, setVisitedLegacy] = useState(classic);
   useEffect(() => {
-    if (!workshop) setVisitedLegacy(true);
-  }, [workshop]);
+    if (classic) setVisitedLegacy(true);
+  }, [classic]);
   return (
     <>
+      {lecture && (
+        <Suspense fallback={<p role="status">Opening the lecture lab…</p>}>
+          <LectureShell />
+        </Suspense>
+      )}
       {workshop && (
         <div className="workshop-host">
           <Suspense fallback={<p role="status">Opening the workshop…</p>}>
@@ -26,10 +41,10 @@ function Experiences() {
           </Suspense>
         </div>
       )}
-      {(visitedLegacy || !workshop) && (
-        <div hidden={workshop} inert={workshop} aria-hidden={workshop || undefined}>
+      {(visitedLegacy || classic) && (
+        <div hidden={!classic} inert={!classic} aria-hidden={!classic || undefined}>
           <Suspense fallback={<p role="status">Opening the Legacy lab…</p>}>
-            <LegacyShell active={!workshop} />
+            <LegacyShell active={classic} />
           </Suspense>
         </div>
       )}

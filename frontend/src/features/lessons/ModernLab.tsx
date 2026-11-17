@@ -108,6 +108,13 @@ function LessonShell() {
           <div className="world-links">
             <Link
               className="legacy-switch"
+              to="/lecture"
+              onClick={() => rememberInterface('lecture')}
+            >
+              Lecture view
+            </Link>
+            <Link
+              className="legacy-switch"
               to={legacyPath}
               onClick={() => rememberInterface('legacy')}
             >
