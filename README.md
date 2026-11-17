@@ -19,6 +19,15 @@ npm.cmd run dev
 For the production build, use `npm.cmd run build` followed by `npm.cmd run preview`.
 No Python server or account is required to use the browser app.
 
+## Two interfaces
+
+The animated workshop is the new default, with guided playback, free exploration
+and step-by-step views inside the RSA machines. Use **Legacy lab** in the header
+to return to the previous interface; your choice is remembered. `/playground`
+and `/legacy` always open the corresponding experience, and all existing lesson
+URLs still work. Both views share the same RSA engine. See
+[the workshop guide](docs/animated-workshop.md) for behavior and rollback details.
+
 ## Key handling and limitations
 
 Keys live in this tab's memory, with the last eight keys available in its history.

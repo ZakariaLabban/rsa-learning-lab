@@ -31,7 +31,7 @@ for (const width of [375, 1440])
       const errors: string[] = [];
       page.on('pageerror', (error) => errors.push(error.message));
       await page.route('**/api/**', (route) => route.abort());
-      await page.goto('/');
+      await page.goto('/legacy');
       await expect(page.getByRole('heading', { name: /Understand the keys/ })).toBeVisible();
       await page.getByRole('button', { name: 'hex', exact: true }).click();
       await expect(page.getByText('0xbb', { exact: true })).toBeVisible();
@@ -79,7 +79,7 @@ for (const width of [375, 1440])
 test('navigation, theme persistence, focus trap and reduced motion', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
-  await page.goto('/');
+  await page.goto('/legacy');
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await page.getByRole('link', { name: 'Worked example', exact: true }).click();
   await expect(page).toHaveURL(/\/learn\/example$/);
@@ -102,7 +102,7 @@ test('navigation, theme persistence, focus trap and reduced motion', async ({ pa
 
 test('mobile navigation contains keyboard focus and restores it on close', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto('/');
+  await page.goto('/legacy');
   const toggle = page.getByRole('button', { name: 'Open navigation', exact: true });
   await toggle.focus();
   await page.keyboard.press('Enter');
