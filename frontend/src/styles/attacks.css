@@ -1,0 +1,54 @@
+.attack-answer {
+  font-weight: 600;
+  color: var(--aqua);
+  overflow-wrap: anywhere;
+}
+.factor-chart {
+  margin: 0;
+  min-width: 0;
+}
+.factor-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.factor-chart line {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+.factor-chart .chart-grid {
+  stroke: var(--line);
+  stroke-dasharray: 4 4;
+}
+.factor-chart text {
+  fill: var(--text);
+  font-size: 12px;
+}
+.factor-chart circle {
+  fill: var(--aqua);
+}
+.factor-chart .chart-timeout {
+  fill: var(--amber);
+}
+.factor-chart figcaption {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin-top: 12px;
+}
+.oaep-flow {
+  display: grid;
+  gap: 12px;
+  padding-left: 24px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.oaep-values {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.attack-lessons .feature-result {
+  min-width: 0;
+}

@@ -43,11 +43,11 @@ export function Home() {
           <FlaskConical size={26} />
           <h2>Break the assumptions</h2>
           <p>
-            Upcoming guided attacks cover tiny keys, guessable messages and repeated messages sent
-            with a small exponent.
+            Guided attacks cover tiny keys, guessable messages and repeated messages sent with a
+            small exponent.
           </p>
           <Link className="text-button aqua-text" to="/break/factoring">
-            See what is planned <ArrowRight size={16} />
+            Explore the attacks <ArrowRight size={16} />
           </Link>
         </section>
       </div>
