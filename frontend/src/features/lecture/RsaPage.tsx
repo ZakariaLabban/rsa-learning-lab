@@ -16,6 +16,7 @@ import {
   Words,
   TabList,
   TabPanel,
+  LessonHeader,
 } from './parts';
 
 type Phase = 'keys' | 'encrypt' | 'decrypt';
@@ -25,7 +26,7 @@ const PHASES: { id: Phase; label: string }[] = [
   { id: 'decrypt', label: '3 · Decrypt' },
 ];
 
-/** One step of the lecture's key setup, with a plain sentence first and the formula second. */
+// one step of the key setup: sentence first, formula after
 function Step({ number, plain, children }: { number: number; plain: string; children: ReactNode }) {
   return (
     <li className="rsa-step">
@@ -96,7 +97,7 @@ function Calc({
   labelResult,
 }: {
   title: string;
-  formula: string;
+  formula: ReactNode;
   base: bigint;
   exponent: bigint;
   n: bigint;
@@ -109,10 +110,12 @@ function Calc({
       <p className="formula">
         {labelResult} = {formula} = <Pow base={fmt(base)} exp={fmt(exponent)} /> mod {fmt(n)}
       </p>
-      <HandMethod run={run} />
+      <Collapse title="The squaring and multiplying, step by step" open>
+        <HandMethod run={run} />
+      </Collapse>
       <p className="see-row">
         <Link to={`/lecture/power?a=${base}&b=${exponent}&n=${n}`} className="see">
-          Step through this with the lecture’s table (i, bᵢ, c, f)
+          Step through this with the exponentiation algorithm
         </Link>
       </p>
     </section>
@@ -150,18 +153,22 @@ export function RsaPage() {
   const ciphertext = setup ? power(message, setup.e, setup.n).result : 0n;
   return (
     <article>
-      <header>
-        <p className="eyebrow">Lesson 5 · Chapter 9 · RSA</p>
-        <h1>RSA by hand</h1>
-      </header>
+      <LessonHeader title="RSA by hand" />
       <Idea>
         You make a pair of keys from two secret primes. <b>Anyone</b> can lock a message with your
-        public key, <Num>C = M^e mod n</Num>. <b>Only you</b> can unlock it with your private key,{' '}
-        <Num>M = C^d mod n</Num>. Below, you do all three parts with small numbers.
+        public key,{' '}
+        <Num>
+          C = M<sup>e</sup> mod n
+        </Num>
+        . <b>Only you</b> can unlock it with your private key,{' '}
+        <Num>
+          M = C<sup>d</sup> mod n
+        </Num>
+        . Below, you do all three parts with small numbers.
       </Idea>
       <UsedFor>
-        This is the whole algorithm. The earlier lessons gave you the tools (gcd, inverse, fast
-        powers); here you use them together.
+        This is the whole algorithm. The earlier lessons gave you the tools (gcd, inverse, powers);
+        here you use them together.
       </UsedFor>
       <SlideRef>ch09 “RSA Key Setup: Example”, “RSA Use”, “RSA En/Decryption: Example”.</SlideRef>
       <Words
@@ -242,7 +249,11 @@ export function RsaPage() {
                 <Calc
                   title="Encryption"
                   labelResult="C"
-                  formula="M^e mod n"
+                  formula={
+                    <>
+                      M<sup>e</sup> mod n
+                    </>
+                  }
                   base={message}
                   exponent={setup.e}
                   n={setup.n}
@@ -266,7 +277,11 @@ export function RsaPage() {
                 <Calc
                   title="Decryption"
                   labelResult="M"
-                  formula="C^d mod n"
+                  formula={
+                    <>
+                      C<sup>d</sup> mod n
+                    </>
+                  }
                   base={ciphertext}
                   exponent={setup.d}
                   n={setup.n}

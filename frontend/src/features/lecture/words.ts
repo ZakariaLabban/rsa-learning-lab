@@ -1,4 +1,4 @@
-/** The few words a first-time student needs, each in one plain sentence. */
+// the words a new student needs, one sentence each
 export const WORDS = {
   mod: {
     term: 'a mod n',

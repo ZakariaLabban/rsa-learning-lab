@@ -1,14 +1,11 @@
 import { Link } from 'react-router-dom';
 import { BigPicture } from './diagrams';
-import { Collapse, Idea, Words } from './parts';
+import { Collapse, Idea, Words, LessonHeader } from './parts';
 
 export function StartPage() {
   return (
     <article>
-      <header>
-        <p className="eyebrow">Lesson 1 · Start here</p>
-        <h1>The big picture</h1>
-      </header>
+      <LessonHeader title="The big picture" />
       <Idea>
         RSA lets two people who have <b>never met</b> send each other secrets. Each person has a
         pair of keys: a <b>public</b> key that anybody may have, and a <b>private</b> key that only
@@ -26,7 +23,7 @@ export function StartPage() {
             <b>GCD and inverse:</b> how to make a pair of keys that fit together.
           </li>
           <li>
-            <b>Fast powers:</b> how to compute the huge powers that locking needs.
+            <b>Powers mod n:</b> how to compute the huge powers that locking needs.
           </li>
           <li>
             <b>RSA by hand:</b> make keys, lock and unlock a message with small numbers.
@@ -42,7 +39,7 @@ export function StartPage() {
       <Words terms={['publicKey', 'privateKey', 'plaintext', 'ciphertext', 'attacker']} />
       <div className="start-cta">
         <Link to="/lecture/gcd" className="button primary big">
-          Start the maths: lesson 2, GCD →
+          Start the maths: 1.1 GCD →
         </Link>
       </div>
     </article>

@@ -123,7 +123,7 @@ test('the exponentiation table is drawn like Table 9.3 and fills column by colum
   page,
 }) => {
   await page.goto('/lecture/power?a=7&b=560&n=561');
-  await page.getByRole('tab', { name: /The lecture table/ }).click();
+  await page.getByRole('tab', { name: /Exponentiation algorithm/ }).click();
   await expect(page.locator('table.horizontal td:not(.ghost)')).toHaveCount(4);
   await showAll(page);
   const table = await page
@@ -205,12 +205,9 @@ test('CRT rebuilds A from its residues and speeds up RSA decryption', async ({ p
   await expect(resultText(page)).toContainText('same 88');
 });
 
-test('Why RSA works: Fermat, then the proof with real numbers', async ({ page }) => {
+test('Why RSA works: two facts, then the proof with real numbers', async ({ page }) => {
   await page.goto('/lecture/why');
-  await expect(page.locator('.calc .formula')).toContainText('= 1');
-  await page.getByLabel('n (2 to 300)').fill('10');
-  await expect(page.getByText('1, 3, 7, 9', { exact: true })).toBeVisible();
-  await page.getByRole('tab', { name: '2 · Why decryption works' }).click();
+  await expect(page.getByText('φ(187) = 16 × 10 = 160')).toBeVisible();
   await showAll(page);
   await expect(page.locator('ol.mr-steps')).toContainText('1 + 1 × 160');
   await expect(page.locator('ol.mr-steps')).toContainText('the original message');
@@ -421,10 +418,10 @@ test('the big picture is a five-step animation with clear buttons', async ({ pag
   await expect(page.locator('.explain')).toContainText('Bob shares his public key');
   await next.click();
   await next.click();
-  await expect(page.locator('.explain')).toContainText('Eve sees the box');
+  await expect(page.locator('.explain')).toContainText('Eve sees 11 go by');
   await next.click();
   await expect(page.locator('.explain')).toContainText('Bob unlocks it');
-  const finished = page.getByRole('button', { name: 'Finished ✓' });
+  const finished = page.getByRole('button', { name: 'Finished' });
   await expect(finished).toBeDisabled();
   await finished.focus();
   await expect(finished).toBeFocused();
@@ -504,6 +501,31 @@ test('an encrypted message keeps the name it was made for when the recipient cha
   await page.goto('/lecture/messages');
   await page.getByRole('button', { name: 'Encrypt message' }).click();
   await expect(page.locator('div.result').first()).toContainText('Send this text to Alice.');
-  await page.getByLabel('To', { exact: true }).selectOption('demo-bob');
+  await page.getByLabel('Lock with the public key of').selectOption('demo-bob');
   await expect(page.locator('div.result').first()).toContainText('Send this text to Alice.');
+});
+
+test('GCD lets the student check an answer', async ({ page }) => {
+  await page.goto('/lecture/gcd');
+  await page.getByLabel(/Work it out on paper/).fill('3');
+  await page.getByRole('button', { name: 'Check', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Not quite' })).toBeVisible();
+  await page.getByLabel(/Work it out on paper/).fill('2');
+  await page.getByRole('button', { name: 'Check', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Correct' })).toBeVisible();
+});
+
+test('Extended Euclid says A1 and B1 can be skipped, and the contents menu collapses', async ({
+  page,
+}) => {
+  await page.goto('/lecture/inverse');
+  await expect(page.getByText('You can skip A1 and B1.')).toBeVisible();
+  await page.getByRole('button', { name: 'Next step →' }).click();
+  await page.getByRole('button', { name: 'Hide A1 and B1' }).click();
+  await expect(page.locator('table.eea th', { hasText: 'A1' })).toBeHidden();
+  const rail = page.getByRole('navigation', { name: 'Course map' }).first();
+  await page.getByRole('button', { name: 'Hide contents' }).click();
+  await expect(rail).toBeHidden();
+  await page.getByRole('button', { name: 'Show contents' }).click();
+  await expect(rail).toBeVisible();
 });

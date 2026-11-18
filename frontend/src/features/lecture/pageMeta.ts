@@ -35,12 +35,12 @@ function setHead(
   tag.setAttribute(attribute, value);
 }
 
-/** The public address chosen at build time (SITE_URL), or null when none was set. */
+// site address from SITE_URL, null if not set
 function siteOrigin(): string | null {
   return document.head.querySelector<HTMLMetaElement>('meta[name="site-origin"]')?.content || null;
 }
 
-/** Sets this page's own canonical link and og:url, only when the public address is known. */
+// canonical link + og:url (only if the address is known)
 function setAddress(path: string | null) {
   const origin = siteOrigin();
   const url = origin && path !== null ? `${origin}${path === '' ? '/' : path}` : null;
@@ -62,10 +62,8 @@ function setAddress(path: string | null) {
   );
 }
 
-/**
- * Keeps the tab title and the search description in step with the page shown, for browsers,
- * search results and link previews. An unknown address is marked "noindex" so it is not listed.
- */
+// updates the tab title and description for the current page.
+// unknown address -> noindex
 export function setPageMeta({
   title,
   description,
@@ -75,7 +73,7 @@ export function setPageMeta({
   title?: string;
   description?: string;
   notFound?: boolean;
-  /** This page's address (for example "/lecture/gcd"); "" is the home page. */
+  // page path, e.g. "/lecture/gcd" ("" = home)
   path?: string;
 }) {
   document.title = title ? `${title} · ${SITE_NAME}` : DEFAULT_TITLE;
@@ -84,7 +82,7 @@ export function setPageMeta({
   setAddress(notFound ? null : path);
 }
 
-/** Puts the head back to its defaults, for when another view takes over the page. */
+// back to the default head
 export function resetPageMeta() {
   document.title = DEFAULT_TITLE;
   setMeta('description', DEFAULT_DESCRIPTION);

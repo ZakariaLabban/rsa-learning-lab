@@ -1,56 +1,31 @@
 import { StepControls, useSteps } from './parts';
 
-/* ───────────── small drawing pieces ───────────── */
-
-function Key({
-  x,
-  y,
-  kind,
-  label,
-}: {
-  x: number;
-  y: number;
-  kind: 'public' | 'private';
-  label: string;
-}) {
+// small icons
+// key icon, filled = private key
+function KeyMark({ x, y, secret }: { x: number; y: number; secret?: boolean }) {
   return (
-    <g transform={`translate(${x} ${y})`} className={`art-key ${kind}`}>
-      <circle cx="0" cy="0" r="12" />
-      <circle cx="0" cy="0" r="4" className="hole" />
-      <path d="M12 0 H58 M46 0 V12 M56 0 V9" />
-      <text x="28" y="34" textAnchor="middle" className="art-label">
-        {label}
-      </text>
+    <g transform={`translate(${x} ${y})`} className={`key-mark ${secret ? 'secret' : ''}`}>
+      <circle cx="6" cy="0" r="5.5" />
+      <path d="M11.5 0 H27 M22 0 V5 M26 0 V4" />
     </g>
   );
 }
 
-function Padlock({ locked }: { locked: boolean }) {
+// padlock icon
+function LockMark({ x, y, open }: { x: number; y: number; open?: boolean }) {
   return (
-    <g className="art-padlock" style={{ opacity: locked ? 1 : 0.25 }}>
-      <path
-        d={locked ? 'M-9 -2 V-9 a9 9 0 0 1 18 0 V-2' : 'M-9 -2 V-9 a9 9 0 0 1 18 0 V-14'}
-        className="shackle"
-      />
-      <rect x="-14" y="-3" width="28" height="22" rx="4" className="body" />
-      <circle cx="0" cy="8" r="3" className="hole" />
+    <g transform={`translate(${x} ${y})`} className={`lock-mark ${open ? 'open' : ''}`}>
+      <rect x="0" y="7" width="15" height="11" rx="1.5" />
+      <path d={open ? 'M3 7 V4.5 a4.5 4.5 0 0 1 9 0 V3' : 'M3 7 V4.5 a4.5 4.5 0 0 1 9 0 V7'} />
     </g>
   );
 }
 
-function Person({ x, name, tone }: { x: number; name: string; tone: 'alice' | 'bob' | 'eve' }) {
-  return (
-    <g transform={`translate(${x} 0)`} className={`art-person ${tone}`}>
-      <circle cx="0" cy="268" r="26" />
-      <path d="M-44 352 a44 44 0 0 1 88 0 Z" />
-      <text x="0" y="380" textAnchor="middle" className="art-name">
-        {name}
-      </text>
-    </g>
-  );
-}
-
-/* ───────────── the big picture: five steps ───────────── */
+// figure 0.1: big picture
+const A = 92,
+  E = 318,
+  B = 544;
+const ROWS = [70, 136, 202, 268, 334];
 
 const CAPTIONS = [
   {
@@ -63,131 +38,166 @@ const CAPTIONS = [
   },
   {
     title: 'Alice locks her message',
-    text: 'She puts her message in a box and locks it with Bob’s public key. Now nobody can read it, not even Alice.',
+    text: 'She turns her message 88 into a number nobody can read, using Bob’s public key: C = 88⁷ mod 187 = 11.',
   },
   {
-    title: 'The locked box travels',
-    text: 'Eve sees the box go by. She has the public key, but not Bob’s private key, so she cannot open it.',
+    title: 'The locked message travels',
+    text: 'Eve sees 11 go by. She has the public key, but not Bob’s private number d = 23, so she cannot get 88 back.',
   },
   {
     title: 'Bob unlocks it',
-    text: 'Bob opens the box with his private key, which only he has. The message arrives. This is RSA.',
+    text: 'Bob computes M = 11²³ mod 187 = 88 with his private key, which only he has. This is RSA.',
   },
 ] as const;
 
 export function BigPicture() {
   const steps = useSteps(CAPTIONS.length);
   const s = steps.shown - 1; // 0 … 4
-  const locked = s >= 2 && s < 4;
-  const hasMessage = s >= 2;
-  const box = [
-    { x: 150, y: 200 },
-    { x: 150, y: 200 },
-    { x: 150, y: 200 },
-    { x: 410, y: 200 },
-    { x: 670, y: 200 },
-  ][s];
   const caption = CAPTIONS[s];
+  const row = (index: number) => (s === index ? 'row now' : s > index ? 'row past' : 'row');
   return (
-    <div className="art-wrap">
-      <svg
-        className="art bigpicture"
-        viewBox="0 0 820 400"
-        role="img"
-        aria-label={`Step ${s + 1} of 5: ${caption.title}. ${caption.text}`}
+    <figure className="fig">
+      <div
+        className="figwrap"
+        tabIndex={0}
+        role="group"
+        aria-label="Figure, scrolls sideways on narrow screens"
       >
-        <line x1="110" y1="236" x2="710" y2="236" className="art-wire" />
-        <Person x={110} name="Alice" tone="alice" />
-        <Person x={710} name="Bob" tone="bob" />
-        <Person x={410} name="Eve (attacker)" tone="eve" />
-
-        {/* Bob's keys */}
-        <g style={{ opacity: 1 }}>
-          <Key x={620} y={90} kind="public" label="public key" />
-        </g>
-        <g
-          className="move"
-          style={{
-            transform: s >= 4 ? 'translate(-135px, 150px)' : 'translate(0, 0)',
-          }}
+        <svg
+          className="art bigpicture"
+          viewBox="0 0 640 372"
+          role="img"
+          aria-label={`Step ${s + 1} of 5: ${caption.title}. ${caption.text}`}
         >
-          <Key x={690} y={30} kind="private" label="private key (secret)" />
-        </g>
-
-        {/* the public key travels to Alice and Eve */}
-        <g
-          className="move"
-          style={{
-            transform: s >= 1 ? 'translate(-470px, 0)' : 'translate(0, 0)',
-            opacity: s >= 1 ? 1 : 0,
-          }}
-        >
-          <Key x={620} y={90} kind="public" label="Alice’s copy" />
-        </g>
-        <g
-          className="move"
-          style={{
-            transform: s >= 1 ? 'translate(-320px, 210px)' : 'translate(0, 0)',
-            opacity: s >= 1 ? 0.9 : 0,
-          }}
-        >
-          <Key x={620} y={90} kind="public" label="Eve’s copy" />
-        </g>
-
-        {/* the box with the message */}
-        <g
-          className="move"
-          style={{
-            transform: `translate(${box.x}px, ${box.y}px)`,
-            opacity: hasMessage ? 1 : 0,
-          }}
-        >
-          <rect x="-46" y="-34" width="92" height="68" rx="10" className="art-box" />
-          <text
-            x="0"
-            y="6"
-            textAnchor="middle"
-            className="art-msg"
-            style={{ opacity: locked ? 0 : 1 }}
-          >
-            “Hi Bob”
+          {/* participants */}
+          {[
+            [A, 'Alice'],
+            [E, 'Eve'],
+            [B, 'Bob'],
+          ].map(([x, name]) => (
+            <g key={name} className="who">
+              <rect x={Number(x) - 46} y="10" width="92" height="30" />
+              <text x={Number(x)} y="30" textAnchor="middle">
+                {name}
+              </text>
+              <line x1={Number(x)} y1="40" x2={Number(x)} y2="364" className="life" />
+            </g>
+          ))}
+          <text x={E} y="54" textAnchor="middle" className="sub">
+            attacker
           </text>
-          <text
-            x="0"
-            y="6"
-            textAnchor="middle"
-            className="art-msg scrambled"
-            style={{ opacity: locked ? 1 : 0 }}
-          >
-            q7#x9!
-          </text>
-          <g transform="translate(0 -34)" className="move" style={{ opacity: hasMessage ? 1 : 0 }}>
-            <Padlock locked={locked} />
+
+          {/* step 1: Bob makes the key pair */}
+          <g className={row(0)}>
+            <text x="4" y={ROWS[0] + 5} className="stepno">
+              1
+            </text>
+            <rect x={B - 5} y={ROWS[0] - 16} width="10" height="32" className="act" />
+            <KeyMark x={B - 168} y={ROWS[0] - 12} />
+            <text x={B - 130} y={ROWS[0] - 8} className="n">
+              PU = {'{'}7, 187{'}'}
+            </text>
+            <KeyMark x={B - 168} y={ROWS[0] + 12} secret />
+            <text x={B - 130} y={ROWS[0] + 16} className="n">
+              PR = {'{'}23, 187{'}'}
+            </text>
           </g>
-        </g>
 
-        {/* Eve cannot open it */}
-        <g className="move" style={{ opacity: s === 3 ? 1 : 0 }}>
-          <text x="410" y="132" textAnchor="middle" className="art-no">
-            ✗ no private key
-          </text>
-        </g>
-      </svg>
+          {/* step 2: the public key goes to Alice, and Eve sees it too */}
+          <g className={row(1)}>
+            <text x="4" y={ROWS[1] + 5} className="stepno">
+              2
+            </text>
+            <path className="msg" pathLength={1} d={`M${B} ${ROWS[1]} H${A + 4}`} />
+            <path
+              className="head"
+              d={`M${A + 12} ${ROWS[1] - 5} L${A + 3} ${ROWS[1]} L${A + 12} ${ROWS[1] + 5}`}
+            />
+            <text x={(A + B) / 2} y={ROWS[1] - 9} textAnchor="middle" className="n lab">
+              PU = {'{'}7, 187{'}'}
+            </text>
+            <circle cx={E} cy={ROWS[1]} r="4" className="tap" />
+            <text x={E + 14} y={ROWS[1] + 22} className="t lab">
+              Eve sees it too
+            </text>
+          </g>
+
+          {/* step 3: Alice locks the message */}
+          <g className={row(2)}>
+            <text x="4" y={ROWS[2] + 5} className="stepno">
+              3
+            </text>
+            <rect x={A - 5} y={ROWS[2] - 16} width="10" height="32" className="act" />
+            <text x={A + 16} y={ROWS[2] - 6} className="t">
+              M = 88
+            </text>
+            <text x={A + 16} y={ROWS[2] + 14} className="n">
+              C = 88⁷ mod 187 = 11
+            </text>
+            <LockMark x={A + 190} y={ROWS[2] - 6} />
+          </g>
+
+          {/* step 4: 11 travels to Bob; Eve cannot read it */}
+          <g className={row(3)}>
+            <text x="4" y={ROWS[3] + 5} className="stepno">
+              4
+            </text>
+            <path className="msg" pathLength={1} d={`M${A} ${ROWS[3]} H${B - 4}`} />
+            <path
+              className="head"
+              d={`M${B - 12} ${ROWS[3] - 5} L${B - 3} ${ROWS[3]} L${B - 12} ${ROWS[3] + 5}`}
+            />
+            <text x={(A + B) / 2 + 80} y={ROWS[3] - 9} textAnchor="middle" className="n lab">
+              C = 11
+            </text>
+            <g
+              className="move packet"
+              style={{ transform: `translateX(${s >= 3 ? B - A - 18 : 0}px)` }}
+            >
+              <rect x={A + 4} y={ROWS[3] - 7} width="14" height="14" />
+            </g>
+            <g className="cross" transform={`translate(${E} ${ROWS[3]})`}>
+              <path d="M-6 -6 L6 6 M6 -6 L-6 6" />
+            </g>
+            <text x={E - 16} y={ROWS[3] + 26} textAnchor="end" className="t lab">
+              no d, cannot decrypt
+            </text>
+          </g>
+
+          {/* step 5: Bob unlocks it */}
+          <g className={row(4)}>
+            <text x="4" y={ROWS[4] + 5} className="stepno">
+              5
+            </text>
+            <rect x={B - 5} y={ROWS[4] - 16} width="10" height="32" className="act" />
+            <text x={B - 16} y={ROWS[4] - 6} textAnchor="end" className="n">
+              M = 11²³ mod 187
+            </text>
+            <text x={B - 16} y={ROWS[4] + 14} textAnchor="end" className="t">
+              = 88, the message
+            </text>
+            <LockMark x={B - 190} y={ROWS[4] - 6} open />
+          </g>
+        </svg>
+      </div>
+      <StepControls steps={steps} label="Picture" />
       <div className="explain" aria-live="polite">
         <p>
           <b>
-            {steps.shown} · {caption.title}
+            {steps.shown}. {caption.title}
           </b>
         </p>
         <p>{caption.text}</p>
       </div>
-      <StepControls steps={steps} label="Picture" />
-    </div>
+      <figcaption>
+        <b>Figure 0.1.</b> {caption.title}. Alice sends 88 to Bob using the lecture’s key PU = {'{'}
+        7, 187{'}'}, PR = {'{'}23, 187{'}'}.
+      </figcaption>
+    </figure>
   );
 }
 
-/* ───────────── the RSA flow: M → C → M ───────────── */
-
+// figure 2.1: lock and unlock
 export type FlowPhase = 'keys' | 'encrypt' | 'decrypt';
 
 export function RsaFlow({
@@ -205,97 +215,111 @@ export function RsaFlow({
   d: string;
   n: string;
 }) {
-  const at = phase === 'keys' ? 100 : phase === 'encrypt' ? 410 : 720;
-  const shown = phase === 'encrypt' ? c : m;
   const label =
     phase === 'keys'
       ? 'The message M is ready to be sent.'
       : phase === 'encrypt'
         ? `Locking: C = M^e mod n turns ${m} into ${c}.`
         : `Unlocking: M = C^d mod n turns ${c} back into ${m}.`;
+  const lockOn = phase !== 'keys';
+  const unlockOn = phase === 'decrypt';
+  // shrink big numbers so they fit in the box, cut the really long ones
+  const long = (value: string) => (value.length > 14 ? `${value.slice(0, 13)}…` : value);
+  const fit = (value: string) => Math.max(11, Math.min(26, 88 / (0.62 * long(value).length)));
+  const encryptText = `M^${e} mod ${n}`;
+  const decryptText = `C^${d} mod ${n}`;
+  // if the label is too long just show the letters
+  const encryptShown = encryptText.length > 11 ? 'M^e mod n' : encryptText;
+  const decryptShown = decryptText.length > 11 ? 'C^d mod n' : decryptText;
   return (
-    <svg className="art rsaflow" viewBox="0 0 820 200" role="img" aria-label={label}>
-      <rect x="40" y="62" width="120" height="76" rx="14" className="art-token" />
-      <text x="100" y="86" textAnchor="middle" className="art-small">
-        message M
-      </text>
-      <text x="100" y="118" textAnchor="middle" className="art-big">
-        {m}
-      </text>
-
-      <rect
-        x="350"
-        y="62"
-        width="120"
-        height="76"
-        rx="14"
-        className="art-token"
-        style={{ opacity: phase === 'keys' ? 0.35 : 1 }}
-      />
-      <text x="410" y="86" textAnchor="middle" className="art-small">
-        ciphertext C
-      </text>
-      <text
-        x="410"
-        y="118"
-        textAnchor="middle"
-        className="art-big"
-        style={{ opacity: phase === 'keys' ? 0.35 : 1 }}
+    <figure className="fig">
+      <div
+        className="figwrap"
+        tabIndex={0}
+        role="group"
+        aria-label="Figure, scrolls sideways on narrow screens"
       >
-        {c}
-      </text>
+        <svg className="art rsaflow" viewBox="0 0 640 150" role="img" aria-label={label}>
+          {/* tokens */}
+          <g className="token on">
+            <rect x="6" y="54" width="104" height="58" />
+            <text x="58" y="72" textAnchor="middle" className="t sub">
+              message M
+            </text>
+            <text x="58" y="100" textAnchor="middle" className="n big" style={{ fontSize: fit(m) }}>
+              {long(m)}
+            </text>
+          </g>
+          <g className={`token ${lockOn ? 'on' : ''}`}>
+            <rect x="268" y="54" width="104" height="58" />
+            <text x="320" y="72" textAnchor="middle" className="t sub">
+              ciphertext C
+            </text>
+            <text
+              x="320"
+              y="100"
+              textAnchor="middle"
+              className="n big"
+              style={{ fontSize: fit(c) }}
+            >
+              {long(c)}
+            </text>
+          </g>
+          <g className={`token ${unlockOn ? 'on' : ''}`}>
+            <rect x="530" y="54" width="104" height="58" />
+            <text x="582" y="72" textAnchor="middle" className="t sub">
+              message M
+            </text>
+            <text
+              x="582"
+              y="100"
+              textAnchor="middle"
+              className="n big"
+              style={{ fontSize: fit(m) }}
+            >
+              {long(m)}
+            </text>
+          </g>
 
-      <rect
-        x="660"
-        y="62"
-        width="120"
-        height="76"
-        rx="14"
-        className="art-token"
-        style={{ opacity: phase === 'decrypt' ? 1 : 0.35 }}
-      />
-      <text x="720" y="86" textAnchor="middle" className="art-small">
-        message M
-      </text>
-      <text
-        x="720"
-        y="118"
-        textAnchor="middle"
-        className="art-big"
-        style={{ opacity: phase === 'decrypt' ? 1 : 0.35 }}
-      >
-        {m}
-      </text>
+          {/* operations */}
+          <g className={`op ${phase === 'encrypt' ? 'now' : lockOn ? 'past' : ''}`}>
+            <path className="msg" pathLength={1} d="M114 83 H262" />
+            <path className="head" d="M254 78 L263 83 L254 88" />
+            <rect x="118" y="12" width="140" height="34" />
+            <KeyMark x={126} y={29} />
+            <text x="158" y="24" className="t sub">
+              public key
+            </text>
+            <text x="158" y="40" className="n">
+              {encryptShown}
+            </text>
+          </g>
+          <g className={`op ${phase === 'decrypt' ? 'now' : unlockOn ? 'past' : ''}`}>
+            <path className="msg" pathLength={1} d="M376 83 H524" />
+            <path className="head" d="M516 78 L525 83 L516 88" />
+            <rect x="380" y="12" width="140" height="34" />
+            <KeyMark x={388} y={29} secret />
+            <text x="420" y="24" className="t sub">
+              private key
+            </text>
+            <text x="420" y="40" className="n">
+              {decryptShown}
+            </text>
+          </g>
 
-      <g className={`art-machine ${phase === 'encrypt' ? 'on' : ''}`}>
-        <path d="M165 100 H345" className="art-arrow" />
-        <path d="M335 92 L347 100 L335 108" className="art-arrow" />
-        <rect x="170" y="14" width="170" height="56" rx="12" />
-        <text x="255" y="35" textAnchor="middle" className="art-small">
-          lock · public key
-        </text>
-        <text x="255" y="58" textAnchor="middle" className="art-formula">
-          M^{e} mod {n}
-        </text>
-      </g>
-      <g className={`art-machine ${phase === 'decrypt' ? 'on' : ''}`}>
-        <path d="M475 100 H655" className="art-arrow" />
-        <path d="M645 92 L657 100 L645 108" className="art-arrow" />
-        <rect x="480" y="14" width="170" height="56" rx="12" />
-        <text x="565" y="35" textAnchor="middle" className="art-small">
-          unlock · private key
-        </text>
-        <text x="565" y="58" textAnchor="middle" className="art-formula">
-          C^{d} mod {n}
-        </text>
-      </g>
-
-      <g className="art-packet move" style={{ transform: `translate(${at}px, 168px)` }}>
-        <circle r="17" />
-        <text y="5" textAnchor="middle">
-          {shown.length > 4 ? '…' : shown}
-        </text>
-      </g>
-    </svg>
+          <g
+            className="move packet"
+            style={{
+              transform: `translateX(${phase === 'keys' ? 0 : phase === 'encrypt' ? 262 : 524}px)`,
+            }}
+          >
+            <rect x="52" y="124" width="12" height="12" />
+          </g>
+        </svg>
+      </div>
+      <figcaption>
+        <b>Figure 2.1.</b> {label}
+      </figcaption>
+    </figure>
   );
 }

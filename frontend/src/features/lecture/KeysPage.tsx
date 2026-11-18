@@ -24,6 +24,7 @@ import {
   Words,
   TabList,
   TabPanel,
+  LessonHeader,
 } from './parts';
 
 const SOURCE: Record<KeyEntry['source'], string> = {
@@ -330,10 +331,7 @@ export function KeysPage() {
   );
   return (
     <article>
-      <header>
-        <p className="eyebrow">Using RSA · Keys</p>
-        <h1>My keys</h1>
-      </header>
+      <LessonHeader title="My keys" />
       <Idea>
         A key pair has a <b>public</b> key (e, n) you give to everyone and a <b>private</b> key (d,
         n) you keep secret. Anybody can lock a message with your public key; only you can unlock it.

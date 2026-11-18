@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { fermat, reducedResidues, whyRsaWorks, type WhyRsaRun } from './advanced';
+import { whyRsaWorks, type WhyRsaRun } from './advanced';
 import { parseWhole, rsaSetup } from './model';
 import {
   Collapse,
@@ -15,127 +15,14 @@ import {
   Words,
   StepControls,
   useSteps,
-  TabList,
-  TabPanel,
+  LessonHeader,
 } from './parts';
 
 function message(cause: unknown) {
   return cause instanceof Error ? cause.message : String(cause);
 }
 
-/* ───────────── Part 1: Fermat and Euler ───────────── */
-
-function FermatPart() {
-  const [aText, setA] = useState('7'),
-    [pText, setP] = useState('19'),
-    [nText, setN] = useState('10'),
-    [error, setError] = useState('');
-  const [run, setRun] = useState<ReturnType<typeof fermat> | null>(() => fermat(7n, 19n));
-  const calculate = (a = aText, p = pText) => {
-    try {
-      setRun(fermat(parseWhole(a, 'a'), parseWhole(p, 'p')));
-      setError('');
-    } catch (cause) {
-      setError(message(cause));
-    }
-  };
-  let totient: ReturnType<typeof reducedResidues> | null = null,
-    totientError = '';
-  try {
-    totient = reducedResidues(parseWhole(nText, 'n', 2n));
-  } catch (cause) {
-    totientError = message(cause);
-  }
-  return (
-    <>
-      <h2>
-        Fermat’s theorem: a<sup>p−1</sup> = 1 (mod p)
-      </h2>
-      <InputForm
-        summary={run ? `a = ${run.a}, p = ${run.p}` : ''}
-        onSubmit={() => calculate()}
-        onExample={() => {
-          setA('7');
-          setP('19');
-          calculate('7', '19');
-        }}
-        error={error}
-      >
-        <Field id="f-a" label="a" value={aText} onChange={setA} />
-        <Field id="f-p" label="p (prime)" value={pText} onChange={setP} />
-      </InputForm>
-      {run && (
-        <div className="calc">
-          <p className="formula">
-            <Pow base={fmt(run.a)} exp={fmt(run.p - 1n)} /> mod {fmt(run.p)} ={' '}
-            <strong>{fmt(run.run.result)}</strong>
-          </p>
-          <HandMethod run={run.run} />
-          <p>
-            It is 1, as Fermat’s theorem says for every a that shares no factor with the prime{' '}
-            {fmt(run.p)}.
-          </p>
-        </div>
-      )}
-      <Collapse title="Why is it true? (the lecture's proof, in numbers)">
-        {run && (
-          <>
-            <p>
-              Multiply every number 1, 2, …, {fmt(run.p - 1n)} by a = {fmt(run.a)} and reduce mod{' '}
-              {fmt(run.p)}. You get the same numbers again, only shuffled:
-            </p>
-            <p className="num">
-              {Array.from({ length: Number(run.p - 1n) }, (_, i) => BigInt(i + 1))
-                .slice(0, 20)
-                .map((k) => `${k}→${(k * run.a) % run.p}`)
-                .join('   ')}
-              {run.p > 21n ? '   …' : ''}
-            </p>
-            <p>
-              So the product of the first set equals the product of the second:{' '}
-              <Num>
-                a<sup>p−1</sup> × (p−1)! = (p−1)!
-              </Num>
-              , and cancelling (p−1)! leaves a<sup>p−1</sup> = 1.
-            </p>
-          </>
-        )}
-      </Collapse>
-
-      <h2>Euler’s totient φ(n) and Euler’s theorem</h2>
-      <p className="lead small">
-        φ(n) counts the numbers from 1 to n that share no factor with n. Euler’s theorem generalises
-        Fermat: <Num>a^φ(n) = 1 (mod n)</Num> when gcd(a, n) = 1.
-      </p>
-      <InputForm onSubmit={() => undefined} error={totientError} submitLabel={null}>
-        <Field id="e-n" label="n (2 to 300)" value={nText} onChange={setN} />
-      </InputForm>
-      {totient && (
-        <div className="calc">
-          <p>
-            Complete set of residues: 0 … {totient.complete - 1}. The <b>reduced</b> set (numbers
-            relatively prime to {nText.trim()}):
-          </p>
-          <p className="num">{totient.residues.map(String).join(', ')}</p>
-          <p>
-            So φ({nText.trim()}) = <strong>{totient.residues.length}</strong>.
-          </p>
-          <Collapse title="Shortcuts from the lecture">
-            <ul className="lines plain">
-              <li>For a prime p: φ(p) = p − 1 (for example φ(37) = 36).</li>
-              <li>
-                For two primes p and q: φ(pq) = (p − 1)(q − 1) (for example φ(21) = 2 × 6 = 12).
-              </li>
-            </ul>
-          </Collapse>
-        </div>
-      )}
-    </>
-  );
-}
-
-/* ───────────── Part 2: why decryption returns M ───────────── */
-
+// part 2: why decryption returns M
 function ProofSteps({ run }: { run: WhyRsaRun }) {
   const { setup, M, common, C } = run;
   const steps = useSteps(5);
@@ -162,7 +49,7 @@ function ProofSteps({ run }: { run: WhyRsaRun }) {
       </Collapse>
     </li>,
     <li key="3">
-      <h3>Step 3 · Decrypting means computing C^d = M^(ed)</h3>
+      <h3>Step 3 · Unlocking computes C^d = M^(ed)</h3>
       <p>
         C<sup>d</sup> = (M<sup>e</sup>)<sup>d</sup> = M<sup>ed</sup> = M<sup>1 + kφ(n)</sup> = M ×
         (M<sup>φ(n)</sup>)<sup>k</sup> (mod n).
@@ -186,9 +73,8 @@ function ProofSteps({ run }: { run: WhyRsaRun }) {
         </>
       ) : (
         <p>
-          Here gcd(M, n) = {fmt(common)}, not 1, so this proof does not apply directly (the lecture
-          assumes gcd(M, n) = 1). RSA still works for such M (it can be shown prime by prime), as
-          the check in the next step confirms.
+          Here gcd(M, n) = {fmt(common)}, not 1, so Euler’s theorem does not apply directly. RSA
+          still works for such M, as the check in the next step confirms.
         </p>
       )}
     </li>,
@@ -239,7 +125,7 @@ function ProofPart() {
     setFields((old) => ({ ...old, [key]: value }));
   return (
     <>
-      <h2>Why decryption returns the message</h2>
+      <h2>See it with numbers</h2>
       <InputForm
         summary={
           run ? `p = ${run.setup.p}, q = ${run.setup.q}, e = ${run.setup.e}, M = ${run.M}` : ''
@@ -263,38 +149,40 @@ function ProofPart() {
 }
 
 export function WhyPage() {
-  const [tab, setTab] = useState<'fermat' | 'proof'>('fermat');
   return (
     <article>
-      <header>
-        <p className="eyebrow">Chapter 8 and 9 · Fermat, Euler, RSA</p>
-        <h1>Why RSA works</h1>
-      </header>
+      <LessonHeader title="Why RSA works" />
       <Idea>
-        Raising a number to the power φ(n) always gives back 1 (mod n). Because e and d are chosen
-        so that e × d is one more than a multiple of φ(n), encrypting and then decrypting multiplies
-        M by 1 over and over, and lands on M again.
+        Locking raises M to the power e and unlocking raises the result to the power d. Because d
+        and e are chosen so that e × d = 1 + k × φ(n), the two steps together give M × (M
+        <sup>φ(n)</sup>)<sup>k</sup>, and Euler’s theorem says M<sup>φ(n)</sup> = 1. So you get M
+        back.
       </Idea>
-      <SlideRef>
-        ch08 “Fermat’s Theorem”, “Euler Totient Function”, “Euler’s Theorem”; ch09 “Why RSA Works”.
-      </SlideRef>
       <UsedFor>
         It shows that unlocking really returns your message, so RSA is correct and not a trick.
       </UsedFor>
+      <SlideRef>ch08 “Euler Totient Function”, “Euler’s Theorem”; ch09 “Why RSA Works”.</SlideRef>
       <Words terms={['phi', 'coprime', 'prime', 'mod', 'exponent']} />
-      <TabList
-        id="why"
-        label="Parts"
-        items={[
-          { id: 'fermat', label: '1 · Fermat and Euler' },
-          { id: 'proof', label: '2 · Why decryption works' },
-        ]}
-        value={tab}
-        onChange={setTab}
-      />
-      <TabPanel id="why" value={tab}>
-        {tab === 'fermat' ? <FermatPart /> : <ProofPart />}
-      </TabPanel>
+      <h2>Two facts to know</h2>
+      <ol className="lines">
+        <li>
+          <b>φ(n) for RSA.</b> φ(n) counts the numbers from 1 to n that share no factor with n. For
+          n = p × q with p and q prime, φ(n) = (p − 1)(q − 1). For example φ(187) = 16 × 10 = 160.
+        </li>
+        <li>
+          <b>Euler’s theorem.</b> If gcd(M, n) = 1, then{' '}
+          <Num>
+            M<sup>φ(n)</sup> = 1 (mod n)
+          </Num>
+          .
+        </li>
+      </ol>
+      <ProofPart />
+      <p className="lead small">
+        What if M shares a factor with n (M is a multiple of p or q)? That is extremely unlikely
+        with real keys, and RSA still works: the same argument holds separately mod p and mod q,
+        because n is a product of two different primes.
+      </p>
     </article>
   );
 }

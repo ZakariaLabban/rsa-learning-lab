@@ -1,7 +1,5 @@
-/**
- * The rest of the lecture topics as step tables: CRT, why RSA works (Fermat / Euler), signatures
- * by hand, and the three attacks. Built on the same small functions as model.ts.
- */
+// the other lecture topics: CRT, why RSA works, signatures and the attacks.
+// uses the functions from model.ts
 import {
   extendedEuclid,
   gcdTable,
@@ -15,20 +13,19 @@ import {
 const gcdOf = (a: bigint, b: bigint) => gcdTable(a, b).gcd;
 const mod = (a: bigint, n: bigint) => ((a % n) + n) % n;
 
-/* ───────────── ch08: Chinese Remainder Theorem ───────────── */
-
+// ch08: Chinese Remainder Theorem
 export type CrtRow = {
   m: bigint;
-  /** A mod m. */
+  // A mod m.
   a: bigint;
-  /** Mᵢ = M / mᵢ. */
+  // mᵢ = M / mᵢ.
   Mi: bigint;
-  /** Mᵢ⁻¹ mod mᵢ, found with the Extended Euclid table. */
+  // mᵢ⁻¹ mod mᵢ, found with the Extended Euclid table.
   inverse: EeaResult;
   invValue: bigint;
-  /** cᵢ = Mᵢ × (Mᵢ⁻¹ mod mᵢ). */
+  // cᵢ = Mᵢ × (Mᵢ⁻¹ mod mᵢ).
   c: bigint;
-  /** aᵢ × cᵢ. */
+  // aᵢ × cᵢ.
   term: bigint;
 };
 export type CrtResult = {
@@ -36,7 +33,7 @@ export type CrtResult = {
   M: bigint;
   rows: CrtRow[];
   sum: bigint;
-  /** The unique A in 0 … M − 1. */
+  // the unique A in 0 … M − 1.
   A: bigint;
 };
 
@@ -44,7 +41,7 @@ export function crtSplit(A: bigint, moduli: readonly bigint[]): bigint[] {
   return moduli.map((m) => mod(A, m));
 }
 
-/** Rebuilds A (mod M) from its residues, exactly as the "Chinese Remainder Theorem" slide. */
+// rebuilds A (mod M) from its residues, exactly as the "Chinese Remainder Theorem" slide.
 export function crtSolve(moduli: readonly bigint[], residues: readonly bigint[]): CrtResult {
   if (moduli.length < 2 || moduli.length > 6) throw new Error('Use 2 to 6 moduli.');
   if (moduli.length !== residues.length) throw new Error('Give one residue for each modulus.');
@@ -76,12 +73,12 @@ export type CrtDecryption = {
   p: bigint;
   q: bigint;
   n: bigint;
-  /** For each prime: C mod prime, the reduced exponent, and the small power. */
+  // for each prime: C mod prime, the reduced exponent, and the small power.
   parts: {
     prime: bigint;
     cr: bigint;
     exponent: bigint;
-    /** True when d mod (prime − 1) was 0 and prime − 1 was used instead. */
+    // true when d mod (prime − 1) was 0 and prime − 1 was used instead.
     exponentAdjusted: boolean;
     value: bigint;
     run: PowerResult | null;
@@ -90,7 +87,7 @@ export type CrtDecryption = {
   M: bigint;
 };
 
-/** RSA decryption by CRT: work mod p and mod q separately, then combine (ch09 "Efficient Decryption"). */
+// RSA decryption by CRT: work mod p and mod q separately, then combine (ch09 "Efficient Decryption").
 export function crtDecrypt(C: bigint, d: bigint, p: bigint, q: bigint): CrtDecryption {
   const n = p * q;
   if (C < 0n || C >= n) throw new Error(`C must satisfy 0 ≤ C < n = ${n}.`);
@@ -111,8 +108,7 @@ export function crtDecrypt(C: bigint, d: bigint, p: bigint, q: bigint): CrtDecry
   return { C, d, p, q, n, parts, combine, M: combine.A };
 }
 
-/* ───────────── ch08/09: Fermat, Euler and why RSA works ───────────── */
-
+// ch08/09: Fermat, Euler and why RSA works
 export function reducedResidues(n: bigint): { residues: bigint[]; complete: number } {
   if (n < 2n || n > 300n) throw new Error('Use 2 ≤ n ≤ 300 to list the residues.');
   const residues: bigint[] = [];
@@ -129,12 +125,12 @@ export function fermat(a: bigint, p: bigint) {
 export type WhyRsaRun = {
   setup: RsaSetup;
   M: bigint;
-  /** gcd(M, n). */
+  // gcd(M, n).
   common: bigint;
   C: bigint;
   encrypt: PowerResult;
   decrypt: PowerResult;
-  /** M^φ(n) mod n, when gcd(M, n) = 1. */
+  // M^φ(n) mod n, when gcd(M, n) = 1.
   euler: PowerResult | null;
   recovered: bigint;
 };
@@ -157,16 +153,15 @@ export function whyRsaWorks(setup: RsaSetup, M: bigint): WhyRsaRun {
   };
 }
 
-/* ───────────── ch09: signatures (authentication) by hand ───────────── */
-
+// ch09: signatures (authentication) by hand
 export type SignatureRun = {
   setup: RsaSetup;
   M: bigint;
-  /** S = M^d mod n, made with the PRIVATE key. */
+  // S = M^d mod n, made with the PRIVATE key.
   sign: PowerResult;
-  /** What the receiver gets and checks, possibly altered. */
+  // what the receiver gets and checks, possibly altered.
   receivedM: bigint;
-  /** S^e mod n, computed with the PUBLIC key. */
+  // S^e mod n, computed with the PUBLIC key.
   verify: PowerResult;
   valid: boolean;
 };
@@ -183,13 +178,12 @@ export function signByHand(setup: RsaSetup, M: bigint, receivedM: bigint = M): S
   return { setup, M, sign, receivedM, verify, valid: verify.result === receivedM };
 }
 
-/* ───────────── ch09: the factoring problem ───────────── */
-
+// ch09: the factoring problem
 export type FactorRun = {
   n: bigint;
-  /** Prime divisors tried, in order, up to and including the one that worked. */
+  // prime divisors tried, in order, up to and including the one that worked.
   rows: { d: number; remainder: bigint }[];
-  /** How many tries there were in total (rows can be shortened for display). */
+  // how many tries there were in total (rows can be shortened for display).
   tries: number;
   shownFirst: number;
   factor: bigint | null;
@@ -209,7 +203,7 @@ export function primesUpTo(limit: number): number[] {
   return list;
 }
 
-/** Trial division by primes up to √n (the "sieve using trial division" slide). */
+// trial division by primes up to √n (the "sieve using trial division" slide).
 export function trialDivision(n: bigint, shown = 40): FactorRun {
   if (n < 4n) throw new Error('Use n ≥ 4.');
   if (n > MAX_FACTOR_N) throw new Error('Trial division here is limited to n ≤ 10¹² (13 digits).');
@@ -246,7 +240,7 @@ export type CrackRun = {
   M: bigint;
 };
 
-/** Everything an attacker does once n is factored: φ(n), d, then M = C^d mod n. */
+// everything an attacker does once n is factored: φ(n), d, then M = C^d mod n.
 export function crackKey(n: bigint, e: bigint, C: bigint): CrackRun {
   const factoring = trialDivision(n);
   if (factoring.factor === null) throw new Error(`${n} has no small factor: it looks prime.`);
@@ -268,8 +262,7 @@ export function crackKey(n: bigint, e: bigint, C: bigint): CrackRun {
   return { factoring, p, q, phi, inverse, d, decrypt, M: decrypt.result };
 }
 
-/* ───────────── ch09: small e (broadcast) attack ───────────── */
-
+// ch09: small e (broadcast) attack
 export function integerRoot(value: bigint, k: bigint): { root: bigint; exact: boolean } {
   if (value < 0n || k < 1n) throw new Error('Use a non-negative value and k ≥ 1.');
   let low = 0n,
@@ -297,7 +290,7 @@ export type BroadcastRun = {
   exact: boolean;
 };
 
-/** Håstad's attack for tiny e: CRT gives M^e exactly, then take the e-th root. */
+// håstad's attack for tiny e: CRT gives M^e exactly, then take the e-th root.
 export function broadcastAttack(
   moduli: readonly bigint[],
   ciphertexts: readonly bigint[],
@@ -309,8 +302,7 @@ export function broadcastAttack(
   return { e, crt, root, exact };
 }
 
-/* ───────────── ch09: why determinism hurts (YES / NO) ───────────── */
-
+// ch09: why determinism hurts (YES / NO)
 export function guessAttack(setup: RsaSetup, candidates: readonly bigint[], C: bigint) {
   return candidates.map((M) => {
     if (M < 0n || M >= setup.n)

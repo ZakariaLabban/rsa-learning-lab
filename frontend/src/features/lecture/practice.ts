@@ -1,7 +1,5 @@
-/**
- * Practice questions in the style of the lecture. Every answer is computed by the same
- * step-by-step functions the lessons use, so the "show the steps" solution is the real work.
- */
+// practice questions like in the lecture. answers come from the same
+// functions the lessons use
 import { crtSolve, crtSplit, type CrtResult } from './advanced';
 import {
   extendedEuclid,
@@ -45,7 +43,7 @@ export const PRACTICE_KINDS: PracticeKind[] = [
   'crt',
 ];
 
-/** A small reproducible generator so a seed always gives the same quiz. Not for cryptography. */
+// tiny seeded random generator (same seed = same quiz). not for real crypto
 function generator(seed: number) {
   let state = seed >>> 0;
   return (limit: number) => {
@@ -131,7 +129,7 @@ export function practiceQuestion(kind: PracticeKind, seed: number, level: Level)
       return {
         id,
         kind,
-        title: 'Fast power',
+        title: 'Powers mod n',
         prompt: `Compute ${a}^${b} mod ${n}.`,
         answer: run.result,
         hint: 'Square and reduce: a¹, a², a⁴, a⁸ … then multiply the powers that add up to the exponent.',

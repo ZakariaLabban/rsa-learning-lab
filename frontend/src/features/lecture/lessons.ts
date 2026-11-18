@@ -1,18 +1,18 @@
 import type { PracticeKind } from './practice';
 
-/** One lesson of the course. Plain data, so titles, descriptions and the sitemap share it. */
+// one lesson (plain data, also used for titles and the sitemap)
 export type Lesson = {
   path: string;
   label: string;
   title: string;
   text: string;
   source: string;
-  /** A practice question that matches this lesson. */
+  // matching practice question
   practice?: PracticeKind;
 };
 export type Group = { name: string; blurb: string; lessons: Lesson[] };
 
-/** The course, in the order a first-time student should follow it. */
+// lessons in order
 export const GROUPS: Group[] = [
   {
     name: 'Start here',
@@ -49,9 +49,9 @@ export const GROUPS: Group[] = [
       },
       {
         path: '/lecture/power',
-        label: 'Fast powers',
+        label: 'Powers mod n',
         title: 'Square and multiply',
-        text: 'Compute a^b mod n with small steps and the lecture table.',
+        text: 'Compute a^b mod n in small steps, by hand or with the exponentiation algorithm.',
         source: 'Chapter 9',
         practice: 'power',
       },
@@ -177,3 +177,13 @@ export const GROUPS: Group[] = [
   },
 ];
 export const LESSONS = GROUPS.flatMap((group) => group.lessons);
+
+// lesson number: 0 for the overview, 1.1, 1.2 ... 6 for practice
+export function clauseNumber(path: string): string {
+  for (const [g, group] of GROUPS.entries())
+    for (const [i, lesson] of group.lessons.entries())
+      if (lesson.path === path) return group.lessons.length === 1 ? String(g) : `${g}.${i + 1}`;
+  return '';
+}
+
+// number of a group, for the contents

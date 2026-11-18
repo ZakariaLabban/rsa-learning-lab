@@ -1,6 +1,6 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, PanelLeft, Sun } from 'lucide-react';
 import { useLabTheme } from '../../app/LabTheme';
 import { rememberInterface } from '../../app/interfacePreference';
 import { BroadcastPage, FactoringPage, GuessingPage } from './AttackPages';
@@ -11,17 +11,15 @@ import { KeysPage } from './KeysPage';
 import { MessagesPage } from './MessagesPage';
 import { PowerPage } from './PowerPage';
 import { PracticePage } from './PracticePage';
-import { GROUPS, LESSONS } from './lessons';
+import { clauseNumber, GROUPS, LESSONS } from './lessons';
 import { PrimalityPage } from './PrimalityPage';
 import { RsaPage } from './RsaPage';
 import { SignaturesPage } from './SignaturesPage';
 import { StartPage } from './StartPage';
 import { WhyPage } from './WhyPage';
 import { resetPageMeta, setPageMeta } from './pageMeta';
-import './lecture.css';
-import './lecture-course.css';
-import './lecture-art.css';
-import './lecture-polish.css';
+import './standard.css';
+import './standard-figures.css';
 
 const ELEMENTS: Record<string, ReactNode> = {
   '/lecture/start': <StartPage />,
@@ -45,65 +43,70 @@ const ELEMENTS: Record<string, ReactNode> = {
 function CourseMap({ current }: { current: string }) {
   return (
     <nav className="course-map" aria-label="Course map">
-      {GROUPS.map((group) => (
-        <details
-          key={`${group.name}-${group.lessons.some((l) => l.path === current)}`}
-          open={group.lessons.some((lesson) => lesson.path === current)}
-        >
-          <summary>{group.name}</summary>
-          <ul>
-            {group.lessons.map((lesson) => (
-              <li key={lesson.path}>
-                <NavLink to={lesson.path}>{lesson.label}</NavLink>
-              </li>
-            ))}
-          </ul>
-        </details>
-      ))}
+      {GROUPS.map((group, g) => {
+        const here = group.lessons.some((l) => l.path === current);
+        return (
+          <details key={`${group.name}-${here}`} open={here}>
+            <summary>
+              <span className="cn">{g}</span>
+              {group.name}
+            </summary>
+            <ul>
+              {group.lessons.map((lesson) => (
+                <li key={lesson.path}>
+                  <NavLink to={lesson.path}>
+                    <span className="cn" aria-hidden="true">
+                      {clauseNumber(lesson.path)}
+                    </span>
+                    {lesson.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </details>
+        );
+      })}
     </nav>
   );
 }
 
 function Home() {
-  let number = 0;
   return (
     <article>
       <header>
-        <p className="eyebrow">RSA Learning Lab</p>
         <h1>Learn RSA, one step at a time</h1>
-        <p className="lead">
-          This course follows the lecture slides. Every page shows the same tables as the slides and
-          fills them in one row at a time. You decide when to move on: press “Next step”.
-        </p>
       </header>
+      <p className="lead">
+        This course follows the lecture slides. Every page shows the same tables as the slides and
+        fills them in one row at a time. You decide when to move on: press “Next step”.
+      </p>
       <div className="start-cta">
         <Link to={LESSONS[0].path} className="button primary big">
           Start with lesson 1 →
         </Link>
         <span className="note">
-          New to RSA? Follow the lessons in order. Already know some? Jump in anywhere.
+          New to RSA? Follow the clauses in order. Already know some? Jump in anywhere.
         </span>
       </div>
-      {GROUPS.map((group) => (
+      <h2 className="contents-title">Contents</h2>
+      {GROUPS.map((group, g) => (
         <section key={group.name} className="course-group">
-          <h2>{group.name}</h2>
-          <p className="note">{group.blurb}</p>
-          <ol className="cards" start={number + 1}>
-            {group.lessons.map((lesson) => {
-              number++;
-              return (
-                <li key={lesson.path}>
-                  <Link to={lesson.path}>
-                    <span className="number">{number}</span>
-                    <span>
-                      <strong>{lesson.title}</strong>
-                      <small>{lesson.source}</small>
-                      <span className="text">{lesson.text}</span>
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
+          <h3 className="part">
+            <span className="number">{g}</span>
+            {group.name}
+            <small>{group.blurb}</small>
+          </h3>
+          <ol className="cards">
+            {group.lessons.map((lesson) => (
+              <li key={lesson.path}>
+                <Link to={lesson.path}>
+                  <span className="number">{clauseNumber(lesson.path)}</span>
+                  <strong>{lesson.title}</strong>
+                  <small>{lesson.source}</small>
+                  <span className="text">{lesson.text}</span>
+                </Link>
+              </li>
+            ))}
           </ol>
         </section>
       ))}
@@ -119,12 +122,11 @@ function NotFound() {
   return (
     <article>
       <header>
-        <p className="eyebrow">Error 404</p>
         <h1>Page not found</h1>
       </header>
       <p className="lead">
-        This address does not match a lesson. It may have been mistyped, or the lesson may have
-        moved.
+        Error 404. This address does not match a lesson. It may have been mistyped, or the lesson
+        may have moved.
       </p>
       <div className="start-cta">
         <Link to="/lecture" className="button primary big">
@@ -160,16 +162,15 @@ function LessonNav({ path }: { path: string }) {
       <nav className="lesson-nav" aria-label="Previous and next lesson">
         {previous ? (
           <Link to={previous.path} className="prev">
-            <small>← Previous</small>
-            {previous.label}
+            <small>Previous lesson</small>← {previous.label}
           </Link>
         ) : (
           <span />
         )}
         {next ? (
           <Link to={next.path} className="next">
-            <small>Next lesson →</small>
-            {next.label}
+            <small>Next lesson</small>
+            {next.label} →
           </Link>
         ) : (
           <Link to="/lecture" className="next">
@@ -186,6 +187,22 @@ export function LectureShell() {
   const { theme, setTheme } = useLabTheme();
   const { pathname } = useLocation();
   const current = pathname.replace(/\/$/, '').toLowerCase();
+  const [railOpen, setRailOpen] = useState(() => {
+    try {
+      return localStorage.getItem('rsa-lab-rail') !== 'closed';
+    } catch {
+      return true;
+    }
+  });
+  const toggleRail = () => {
+    const next = !railOpen;
+    setRailOpen(next);
+    try {
+      localStorage.setItem('rsa-lab-rail', next ? 'open' : 'closed');
+    } catch {
+      /* the choice just is not remembered */
+    }
+  };
   useEffect(() => rememberInterface('lecture'), []);
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -194,7 +211,7 @@ export function LectureShell() {
     if (lesson) setPageMeta({ title: lesson.title, description: lesson.text, path: lesson.path });
     else if (atHome) setPageMeta({});
     else setPageMeta({ title: 'Page not found', notFound: true });
-    // When another view takes over (or the address changes), nothing of this page is left behind.
+    // reset the page info when we leave
     return resetPageMeta;
   }, [current]);
   return (
@@ -203,6 +220,16 @@ export function LectureShell() {
         Skip to the lesson
       </a>
       <header className="bar">
+        <button
+          type="button"
+          className="rail-toggle"
+          aria-expanded={railOpen}
+          aria-controls="course-rail"
+          onClick={toggleRail}
+        >
+          <PanelLeft size={16} aria-hidden="true" />
+          <span>{railOpen ? 'Hide contents' : 'Show contents'}</span>
+        </button>
         <Link to="/" className="brand">
           RSA Lab
         </Link>
@@ -216,11 +243,16 @@ export function LectureShell() {
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
         >
-          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          {theme === 'dark' ? (
+            <Sun size={16} aria-hidden="true" />
+          ) : (
+            <Moon size={16} aria-hidden="true" />
+          )}
+          <span aria-hidden="true">{theme === 'dark' ? 'Light' : 'Dark'}</span>
         </button>
       </header>
-      <div className="layout">
-        <aside className="side">
+      <div className={`layout${railOpen ? '' : ' rail-closed'}`}>
+        <aside className="side" id="course-rail">
           <details className="map-toggle" open={false}>
             <summary>Course map</summary>
             <CourseMap current={current} />
