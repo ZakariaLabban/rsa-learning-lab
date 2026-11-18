@@ -126,7 +126,7 @@ export function Workshop() {
         Skip to workshop
       </a>
       <header className="world-header">
-        <Link to="/playground" className="wordmark" aria-label="RSA playground home">
+        <Link to="/playground" className="wordmark">
           rsa<span>playground</span>
           <span className="prototype">THE LEARNING LAB</span>
         </Link>

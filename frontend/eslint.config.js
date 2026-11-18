@@ -17,4 +17,6 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
+  // One-off Node scripts (for example the share-image generator).
+  { files: ['scripts/**/*.mjs'], languageOptions: { globals: { ...globals.node } } },
 );

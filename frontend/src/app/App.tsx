@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, matchPath, useLocation } from 'react-router-dom';
+import { ErrorBoundary } from './ErrorBoundary';
 import { LabThemeProvider } from './LabTheme';
 import { preferredInterface } from './interfacePreference';
 
@@ -52,11 +53,21 @@ function Experiences() {
   );
 }
 
+/** A page that fails to draw shows a clear message; moving to another address tries again. */
+function Guarded() {
+  const { pathname } = useLocation();
+  return (
+    <ErrorBoundary resetKey={pathname}>
+      <Experiences />
+    </ErrorBoundary>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <LabThemeProvider>
-        <Experiences />
+        <Guarded />
       </LabThemeProvider>
     </BrowserRouter>
   );

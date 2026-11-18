@@ -38,6 +38,9 @@ same RSA engine. See [the workshop guide](docs/animated-workshop.md) for behavio
 rollback details, and [animated lessons](docs/animated-lessons.md) for the route map, player,
 private-value handling and seeded Practice questions/progress.
 
+Error and 404 pages, accessibility checks, page titles and link previews, and Lighthouse
+results are described in [hardening](docs/hardening.md).
+
 ## Key handling and limitations
 
 Keys live in this tab's memory, with the last eight keys available in its history.

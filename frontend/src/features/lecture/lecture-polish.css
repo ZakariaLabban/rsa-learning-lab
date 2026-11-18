@@ -125,7 +125,7 @@
 .lecture .used-for {
   margin: 0 0 12px;
   padding: 10px 16px;
-  border-left: 5px solid #2f9e6e;
+  border-left: 5px solid var(--l-green);
   border-radius: 0 10px 10px 0;
   background: var(--l-surface);
   font-size: 17px;
@@ -334,7 +334,7 @@
   font-size: 17px;
 }
 .lecture .idea + .used-for strong {
-  color: #2f9e6e;
+  color: var(--l-green);
 }
 .lecture table.grid th:first-child {
   width: 1%;
@@ -342,4 +342,34 @@
 }
 .lecture .slide-ref {
   margin: 4px 0 6px;
+}
+
+/* Keyboard users can jump past the menu. */
+.lecture .skip-link {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 20;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--l-accent);
+  color: var(--l-accent-text);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.lecture .skip-link:focus {
+  transform: none;
+}
+.lecture main:focus {
+  outline: none;
+}
+
+/* Links inside sentences are underlined, so they do not rely on colour alone. */
+.lecture main p a:not(.button),
+.lecture main li a:not(.button),
+.lecture main .explain a:not(.button),
+.lecture main small a:not(.button) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }

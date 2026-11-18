@@ -249,7 +249,7 @@ export function MyKeys({ onUse }: { onUse?: (key: PrivateKey) => Promise<void> }
                       )}
                       <button
                         className="text-button"
-                        aria-label={`Export public key of ${entry.name}`}
+                        aria-label={`.pub file: export public key of ${entry.name}`}
                         onClick={() =>
                           download(
                             `${fileSlug(entry.name)}.pub`,

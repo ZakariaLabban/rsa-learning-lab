@@ -1,0 +1,87 @@
+/* Shown when a page cannot be drawn. Self-contained: it must work even if other styles failed. */
+.error-page {
+  --e-bg: #f7f8fa;
+  --e-surface: #ffffff;
+  --e-text: #172033;
+  --e-muted: #536076;
+  --e-line: #cfd6e2;
+  --e-accent: #1456b8;
+  --e-accent-text: #ffffff;
+  box-sizing: border-box;
+  max-width: 640px;
+  margin: 12vh auto 0;
+  padding: 28px 24px;
+  border: 1px solid var(--e-line);
+  border-radius: 14px;
+  background: var(--e-surface);
+  color: var(--e-text);
+  font-family: 'Segoe UI', Inter, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.55;
+}
+:root[data-theme='dark'] .error-page {
+  --e-bg: #10161f;
+  --e-surface: #172030;
+  --e-text: #edf1f7;
+  --e-muted: #a3afc2;
+  --e-line: #34425a;
+  --e-accent: #7db4ff;
+  --e-accent-text: #0b1320;
+}
+.error-page h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  line-height: 1.2;
+}
+.error-page p {
+  margin: 0 0 18px;
+  color: var(--e-muted);
+}
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.error-actions .primary,
+.error-actions .secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 10px 24px;
+  border: 2px solid var(--e-accent);
+  border-radius: 12px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.error-actions .primary {
+  background: var(--e-accent);
+  color: var(--e-accent-text);
+}
+.error-actions .secondary {
+  background: transparent;
+  color: var(--e-accent);
+}
+.error-page :is(button, a, summary):focus-visible {
+  outline: 3px solid var(--e-accent);
+  outline-offset: 2px;
+}
+.error-page summary {
+  color: var(--e-muted);
+  cursor: pointer;
+  font-size: 16px;
+}
+.error-page pre {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--e-bg);
+  color: var(--e-text);
+  font-size: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
