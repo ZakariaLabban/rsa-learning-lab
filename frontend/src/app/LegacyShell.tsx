@@ -147,7 +147,7 @@ export default function LegacyShell({ active }: { active: boolean }) {
           to="/legacy"
           className="brand"
           onClick={() => setMobileNav(false)}
-          aria-label="RSA Lab home"
+          aria-label="rsalab home"
         >
           <span className="brand-mark">
             <Braces size={23} />

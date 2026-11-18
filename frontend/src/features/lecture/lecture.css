@@ -8,6 +8,8 @@
   --l-accent: #1456b8;
   --l-accent-text: #ffffff;
   --l-current: #fff3c4;
+  --l-flash: #ffe48a;
+  --l-green: #176b45;
   --l-answer: #d7f2df;
   --l-bad: #fde4e1;
   --l-bad-text: #8a1f14;
@@ -27,18 +29,20 @@
   --l-accent: #7db4ff;
   --l-accent-text: #0b1320;
   --l-current: #4a3f12;
+  --l-flash: #6a5a16;
+  --l-green: #5fd0a0;
   --l-answer: #1d4a2c;
   --l-bad: #4d2420;
   --l-bad-text: #ffc9c2;
 }
 /* Motion is gentle: only the newest row or card fades in, and never when the system asks for less. */
+/* A short colour flash and a small slide. Text is never made see-through, so it stays readable. */
 @keyframes lecture-in {
   from {
-    opacity: 0.2;
+    background-color: var(--l-flash);
     transform: translateY(-4px);
   }
   to {
-    opacity: 1;
     transform: none;
   }
 }
