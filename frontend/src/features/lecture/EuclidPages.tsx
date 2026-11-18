@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { extendedEuclid, gcdTable, parseWhole, type EeaResult, type GcdRow } from './model';
 import {
-  Collapse,
   Field,
   fmt,
   Idea,
@@ -12,19 +11,54 @@ import {
   UsedFor,
   useSteps,
   Words,
+  LessonHeader,
+  Procedure,
+  CheckAnswer,
 } from './parts';
 
-/* ───────────── GCD (ch04: "Example GCD(1970,1066)") ───────────── */
-
+// GCD (ch04: "Example GCD(1970,1066)")
 type GcdRun = { a: bigint; b: bigint; rows: GcdRow[]; gcd: bigint };
 
 function GcdSteps({ run }: { run: GcdRun }) {
   const steps = useSteps(Math.max(1, run.rows.length));
   const last = run.rows[steps.shown - 1];
+  // every row does lines 3-5, then line 2 (stop) or line 6 (repeat)
+  const active = [...(steps.shown === 1 ? [1] : []), 3, 4, 5, last.remainder === 0n ? 2 : 6];
   return (
     <>
+      <Procedure
+        id="Algorithm 1.1"
+        name="EUCLID(a, b)"
+        input="integers a and b"
+        output="gcd(a, b)"
+        active={active}
+        lines={[
+          { text: 'A = a ; B = b' },
+          { text: 'if B = 0 return A = gcd(a, b)' },
+          { text: 'R = A mod B' },
+          { text: 'A = B' },
+          { text: 'B = R' },
+          { text: 'goto 2' },
+        ]}
+      />
+      <CheckAnswer
+        key={`check-${run.a}-${run.b}`}
+        id="gcd-check"
+        question={
+          <>
+            Work it out on paper, then type gcd({fmt(run.a)}, {fmt(run.b)}):
+          </>
+        }
+        answer={run.gcd}
+        wrongHint="Not quite. Divide the bigger number by the smaller one, keep the remainder, and repeat. The gcd is the last divisor before the remainder reaches 0. Step through the table to compare."
+      />
       <StepControls steps={steps} />
-      <div className="table-wrap">
+      <div
+        className="table-wrap"
+        tabIndex={0}
+        role="region"
+        aria-label="Table, scrolls sideways on narrow screens"
+      >
         <table className="grid">
           <thead>
             <tr>
@@ -90,10 +124,7 @@ export function GcdPage() {
   };
   return (
     <article>
-      <header>
-        <p className="eyebrow">Lesson 2 · Chapter 4 · Euclidean algorithm</p>
-        <h1>Greatest common divisor</h1>
-      </header>
+      <LessonHeader title="Greatest common divisor" />
       <Idea>
         The <b>gcd</b> of two numbers is the biggest number that divides both. Euclid’s trick:
         gcd(a, b) = gcd(b, a mod b). Divide, keep the remainder, and repeat with the pair (divisor,
@@ -125,48 +156,206 @@ export function GcdPage() {
   );
 }
 
-/* ───────────── Inverse (ch04: "Finding Inverses", "Inverse of 550 in GF(1759)") ───────────── */
+// inverse (ch04: "Finding Inverses", "Inverse of 550 in GF(1759)")
+type Mark = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  label: string;
+  kind: 'src' | 'dst';
+  // true if the cell is in the highlighted row (outline needs to be dark)
+  band: boolean;
+};
 
-export function EeaTable({ run, shown }: { run: EeaResult; shown: number }) {
+// extended euclid table. with `links` the newest row outlines the cells it was
+// calculated from. `column` = which of B1, B2, B3 to show
+export function EeaTable({
+  run,
+  shown,
+  links = false,
+  column = 2,
+}: {
+  run: EeaResult;
+  shown: number;
+  links?: boolean;
+  column?: number;
+}) {
   const done = shown >= run.rows.length;
+  const [hideSkip, setHideSkip] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const [marks, setMarks] = useState<{ list: Mark[]; width: number; height: number }>({
+    list: [],
+    width: 0,
+    height: 0,
+  });
+  useLayoutEffect(() => {
+    const box = wrap.current;
+    if (!links || !box || shown < 2) {
+      setMarks({ list: [], width: 0, height: 0 });
+      return;
+    }
+    const measure = () => {
+      const base = box.getBoundingClientRect();
+      const at = (row: number, col: number, label: string, kind: Mark['kind']): Mark | null => {
+        const cell = box.querySelector<HTMLElement>(`[data-r="${row}"][data-c="${col}"]`);
+        if (!cell) return null;
+        const r = cell.getBoundingClientRect();
+        return {
+          x: r.left - base.left + box.scrollLeft,
+          y: r.top - base.top,
+          w: r.width,
+          h: r.height,
+          label,
+          kind,
+          band: row === shown - 1,
+        };
+      };
+      const r = shown - 1;
+      const list = [
+        at(r - 1, 1 + column, 'A', 'src'),
+        at(r - 1, 4 + column, 'B', 'src'),
+        at(r, 0, 'Q', 'src'),
+        at(r, 4 + column, 'new B', 'dst'),
+      ].filter((mark): mark is Mark => mark !== null);
+      setMarks({ list, width: box.scrollWidth, height: box.scrollHeight });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(box);
+    const table = box.querySelector('table');
+    if (table) observer.observe(table);
+    let live = true;
+    void document.fonts?.ready.then(() => live && measure());
+    return () => {
+      live = false;
+      observer.disconnect();
+    };
+  }, [links, shown, run, column, hideSkip]);
   return (
-    <div className="table-wrap">
-      <table className="grid eea">
-        <thead>
-          <tr>
-            <th scope="col">Q</th>
-            <th scope="col">A1</th>
-            <th scope="col">A2</th>
-            <th scope="col">A3</th>
-            <th scope="col" className="split">
-              B1
-            </th>
-            <th scope="col">B2</th>
-            <th scope="col">B3</th>
-          </tr>
-        </thead>
-        <tbody>
-          {run.rows.slice(0, shown).map((row, index) => {
-            const isLast = index === run.rows.length - 1 && done;
-            return (
-              <tr key={index} className={index === shown - 1 ? 'current' : ''}>
-                <td>{row.q === null ? '—' : fmt(row.q)}</td>
-                <td>{fmt(row.A[0])}</td>
-                <td>{fmt(row.A[1])}</td>
-                <td>{fmt(row.A[2])}</td>
-                <td className="split">{fmt(row.B[0])}</td>
-                <td className={isLast && run.inverse !== null ? 'answer' : ''}>{fmt(row.B[1])}</td>
-                <td>{fmt(row.B[2])}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <>
+      {links && (
+        <p className="skip-note">
+          <b>You can skip A1 and B1.</b> The inverse only needs A2, B2, A3 and B3, so those two
+          columns never change the answer.{' '}
+          <button
+            type="button"
+            className="quiet"
+            aria-pressed={hideSkip}
+            onClick={() => setHideSkip(!hideSkip)}
+          >
+            {hideSkip ? 'Show A1 and B1' : 'Hide A1 and B1'}
+          </button>
+        </p>
+      )}
+      <div
+        className="table-wrap"
+        ref={wrap}
+        tabIndex={0}
+        role="region"
+        aria-label="Table, scrolls sideways on narrow screens"
+      >
+        <table className={`grid eea${hideSkip ? ' hide-skip' : ''}`}>
+          <thead>
+            <tr>
+              <th scope="col">Q</th>
+              <th scope="col" className="skippable">
+                A1
+              </th>
+              <th scope="col">A2</th>
+              <th scope="col">A3</th>
+              <th scope="col" className="split skippable">
+                B1
+              </th>
+              <th scope="col">B2</th>
+              <th scope="col">B3</th>
+            </tr>
+          </thead>
+          <tbody>
+            {run.rows.slice(0, shown).map((row, index) => {
+              const isLast = index === run.rows.length - 1 && done;
+              const cells = [
+                row.q === null ? '—' : fmt(row.q),
+                fmt(row.A[0]),
+                fmt(row.A[1]),
+                fmt(row.A[2]),
+                fmt(row.B[0]),
+                fmt(row.B[1]),
+                fmt(row.B[2]),
+              ];
+              return (
+                <tr key={index} className={index === shown - 1 ? 'current' : ''}>
+                  {cells.map((text, col) => (
+                    <td
+                      key={col}
+                      data-r={index}
+                      data-c={col}
+                      className={
+                        col === 4
+                          ? 'split skippable'
+                          : col === 1
+                            ? 'skippable'
+                            : col === 5 && isLast && run.inverse !== null
+                              ? 'answer'
+                              : undefined
+                      }
+                    >
+                      {text}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {links && marks.list.length > 0 && (
+          <svg
+            className="links"
+            aria-hidden="true"
+            width={marks.width}
+            height={marks.height}
+            key={`${shown}-${column}`}
+          >
+            {marks.list.map((mark, index) => (
+              <g
+                key={index}
+                style={{ ['--d' as string]: `${index * 0.12}s` }}
+                className={`${mark.kind} ${mark.band ? 'band' : 'paper'}`}
+              >
+                <rect
+                  className="box"
+                  pathLength={1}
+                  x={mark.x + 1.5}
+                  y={mark.y + 1.5}
+                  width={mark.w - 3}
+                  height={mark.h - 3}
+                />
+                <g className="tag" transform={`translate(${mark.x + 2} ${mark.y - 1})`}>
+                  <rect width={mark.label.length * 7.4 + 9} height="14" />
+                  <text x="4.5" y="10.5">
+                    {mark.label}
+                  </text>
+                </g>
+              </g>
+            ))}
+          </svg>
+        )}
+      </div>
+    </>
   );
 }
 
-function EeaExplain({ run, shown }: { run: EeaResult; shown: number }) {
+function EeaExplain({
+  run,
+  shown,
+  column,
+  onPick,
+}: {
+  run: EeaResult;
+  shown: number;
+  column: number;
+  onPick: (column: number) => void;
+}) {
   const index = shown - 1,
     row = run.rows[index];
   const check = (
@@ -200,11 +389,21 @@ function EeaExplain({ run, shown }: { run: EeaResult; shown: number }) {
       <p>
         Q = A3 div B3 = {fmt(prev.A[2])} div {fmt(prev.B[2])} = <b>{fmt(q)}</b>
       </p>
-      <p>New B = old A − Q × old B, and the new A is the old B:</p>
+      <p>
+        New B = old A − Q × old B, and the new A is the old B. Pick a line to see where its number
+        came from in the table:
+      </p>
       <ul className="lines plain">
         {[0, 1, 2].map((c) => (
           <li key={c}>
-            B{c + 1} = {fmt(prev.A[c])} − {fmt(q)} × {fmt(prev.B[c])} = <b>{fmt(row.B[c])}</b>
+            <button
+              type="button"
+              className="pick"
+              aria-pressed={column === c}
+              onClick={() => onPick(c)}
+            >
+              B{c + 1} = {fmt(prev.A[c])} − {fmt(q)} × {fmt(prev.B[c])} = <b>{fmt(row.B[c])}</b>
+            </button>
           </li>
         ))}
       </ul>
@@ -215,12 +414,34 @@ function EeaExplain({ run, shown }: { run: EeaResult; shown: number }) {
 
 function EeaSteps({ run }: { run: EeaResult }) {
   const steps = useSteps(run.rows.length);
+  const [column, setColumn] = useState(2);
   const last = run.rows[run.rows.length - 1];
+  const row = run.rows[steps.shown - 1];
+  // first row = line 1, later rows = lines 4-7
+  const decided = row.B[2] === 0n ? 2 : row.B[2] === 1n ? 3 : 8;
+  const active = steps.shown === 1 ? [1, decided] : [4, 5, 6, 7, decided];
   return (
     <>
+      <Procedure
+        id="Algorithm 1.2"
+        name="EXTENDED EUCLID(m, b)"
+        input="integers m and b"
+        output="b⁻¹ mod m, or no inverse"
+        active={active}
+        lines={[
+          { text: '(A1, A2, A3) = (1, 0, m) ; (B1, B2, B3) = (0, 1, b)' },
+          { text: 'if B3 = 0 return A3 = gcd(m, b) ; no inverse' },
+          { text: 'if B3 = 1 return B3 = gcd(m, b) ; B2 = b⁻¹ mod m' },
+          { text: 'Q = A3 div B3' },
+          { text: '(T1, T2, T3) = (A1 − Q B1, A2 − Q B2, A3 − Q B3)' },
+          { text: '(A1, A2, A3) = (B1, B2, B3)' },
+          { text: '(B1, B2, B3) = (T1, T2, T3)' },
+          { text: 'goto 2' },
+        ]}
+      />
       <StepControls steps={steps} />
-      <EeaTable run={run} shown={steps.shown} />
-      <EeaExplain run={run} shown={steps.shown} />
+      <EeaTable run={run} shown={steps.shown} links column={column} />
+      <EeaExplain run={run} shown={steps.shown} column={column} onPick={setColumn} />
       {steps.done && run.inverse !== null && (
         <div className="result">
           <p>
@@ -278,10 +499,7 @@ export function InversePage() {
   };
   return (
     <article>
-      <header>
-        <p className="eyebrow">Lesson 3 · Chapter 4 · Extended Euclidean algorithm</p>
-        <h1>Inverse of b mod m</h1>
-      </header>
+      <LessonHeader title="Inverse of b mod m" />
       <Idea>
         The <b>inverse</b> of b mod m is the number x with b × x = 1 (mod m). It “undoes”
         multiplication by b, like dividing. The Extended Euclid table finds it, and also tells you
@@ -292,13 +510,6 @@ export function InversePage() {
         how d is found.
       </UsedFor>
       <SlideRef>ch04 “Finding Inverses” and “Inverse of 550 in GF(1759)”.</SlideRef>
-      <Collapse title="The rules of the table">
-        <p>
-          Start with (A1, A2, A3) = (1, 0, m) and (B1, B2, B3) = (0, 1, b). In each row: Q = A3 div
-          B3, the new B = old A − Q × old B, and the new A is the old B. Stop when B3 is 1 (then B2
-          is the inverse) or 0 (there is no inverse).
-        </p>
-      </Collapse>
       <Words terms={['mod', 'inverse', 'gcd', 'coprime']} />
       <InputForm
         summary={run ? `b = ${run.b}, m = ${run.m}` : 'no numbers yet'}

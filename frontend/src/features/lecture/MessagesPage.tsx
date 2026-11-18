@@ -19,7 +19,17 @@ import {
 } from '../encrypt/model';
 import { fileJob } from '../files/client';
 import { checkFileSize, downloadName, type FileResult } from '../files/model';
-import { Collapse, CopyText, Idea, SlideRef, UsedFor, Words, TabList, TabPanel } from './parts';
+import {
+  Collapse,
+  CopyText,
+  Idea,
+  SlideRef,
+  UsedFor,
+  Words,
+  TabList,
+  TabPanel,
+  LessonHeader,
+} from './parts';
 
 const METHODS: { id: PaddingMode; label: string; text: string }[] = [
   {
@@ -34,7 +44,7 @@ const METHODS: { id: PaddingMode; label: string; text: string }[] = [
   },
   {
     id: 'textbook',
-    label: 'Textbook RSA (as in the lecture)',
+    label: 'Textbook RSA (the formula from the course)',
     text: 'No padding: C = M^e mod n for each block of the message. Predictable and insecure, but it is exactly the formula you learned. Works with small keys.',
   },
 ];
@@ -42,13 +52,19 @@ const METHODS: { id: PaddingMode; label: string; text: string }[] = [
 const message = (cause: unknown) => (cause instanceof Error ? cause.message : String(cause));
 
 function SignatureNote({ run }: { run: DecryptRun }) {
-  if (run.kind !== 'text' || run.opened.kind !== 'hybrid') return null;
+  if (run.kind !== 'text') return null;
+  if (run.opened.kind !== 'hybrid')
+    return (
+      <p className="sigline neutral">
+        No signature to check: this method cannot carry one, so nothing here proves who sent it. To
+        prove the sender, encrypt with the hybrid method and choose “Also sign”.
+      </p>
+    );
   const { tone, text } = describeSignature(run.signature);
   return <p className={`sigline ${tone}`}>{text}</p>;
 }
 
-/* ───────────── Send ───────────── */
-
+// send
 function Send({ onEnvelope }: { onEnvelope: (text: string) => void }) {
   const keys = useKeyring();
   const [chosen, setChosen] = useState<{ made: boolean; value: Recipient | null }>({
@@ -126,8 +142,16 @@ function Send({ onEnvelope }: { onEnvelope: (text: string) => void }) {
 
   return (
     <section aria-label="Send a message">
-      <h2>1 · Send</h2>
-      <RecipientPicker value={recipient} onChange={(value) => setChosen({ made: true, value })} />
+      <h2>1 · Lock a message</h2>
+      <p className="lead small">
+        Choose whose <b>public key</b> locks the message. Only the owner of the matching private key
+        will be able to read it.
+      </p>
+      <RecipientPicker
+        label="Lock with the public key of"
+        value={recipient}
+        onChange={(value) => setChosen({ made: true, value })}
+      />
       {recipient && (
         <p className="note">
           {recipient.label}: {limits ? `${limits.caps.bits}-bit key` : ''}
@@ -262,6 +286,11 @@ function Send({ onEnvelope }: { onEnvelope: (text: string) => void }) {
             Encrypted envelope
           </label>
           <textarea id="envelope-out" readOnly rows={4} value={envelope} className="mono-box" />
+          <p>
+            <a href="#unlock" className="next-step">
+              Next: unlock it in step 2 ↓
+            </a>
+          </p>
           <div className="controls">
             <CopyText value={envelope} label="Copy the envelope" />
             <button
@@ -299,7 +328,7 @@ function Send({ onEnvelope }: { onEnvelope: (text: string) => void }) {
                 </li>
                 <li>
                   Each block was raised to the power e modulo n, with {textRun.recipient.label}’s
-                  public key (the C = M^e mod n of the lecture).
+                  public key (the C = M^e mod n formula).
                 </li>
               </ol>
             )}
@@ -326,8 +355,7 @@ function Send({ onEnvelope }: { onEnvelope: (text: string) => void }) {
   );
 }
 
-/* ───────────── Receive ───────────── */
-
+// receive
 function Receive({ suggested }: { suggested: string }) {
   const keys = useKeyring();
   const [text, setText] = useState('');
@@ -341,6 +369,9 @@ function Receive({ suggested }: { suggested: string }) {
       signature: ReturnType<typeof describeSignature>;
     } | null>(null);
   const picker = useRef<HTMLInputElement>(null);
+  const [holderId, setHolderId] = useState('');
+  const holders = keys.entries.filter((entry) => entry.privateKey);
+  const pool = holderId ? holders.filter((entry) => entry.id === holderId) : holders;
 
   async function go() {
     setBusy(true);
@@ -360,12 +391,11 @@ function Receive({ suggested }: { suggested: string }) {
         );
       }
       if (isFile) {
-        const holders = keys.entries.filter((entry) => entry.privateKey);
         const result = await fileJob(
           {
             type: 'open',
             envelope,
-            keys: holders.map((entry) => entry.privateKey!),
+            keys: pool.map((entry) => entry.privateKey!),
             senders: knownSenders(keys.entries),
           },
           new AbortController().signal,
@@ -378,22 +408,38 @@ function Receive({ suggested }: { suggested: string }) {
           signature: describeSignature(result.signature),
         });
       } else {
-        setRun(await decryptReceived(envelope, keys.entries, keys.entries));
+        setRun(await decryptReceived(envelope, pool, keys.entries));
       }
     } catch (cause) {
-      setError(message(cause));
+      setError(
+        holderId
+          ? `${message(cause)} You chose to decrypt with one specific private key. If the message was locked for someone else, choose “Any of my keys”.`
+          : message(cause),
+      );
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <section aria-label="Receive a message">
-      <h2>2 · Receive</h2>
+    <section aria-label="Receive a message" id="unlock">
+      <h2>2 · Unlock a message</h2>
       <p className="lead small">
         Paste an envelope that was encrypted for one of <b>your</b> keys (or one of the demo keys).
         The lab tries each private key you have, and tells you if a signature checks out.
       </p>
+      <div className="field">
+        <label htmlFor="holder">Unlock with the private key of</label>
+        <select id="holder" value={holderId} onChange={(event) => setHolderId(event.target.value)}>
+          <option value="">Any of my keys (the lab finds the right one)</option>
+          {holders.map((entry) => (
+            <option key={entry.id} value={entry.id}>
+              {entry.name} · {entry.bits}-bit
+            </option>
+          ))}
+        </select>
+        <small>Only keys whose private part is stored in this browser are listed.</small>
+      </div>
       <div className="field">
         <label htmlFor="envelope-in">Envelope to decrypt</label>
         <textarea
@@ -406,11 +452,11 @@ function Receive({ suggested }: { suggested: string }) {
         />
       </div>
       <div className="controls">
-        <button type="button" className="primary" disabled={busy} onClick={() => void go()}>
-          {busy ? 'Decrypting…' : 'Decrypt'}
-        </button>
         <button type="button" disabled={!suggested} onClick={() => setText(suggested)}>
           Use the envelope I just made
+        </button>
+        <button type="button" className="primary" disabled={busy} onClick={() => void go()}>
+          {busy ? 'Decrypting…' : 'Decrypt'}
         </button>
         <button type="button" onClick={() => picker.current?.click()}>
           Open an envelope file…
@@ -472,10 +518,7 @@ export function MessagesPage() {
   const [envelope, setEnvelope] = useState('');
   return (
     <article>
-      <header>
-        <p className="eyebrow">Using RSA · Messages and files</p>
-        <h1>Send and receive secret messages</h1>
-      </header>
+      <LessonHeader title="Send and receive secret messages" />
       <Idea>
         You lock a message with the receiver’s <b>public</b> key; only their <b>private</b> key can
         unlock it. For long messages and files, RSA locks a small AES key and AES does the heavy
@@ -487,8 +530,8 @@ export function MessagesPage() {
       </UsedFor>
       <Words terms={['aes', 'publicKey', 'privateKey', 'signature', 'plaintext', 'ciphertext']} />
       <p className="note">
-        New here? Try it as is: the message goes to the demo key Alice, and you decrypt it in step
-        2. To work with the numbers by hand, use <Link to="/lecture/rsa">RSA by hand</Link>.
+        New here? Try it as is: lock a message for the demo key Alice in step 1, then unlock it in
+        step 2. To work with the numbers by hand, use <Link to="/lecture/rsa">RSA by hand</Link>.
       </p>
       <Send onEnvelope={setEnvelope} />
       <Receive suggested={envelope} />

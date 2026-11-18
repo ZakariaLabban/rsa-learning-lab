@@ -17,9 +17,11 @@ import {
   Words,
   TabList,
   TabPanel,
+  LessonHeader,
+  Procedure,
 } from './parts';
 
-/** The slide's table (Table 9.3): one column per bit of the exponent, filled left to right. */
+// table 9.3 from the slides, one column per bit
 export function LectureTable({ run, shown }: { run: PowerResult; shown: number }) {
   const rows: { name: string; cell: (index: number) => string }[] = [
     { name: 'i', cell: (index) => String(run.steps[index].i) },
@@ -28,8 +30,13 @@ export function LectureTable({ run, shown }: { run: PowerResult; shown: number }
     { name: 'f', cell: (index) => fmt(run.steps[index].f) },
   ];
   return (
-    <div className="table-wrap">
-      <table className="grid horizontal" aria-label="Fast exponentiation table">
+    <div
+      className="table-wrap"
+      tabIndex={0}
+      role="region"
+      aria-label="Table, scrolls sideways on narrow screens"
+    >
+      <table className="grid horizontal" aria-label="Exponentiation table">
         <tbody>
           {rows.map((row) => (
             <tr key={row.name}>
@@ -86,13 +93,35 @@ function LectureExplain({ run, shown }: { run: PowerResult; shown: number }) {
 
 function LectureSteps({ run }: { run: PowerResult }) {
   const steps = useSteps(run.steps.length);
+  const step = run.steps[steps.shown - 1];
+  const active = [
+    ...(steps.shown === 1 ? [1] : []),
+    2,
+    3,
+    4,
+    5,
+    ...(step.bit ? [6, 7] : []),
+    ...(steps.done ? [8] : []),
+  ];
   return (
     <>
-      <p className="lead small">
-        Start with c = 0 and f = 1. For each bit bᵢ of the exponent from the top bit down to bit 0:
-        c = 2c, then f = f × f mod n; if the bit is 1 also c = c + 1 and f = f × a mod n. The last f
-        is the answer, and c ends up equal to the exponent.
-      </p>
+      <Procedure
+        id="Algorithm 1.3"
+        name="EXPONENTIATION(a, b, n)"
+        input="a, the bits bₖ … b₀ of b, and n"
+        output="a^b mod n"
+        active={active}
+        lines={[
+          { text: 'c = 0 ; f = 1' },
+          { text: 'for i = k downto 0 do' },
+          { text: 'c = 2 × c', depth: 1 },
+          { text: 'f = (f × f) mod n', depth: 1 },
+          { text: 'if bᵢ = 1 then', depth: 1 },
+          { text: 'c = c + 1', depth: 2 },
+          { text: 'f = (f × a) mod n', depth: 2 },
+          { text: 'return f' },
+        ]}
+      />
       <StepControls steps={steps} label="Column" />
       <LectureTable run={run} shown={steps.shown} />
       <LectureExplain run={run} shown={steps.shown} />
@@ -153,10 +182,7 @@ export function PowerPage() {
   };
   return (
     <article>
-      <header>
-        <p className="eyebrow">Lesson 4 · Chapter 9 · Exponentiation</p>
-        <h1>Fast powers: square and multiply</h1>
-      </header>
+      <LessonHeader title="Powers mod n" />
       <Idea>
         To compute <Num>a^b mod n</Num> you never need the giant number a^b. Square, reduce mod n,
         square again, and multiply together only the squares you need. The numbers stay small the
@@ -190,7 +216,7 @@ export function PowerPage() {
             label="How to show the calculation"
             items={[
               { id: 'hand', label: 'By hand (squares, then multiply)' },
-              { id: 'table', label: 'The lecture table (i, bᵢ, c, f)' },
+              { id: 'table', label: 'Exponentiation algorithm' },
             ]}
             value={view}
             onChange={setView}

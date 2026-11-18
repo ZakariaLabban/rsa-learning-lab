@@ -18,6 +18,7 @@ import {
   useSteps,
   TabList,
   TabPanel,
+  LessonHeader,
 } from './parts';
 
 function parseList(text: string, name: string, min = 0n): bigint[] {
@@ -29,7 +30,7 @@ function parseList(text: string, name: string, min = 0n): bigint[] {
   return parts.map((part) => parseWhole(part, name, min));
 }
 
-/** The lecture's CRT recipe, one card per step. `from` says what the student started with. */
+// CRT steps from the lecture, one card each. `from` = what we started with
 export function CrtCards({ crt, shown, from }: { crt: CrtResult; shown: number; from: string }) {
   const k = crt.rows.length;
   const cards = [
@@ -283,18 +284,40 @@ function DecryptCards({ run, shown }: { run: CrtDecryption; shown: number }) {
       <h3>Step 4 · Combine with the CRT</h3>
       <p>
         We know M ≡ {fmt(run.parts[0].value)} (mod {fmt(p)}) and M ≡ {fmt(run.parts[1].value)} (mod{' '}
-        {fmt(q)}). Using the CRT recipe:
+        {fmt(q)}). In the CRT recipe the moduli are m₁ = p = {fmt(p)} and m₂ = q = {fmt(q)}, and the
+        residues are a₁ = M<sub>p</sub> = {fmt(run.parts[0].value)} and a₂ = M<sub>q</sub> ={' '}
+        {fmt(run.parts[1].value)}.
       </p>
-      <ul className="lines plain">
-        {run.combine.rows.map((row, i) => (
-          <li key={i}>
-            M<sub>{i + 1}</sub> = {fmt(row.Mi)}, inverse = {fmt(row.invValue)}, c<sub>{i + 1}</sub>{' '}
-            = {fmt(row.c)}, a<sub>{i + 1}</sub> × c<sub>{i + 1}</sub> = {fmt(row.term)}
-          </li>
-        ))}
-      </ul>
       <p>
-        ({run.combine.rows.map((row) => fmt(row.term)).join(' + ')}) mod {fmt(n)} ={' '}
+        M = m₁ × m₂ = {fmt(p)} × {fmt(q)} = {fmt(n)}
+      </p>
+      {run.combine.rows.map((row, i) => (
+        <ul className="lines plain crt-row" key={i}>
+          <li>
+            <b>
+              For m{i === 0 ? '₁' : '₂'} = {fmt(row.m)}:
+            </b>
+          </li>
+          <li>
+            M<sub>{i + 1}</sub> = M / m<sub>{i + 1}</sub> = {fmt(n)} / {fmt(row.m)} ={' '}
+            <strong>{fmt(row.Mi)}</strong>
+          </li>
+          <li>
+            M<sub>{i + 1}</sub>
+            <sup>−1</sup> mod {fmt(row.m)} = <strong>{fmt(row.invValue)}</strong>
+          </li>
+          <li>
+            c<sub>{i + 1}</sub> = M<sub>{i + 1}</sub> × {fmt(row.invValue)} = {fmt(row.Mi)} ×{' '}
+            {fmt(row.invValue)} = <strong>{fmt(row.c)}</strong>
+          </li>
+          <li>
+            a<sub>{i + 1}</sub> × c<sub>{i + 1}</sub> = {fmt(row.a)} × {fmt(row.c)} ={' '}
+            <strong>{fmt(row.term)}</strong>
+          </li>
+        </ul>
+      ))}
+      <p>
+        M = ({run.combine.rows.map((row) => fmt(row.term)).join(' + ')}) mod {fmt(n)} ={' '}
         <strong>{fmt(run.M)}</strong>
       </p>
     </li>,
@@ -376,10 +399,7 @@ export function CrtPage() {
   const [tab, setTab] = useState<'rebuild' | 'decrypt'>('rebuild');
   return (
     <article>
-      <header>
-        <p className="eyebrow">Chapter 8 · Chinese Remainder Theorem</p>
-        <h1>Chinese Remainder Theorem</h1>
-      </header>
+      <LessonHeader title="Chinese Remainder Theorem" />
       <Idea>
         A number A below M = m₁m₂…mₖ is completely described by its remainders (a₁, a₂, …, aₖ) when
         the mᵢ share no factors. We can work with the small moduli separately, then rebuild A.
@@ -392,11 +412,33 @@ export function CrtPage() {
         rebuilding the answer with the CRT. The small-e attack uses it too.
       </UsedFor>
       <Words terms={['mod', 'coprime', 'inverse', 'residue']} />
-      <Collapse title="The formulas from the lecture">
-        <p>
-          <Num>aᵢ = A mod mᵢ</Num> · <Num>Mᵢ = M / mᵢ</Num> · <Num>cᵢ = Mᵢ × (Mᵢ⁻¹ mod mᵢ)</Num> ·{' '}
-          <Num>A ≡ (Σ aᵢcᵢ) mod M</Num>
-        </p>
+      <Collapse title="The four formulas" open>
+        <dl className="formulas">
+          <div>
+            <dt>1. The residues</dt>
+            <dd>
+              <Num>aᵢ = A mod mᵢ</Num>
+            </dd>
+          </div>
+          <div>
+            <dt>2. The product of the moduli</dt>
+            <dd>
+              <Num>M = m₁ × m₂ × … × mₖ</Num> and <Num>Mᵢ = M / mᵢ</Num>
+            </dd>
+          </div>
+          <div>
+            <dt>3. One helper number for each modulus</dt>
+            <dd>
+              <Num>cᵢ = Mᵢ × (Mᵢ⁻¹ mod mᵢ)</Num>
+            </dd>
+          </div>
+          <div>
+            <dt>4. Rebuild A</dt>
+            <dd>
+              <Num>A = (a₁c₁ + a₂c₂ + … + aₖcₖ) mod M</Num>
+            </dd>
+          </div>
+        </dl>
       </Collapse>
       <TabList
         id="crt"

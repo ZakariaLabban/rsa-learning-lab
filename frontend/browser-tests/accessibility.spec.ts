@@ -70,7 +70,7 @@ for (const theme of ['light', 'dark'] as const)
       await page.getByRole('tab', { name: '2 · Encrypt' }).click();
       found.push(...(await scan(page, `${theme} rsa encrypt`)));
       await page.goto('/lecture/power?a=7&b=560&n=561');
-      await page.getByRole('tab', { name: /The lecture table/ }).click();
+      await page.getByRole('tab', { name: /Exponentiation algorithm/ }).click();
       await page.getByRole('button', { name: 'Show all', exact: true }).click();
       found.push(...(await scan(page, `${theme} power table`)));
       await page.goto('/lecture/practice');

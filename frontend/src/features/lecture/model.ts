@@ -1,8 +1,5 @@
-/**
- * Calculations exactly as the lectures (ch04, ch08, ch09) present them.
- * Every function returns the rows the slide tables show, so the UI can draw them one by one.
- * Small, independent BigInt code: tests compare it with the engine and with the slide numbers.
- */
+// the calculations from the lectures (ch04, ch08, ch09).
+// each function returns the rows of the slide table so the UI can show them one by one
 
 export const MAX_DIGITS = 40;
 
@@ -19,9 +16,8 @@ export function parseWhole(text: string, name: string, min = 0n): bigint {
 
 const mod = (a: bigint, n: bigint) => ((a % n) + n) % n;
 
-/* ───────────── ch04: Euclidean algorithm ───────────── */
-
-/** One line of the lecture's GCD example: dividend = quotient × divisor + remainder. */
+// ch04: Euclidean algorithm
+// one line of the lecture's GCD example: dividend = quotient × divisor + remainder.
 export type GcdRow = { dividend: bigint; divisor: bigint; quotient: bigint; remainder: bigint };
 
 export function gcdTable(a: bigint, b: bigint): { rows: GcdRow[]; gcd: bigint } {
@@ -41,22 +37,22 @@ export function gcdTable(a: bigint, b: bigint): { rows: GcdRow[]; gcd: bigint } 
 }
 
 type Triple = [bigint, bigint, bigint];
-/** A row of the lecture's inverse table: Q, then (A1, A2, A3) and (B1, B2, B3). */
+// A row of the lecture's inverse table: Q, then (A1, A2, A3) and (B1, B2, B3).
 export type EeaRow = { q: bigint | null; A: Triple; B: Triple };
 export type EeaResult = {
   m: bigint;
   b: bigint;
-  /** True when the input b was larger than m and was first reduced mod m. */
+  // true when the input b was larger than m and was first reduced mod m.
   reduced: boolean;
   rows: EeaRow[];
   gcd: bigint;
-  /** b⁻¹ mod m, or null when gcd(m, b) ≠ 1. */
+  // b⁻¹ mod m, or null when gcd(m, b) ≠ 1.
   inverse: bigint | null;
-  /** B2 in the last row before reducing mod m (can be negative). */
+  // B2 in the last row before reducing mod m (can be negative).
   b2: bigint | null;
 };
 
-/** EXTENDED EUCLID(m, b) from the "Finding Inverses" slide, row for row. */
+// EXTENDED EUCLID(m, b) from the "Finding Inverses" slide, row for row.
 export function extendedEuclid(m: bigint, bInput: bigint): EeaResult {
   if (m <= 1n) throw new Error('m must be greater than 1.');
   if (bInput < 0n) throw new Error('b must not be negative.');
@@ -78,27 +74,26 @@ export function extendedEuclid(m: bigint, bInput: bigint): EeaResult {
   throw new Error('Too many steps.');
 }
 
-/* ───────────── ch09: square and multiply ───────────── */
-
-/** One column of the lecture's exponentiation table, with the arithmetic that produced it. */
+// ch09: square and multiply
+// one column of the lecture's exponentiation table, with the arithmetic that produced it.
 export type PowerStep = {
   i: number;
   bit: 0 | 1;
-  /** The exponent built so far (the lecture's c). */
+  // the exponent built so far (the lecture's c).
   c: bigint;
-  /** f before this step. */
+  // f before this step.
   before: bigint;
-  /** f × f, and the same reduced mod n. */
+  // f × f, and the same reduced mod n.
   squareRaw: bigint;
   squared: bigint;
-  /** f × a before reduction when the bit is 1, otherwise null. */
+  // f × a before reduction when the bit is 1, otherwise null.
   multiplyRaw: bigint | null;
-  /** The lecture's f after this step. */
+  // the lecture's f after this step.
   f: bigint;
 };
-/** a^(2^j) mod n: repeated squaring, simplifying after each square. */
+// a^(2^j) mod n: repeated squaring, simplifying after each square.
 export type SquareRow = { j: number; power: bigint; raw: bigint | null; value: bigint };
-/** One multiplication when combining the needed powers. */
+// one multiplication when combining the needed powers.
 export type ProductRow = { left: bigint; right: bigint; raw: bigint; value: bigint; power: bigint };
 export type PowerResult = {
   a: bigint;
@@ -106,9 +101,9 @@ export type PowerResult = {
   exponent: bigint;
   n: bigint;
   binary: string;
-  /** The slide's table, left to right (i from the top bit down to 0). */
+  // the slide's table, left to right (i from the top bit down to 0).
   steps: PowerStep[];
-  /** The by-hand method: powers of the base, then the needed ones multiplied. */
+  // the by-hand method: powers of the base, then the needed ones multiplied.
   squares: SquareRow[];
   needed: number[];
   products: ProductRow[];
@@ -166,13 +161,12 @@ export function power(a: bigint, exponent: bigint, n: bigint): PowerResult {
   return { a, base, exponent, n, binary, steps, squares, needed, products, result: running };
 }
 
-/* ───────────── ch08: Miller–Rabin ───────────── */
-
+// ch08: Miller–Rabin
 export type MrTerm = {
-  /** j in a^(2^j · q); the first term is j = 0, i.e. a^q. */
+  // j in a^(2^j · q); the first term is j = 0, i.e. a^q.
   j: number;
   exponent: bigint;
-  /** Previous term squared (null for the first term, a^q itself). */
+  // previous term squared (null for the first term, a^q itself).
   squareRaw: bigint | null;
   value: bigint;
   isOne: boolean;
@@ -184,13 +178,13 @@ export type MillerRabinRun = {
   k: number;
   q: bigint;
   terms: MrTerm[];
-  /** Index into terms where the test stopped, or null when it ran out of terms. */
+  // index into terms where the test stopped, or null when it ran out of terms.
   stoppedAt: number | null;
   stopReason: 'one' | 'minus-one' | null;
   verdict: 'maybe prime' | 'composite';
 };
 
-/** TEST(n) from the "Miller Rabin Algorithm" slide, with a chosen a. */
+// TEST(n) from the "Miller Rabin Algorithm" slide, with a chosen a.
 export function millerRabinRun(n: bigint, a: bigint): MillerRabinRun {
   if (n < 5n) throw new Error('Use an odd n of at least 5 (n = 3 is prime).');
   if (n % 2n === 0n)
@@ -225,8 +219,7 @@ export function millerRabinRun(n: bigint, a: bigint): MillerRabinRun {
   return { n, a, k, q, terms, stoppedAt: null, stopReason: null, verdict: 'composite' };
 }
 
-/* ───────────── ch09: RSA by hand ───────────── */
-
+// ch09: RSA by hand
 export function isPrime(n: bigint): boolean {
   if (n < 2n) return false;
   for (const p of [2n, 3n, 5n, 7n, 11n, 13n, 17n, 19n, 23n, 29n, 31n, 37n]) {
@@ -259,16 +252,16 @@ export type RsaSetup = {
   n: bigint;
   phi: bigint;
   e: bigint;
-  /** gcd(e, φ(n)) = 1 as a Euclid table. */
+  // gcd(e, φ(n)) = 1 as a Euclid table.
   coprime: { rows: GcdRow[]; gcd: bigint };
-  /** d = e⁻¹ mod φ(n) from the inverse table. */
+  // d = e⁻¹ mod φ(n) from the inverse table.
   inverse: EeaResult;
   d: bigint;
-  /** e·d = 1 + k·φ(n). */
+  // e·d = 1 + k·φ(n).
   k: bigint;
 };
 
-/** The seven steps of the "RSA Key Setup: Example" slide. */
+// the seven steps of the "RSA Key Setup: Example" slide.
 export function rsaSetup(p: bigint, q: bigint, e: bigint): RsaSetup {
   if (!isPrime(p)) throw new Error(`p = ${p} is not prime. Pick a prime.`);
   if (!isPrime(q)) throw new Error(`q = ${q} is not prime. Pick a prime.`);

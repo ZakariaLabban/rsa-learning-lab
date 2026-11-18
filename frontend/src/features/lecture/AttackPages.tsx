@@ -27,6 +27,7 @@ import {
   Words,
   StepControls,
   useSteps,
+  LessonHeader,
 } from './parts';
 
 const message = (cause: unknown) => (cause instanceof Error ? cause.message : String(cause));
@@ -49,8 +50,7 @@ function Cards({
   );
 }
 
-/* ───────────── Attack 1: factor n ───────────── */
-
+// attack 1: factor n
 const BIG_N = 999985999949n; // 999983 × 1000003
 const BIG_C = power(123456n, 65537n, BIG_N).result;
 
@@ -77,7 +77,12 @@ function FactorSteps({ run, e, C }: { run: CrackRun; e: bigint; C: bigint }) {
       body: (
         <>
           <h3>Step 2 · Trial division: try the primes up to √n</h3>
-          <div className="table-wrap">
+          <div
+            className="table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label="Table, scrolls sideways on narrow screens"
+          >
             <table className="grid">
               <thead>
                 <tr>
@@ -196,10 +201,7 @@ export function FactoringPage() {
   };
   return (
     <article>
-      <header>
-        <p className="eyebrow">Attack 1 · The factoring problem</p>
-        <h1>Break a small key by factoring n</h1>
-      </header>
+      <LessonHeader title="Break a small key by factoring n" />
       <Idea>
         RSA is safe only because factoring n = p × q is hard when p and q are huge. If n is small,
         anyone can factor it, rebuild the private key, and read the message.
@@ -248,8 +250,7 @@ export function FactoringPage() {
   );
 }
 
-/* ───────────── Attack 2: the same message to several recipients, small e ───────────── */
-
+// attack 2: the same message to several recipients, small e
 function BroadcastSteps({
   run,
   moduli,
@@ -400,10 +401,7 @@ export function BroadcastPage() {
     setFields((old) => ({ ...old, [key]: value }));
   return (
     <article>
-      <header>
-        <p className="eyebrow">Attack 2 · Small public exponent</p>
-        <h1>Same message, three recipients, e = 3</h1>
-      </header>
+      <LessonHeader title="Same message, three recipients, e = 3" />
       <Idea>
         A small e makes encryption fast, but if one message M is sent to e different people, the
         attacker can combine the ciphertexts with the CRT and take an ordinary root. No factoring
@@ -456,8 +454,7 @@ export function BroadcastPage() {
   );
 }
 
-/* ───────────── Attack 3: YES or NO? (deterministic encryption) ───────────── */
-
+// attack 3: YES or NO? (deterministic encryption)
 export function GuessingPage() {
   const keys = useKeyring();
   const [fields, setFields] = useState({ p: '17', q: '11', e: '7', a: '12', b: '34', secret: 'b' }),
@@ -487,7 +484,7 @@ export function GuessingPage() {
     setFields((old) => ({ ...old, [key]: value }));
   const [demo, setDemo] = useState<{ textbook: string[]; oaep: string[] } | null>(null),
     [oaepError, setOaepError] = useState('');
-  /** The ciphertext part of an envelope (the header is the same for every message to Alice). */
+  // only the ciphertext part (the header is the same for every message to Alice)
   function cipherOf(envelope: string): string {
     const value = parseEnvelope(envelope);
     if (value.kind === 'oaep') return value.ciphertext;
@@ -513,10 +510,7 @@ export function GuessingPage() {
   const steps = useSteps(3);
   return (
     <article>
-      <header>
-        <p className="eyebrow">Attack 3 · Predictable messages</p>
-        <h1>YES or NO? Guessing the message</h1>
-      </header>
+      <LessonHeader title="YES or NO? Guessing the message" />
       <Idea>
         Textbook RSA always gives the same ciphertext for the same message. If there are only a few
         possible messages (like YES and NO), the attacker simply encrypts each one with the public

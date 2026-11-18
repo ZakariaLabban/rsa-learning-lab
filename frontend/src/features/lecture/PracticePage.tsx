@@ -3,13 +3,18 @@ import { useSearchParams } from 'react-router-dom';
 import { CrtCards } from './CrtPage';
 import { EeaTable } from './EuclidPages';
 import { practiceSet, type Level, type PracticeQuestion, type Solution } from './practice';
-import { Collapse, fmt, HandMethod, Idea, SlideRef } from './parts';
+import { Collapse, fmt, HandMethod, Idea, SlideRef, LessonHeader } from './parts';
 
 function SolutionView({ solution }: { solution: Solution }) {
   switch (solution.type) {
     case 'gcd':
       return (
-        <div className="table-wrap">
+        <div
+          className="table-wrap"
+          tabIndex={0}
+          role="region"
+          aria-label="Table, scrolls sideways on narrow screens"
+        >
           <table className="grid">
             <thead>
               <tr>
@@ -134,10 +139,7 @@ export function PracticePage() {
   const correct = questions.filter((q) => results[q.id]).length;
   return (
     <article>
-      <header>
-        <p className="eyebrow">Practice</p>
-        <h1>Practice with the lecture’s numbers</h1>
-      </header>
+      <LessonHeader title="Practice with the lecture’s numbers" />
       <Idea>
         Try each question on paper first, then type your answer. If you are stuck, open the hint, or
         show the steps to see the same table you would draw in the exam.

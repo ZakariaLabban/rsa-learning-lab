@@ -15,6 +15,7 @@ import {
   Words,
   StepControls,
   useSteps,
+  LessonHeader,
 } from './parts';
 
 function Cards({ run }: { run: SignatureRun }) {
@@ -69,7 +70,7 @@ function Cards({ run }: { run: SignatureRun }) {
       </p>
       <p className={run.valid ? 'ok' : 'warn'}>
         {run.valid
-          ? '✓ They are equal, so only the owner of the private key d could have produced S: the message is authentic and unchanged.'
+          ? '✓ They are equal: the message is authentic. It really comes from the sender, and it has not been changed.'
           : '✗ They are different, so this signature does not belong to this message. Alice rejects it.'}
       </p>
     </li>,
@@ -114,10 +115,7 @@ export function SignaturesPage() {
     setFields((old) => ({ ...old, [key]: value }));
   return (
     <article>
-      <header>
-        <p className="eyebrow">Chapter 9 · Authentication</p>
-        <h1>Digital signatures</h1>
-      </header>
+      <LessonHeader title="Digital signatures" />
       <Idea>
         Encryption uses the receiver’s public key. A signature turns this around: the sender
         transforms the message with their <b>private</b> key, and anybody can check it with the
@@ -160,9 +158,9 @@ export function SignaturesPage() {
       {run && <Cards key={`${run.setup.n}-${run.setup.e}-${run.M}-${run.receivedM}`} run={run} />}
       <Collapse title="Real signatures are a little different">
         <p>
-          This is the “textbook” signature from the lecture, with small numbers, so you can follow
-          every step. Real systems sign a <b>hash</b> of the message (so any length works) and add
-          padding (RSA-PSS). You can try that with 1024-bit and 2048-bit keys on the{' '}
+          This is a “textbook” signature with small numbers, so you can follow every step. Real
+          systems sign a <b>hash</b> of the message (so any length works) and add padding (RSA-PSS).
+          You can try that with 1024-bit and 2048-bit keys on the{' '}
           <Link to="/lecture/messages">Messages</Link> page by choosing “Also sign”.
         </p>
       </Collapse>

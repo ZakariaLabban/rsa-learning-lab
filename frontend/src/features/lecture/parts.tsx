@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import {
   useEffect,
   useRef,
@@ -6,10 +7,11 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
+import { clauseNumber } from './lessons';
 import type { PowerResult } from './model';
 import { WORDS, type WordKey } from './words';
 
-/** Minus sign that matches the slides. */
+// minus sign like in the slides
 export const fmt = (value: bigint | number) => String(value).replace('-', '−');
 
 export function Pow({ base, exp }: { base: ReactNode; exp: ReactNode }) {
@@ -25,7 +27,7 @@ export function Num({ children }: { children: ReactNode }) {
   return <span className="num">{children}</span>;
 }
 
-/** Reveals a calculation one step at a time, like a teacher filling in the table. */
+// shows a calculation one step at a time
 export function useSteps(total: number, initial = 1) {
   const [shown, setShown] = useState(Math.min(initial, total));
   const [playing, setPlaying] = useState(false);
@@ -72,6 +74,7 @@ export function StepControls({
   steps: ReturnType<typeof useSteps>;
   label?: string;
 }) {
+  const dense = steps.total > 16;
   return (
     <div className="controls steps-bar" role="group" aria-label="Step controls">
       <button
@@ -80,13 +83,21 @@ export function StepControls({
         onClick={steps.done ? undefined : steps.next}
         aria-disabled={steps.done}
       >
-        {steps.done ? 'Finished ✓' : 'Next step →'}
+        {steps.done ? 'Finished' : 'Next step →'}
       </button>
       <button type="button" className="back" onClick={steps.back} disabled={steps.shown <= 1}>
         ← Back
       </button>
       <span className="counter" aria-live="polite">
         {label} {steps.shown} of {steps.total}
+      </span>
+      <span className={`ticks ${dense ? 'dense' : ''}`} aria-hidden="true">
+        {Array.from({ length: steps.total }, (_, index) => (
+          <i
+            key={index}
+            className={index + 1 < steps.shown ? 'done' : index + 1 === steps.shown ? 'here' : ''}
+          />
+        ))}
       </span>
       <span className="more-controls">
         {steps.playing ? (
@@ -109,7 +120,7 @@ export function StepControls({
   );
 }
 
-/** A section the student can open or close. Closed sections keep the page short. */
+// section you can open or close
 export function Collapse({
   title,
   children,
@@ -129,18 +140,99 @@ export function Collapse({
   );
 }
 
-/** Where this topic is in the lecture slides. */
+// which slides this topic comes from
 export function SlideRef({ children }: { children: ReactNode }) {
-  return <p className="slide-ref">📖 In the lecture: {children}</p>;
+  return (
+    <p className="slide-ref">
+      <strong>In the lecture:</strong> {children}
+    </p>
+  );
 }
 
-/** The big idea in one or two sentences, shown first on every page. */
+// short summary at the top of a page
 export function Idea({ children }: { children: ReactNode }) {
   return (
-    <aside className="idea" aria-label="The idea">
-      <strong>The idea</strong>
-      <div>{children}</div>
+    <aside className="idea" aria-label="Summary">
+      {children}
     </aside>
+  );
+}
+
+// page title with its number
+export function LessonHeader({ title }: { title: string }) {
+  const { pathname } = useLocation();
+  const clause = clauseNumber(pathname.replace(/\/$/, '').toLowerCase());
+  return (
+    <header>
+      <h1>
+        {clause && (
+          <span className="clause-no" aria-hidden="true">
+            {clause}
+          </span>
+        )}
+        {title}
+      </h1>
+    </header>
+  );
+}
+
+export type ProcedureLine = { text: ReactNode; depth?: number };
+
+// the algorithm from the slides, with numbered lines.
+// the lines used by the current step get highlighted
+export function Procedure({
+  id,
+  name,
+  input,
+  output,
+  lines,
+  active,
+}: {
+  id: string;
+  name: string;
+  input?: ReactNode;
+  output?: ReactNode;
+  lines: ProcedureLine[];
+  // line numbers in use now (start at 1)
+  active: number[];
+}) {
+  return (
+    <section className="procedure" aria-label={`Procedure: ${name}`}>
+      <header>
+        <span className="id">{id}</span>
+        {name}
+      </header>
+      {(input || output) && (
+        <dl>
+          {input && (
+            <div>
+              <dt>Input</dt>
+              <dd>{input}</dd>
+            </div>
+          )}
+          {output && (
+            <div>
+              <dt>Output</dt>
+              <dd>{output}</dd>
+            </div>
+          )}
+        </dl>
+      )}
+      <ol>
+        {lines.map((line, index) => {
+          const on = active.includes(index + 1);
+          return (
+            <li key={index} className={on ? 'on' : ''} aria-current={on ? 'step' : undefined}>
+              <span className="mark" aria-hidden="true" />
+              <span className="n">{index + 1}</span>
+              <span className="body" style={{ ['--depth' as string]: line.depth ?? 0 }}>
+                {line.text}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }
 
@@ -173,11 +265,8 @@ export function Field({
   );
 }
 
-/**
- * The numbers a lesson works with. With a `summary` it starts folded into one line
- * ("Using: a = 1970, b = 1066 · Change the numbers"), so the lesson itself is the first thing the
- * student sees. It folds again after a successful calculation, and stays open when there is an error.
- */
+// the numbers the lesson uses. closed by default when there is a summary,
+// closes again after calculating, stays open on an error
 export function InputForm({
   children,
   onSubmit,
@@ -200,7 +289,7 @@ export function InputForm({
   const [tick, setTick] = useState(0);
   useEffect(() => {
     if (tick > 0 && foldable && !error) setOpen(false);
-    // Only react to a new submit; `error` is already up to date when this runs.
+    // only run on a new submit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tick]);
   const submit = (event: FormEvent) => {
@@ -255,7 +344,7 @@ export function InputForm({
   );
 }
 
-/** One line saying what RSA needs this lesson for. */
+// why this lesson matters for RSA
 export function UsedFor({ children }: { children: ReactNode }) {
   return (
     <p className="used-for">
@@ -264,7 +353,7 @@ export function UsedFor({ children }: { children: ReactNode }) {
   );
 }
 
-/** A closed list of the words this lesson uses, each in one plain sentence. */
+// list of the words used in the lesson
 export function Words({ terms }: { terms: WordKey[] }) {
   return (
     <Collapse title="Words you need" className="words">
@@ -280,10 +369,8 @@ export function Words({ terms }: { terms: WordKey[] }) {
   );
 }
 
-/**
- * The by-hand method: square and simplify, then multiply the powers you need, simplifying each
- * time. `shown` counts how many of the steps (squares first, then products) are visible.
- */
+// by-hand method: square and reduce, then multiply the ones needed.
+// shown = how many steps are visible
 export function handSteps(run: PowerResult) {
   return run.squares.length + run.products.length;
 }
@@ -298,7 +385,7 @@ export function HandMethod({ run, shown = Infinity }: { run: PowerResult; shown?
     <div className="hand">
       <p>
         <b>Split the exponent into powers of 2.</b> {fmt(exponent)} ={' '}
-        <Num>{parts.map(fmt).join(' + ')}</Num> (binary <Num>{run.binary}</Num>).
+        <Num>{parts.map(fmt).join(' + ')}</Num>.
       </p>
       <p>
         <b>Square, then simplify (mod {fmt(n)}), again and again:</b>
@@ -358,7 +445,7 @@ export function HandMethod({ run, shown = Infinity }: { run: PowerResult; shown?
   );
 }
 
-/** Copies text and says so. Falls back to a hint when the clipboard is blocked. */
+// copy button, tells you if the clipboard is blocked
 export function CopyText({ value, label = 'Copy' }: { value: string; label?: string }) {
   const [state, setState] = useState<'idle' | 'done' | 'failed'>('idle');
   return (
@@ -379,7 +466,7 @@ export function CopyText({ value, label = 'Copy' }: { value: string; label?: str
   );
 }
 
-/** Tab buttons with the keyboard pattern: arrows, Home and End move between tabs. */
+// tabs, arrow keys / Home / End move between them
 export function TabList<T extends string>({
   id,
   label,
@@ -437,7 +524,7 @@ export function TabList<T extends string>({
   );
 }
 
-/** The content that belongs to the selected tab. */
+// content of the selected tab
 export function TabPanel({
   id,
   value,
@@ -451,5 +538,58 @@ export function TabPanel({
     <div role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-tab-${value}`}>
       {children}
     </div>
+  );
+}
+
+// check your answer box. a wrong answer gives a hint, not the number
+export function CheckAnswer({
+  id,
+  question,
+  answer,
+  wrongHint,
+}: {
+  id: string;
+  question: ReactNode;
+  answer: bigint;
+  wrongHint: string;
+}) {
+  const [text, setText] = useState('');
+  const [verdict, setVerdict] = useState<'none' | 'right' | 'wrong' | 'empty'>('none');
+  const check = () => {
+    const clean = text.trim();
+    if (!/^-?\d+$/.test(clean)) return setVerdict('empty');
+    setVerdict(BigInt(clean) === answer ? 'right' : 'wrong');
+  };
+  return (
+    <form
+      className="check-answer"
+      onSubmit={(event) => {
+        event.preventDefault();
+        check();
+      }}
+    >
+      <label htmlFor={id}>
+        <strong>Check your answer.</strong> {question}
+      </label>
+      <div className="check-row">
+        <input
+          id={id}
+          value={text}
+          inputMode="numeric"
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(event) => {
+            setText(event.target.value);
+            setVerdict('none');
+          }}
+        />
+        <button type="submit">Check</button>
+      </div>
+      <p className={`check-result ${verdict}`} role="status">
+        {verdict === 'right' && 'Correct. That matches the table.'}
+        {verdict === 'wrong' && wrongHint}
+        {verdict === 'empty' && 'Type a whole number first.'}
+      </p>
+    </form>
   );
 }

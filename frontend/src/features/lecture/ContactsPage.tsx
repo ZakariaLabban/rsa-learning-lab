@@ -4,7 +4,7 @@ import { groupFingerprint } from '../../engine/encoding';
 import { fileSlug, keyring, publicKeyFile, useKeyring, type KeyEntry } from '../../keyring';
 import { parseContact, shareText } from '../contacts/model';
 import { QrScanner } from '../contacts/QrScanner';
-import { Collapse, CopyText, Idea, SlideRef, UsedFor, Words } from './parts';
+import { Collapse, CopyText, Idea, SlideRef, UsedFor, Words, LessonHeader } from './parts';
 
 function ShareMine({ entries }: { entries: readonly KeyEntry[] }) {
   const [id, setId] = useState(entries[0]?.id ?? '');
@@ -240,10 +240,7 @@ export function ContactsPage() {
   const mine = state.entries.find((entry) => entry.source === 'mine');
   return (
     <article>
-      <header>
-        <p className="eyebrow">Using RSA · Contacts</p>
-        <h1>Contacts and sharing keys</h1>
-      </header>
+      <LessonHeader title="Contacts and sharing keys" />
       <Idea>
         To send someone an encrypted message you need <b>their public key</b>. Public keys are safe
         to share, but you must be sure a key really belongs to the person. That is why you compare
