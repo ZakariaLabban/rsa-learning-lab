@@ -6,7 +6,12 @@ function configuredClient() {
   if (!url || !key) return null;
 
   try {
-    return createClient(url, key);
+    return createClient(url, key, {
+      auth: {
+        flowType: 'pkce',
+        detectSessionInUrl: /^\/account\/?$/.test(window.location.pathname),
+      },
+    });
   } catch {
     return null;
   }

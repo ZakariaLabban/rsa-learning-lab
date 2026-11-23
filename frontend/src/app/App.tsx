@@ -125,8 +125,6 @@ function Profile({ accountId }: { accountId: string | null }) {
     const reloadAfterClear = (event: StorageEvent) => {
       if (event.key === clearKey || event.key === null) {
         window.location.reload();
-      } else if (event.key === localClearKey(null)) {
-        void keyring.ready.then(() => keyring.resetAfterClear());
       }
     };
     window.addEventListener('storage', reloadAfterClear);
@@ -142,6 +140,16 @@ function Profile({ accountId }: { accountId: string | null }) {
 
 function ActiveProfile() {
   const { accountId, loading, setGuestOverride } = useAuth();
+  useEffect(() => {
+    const resetGuestKeyring = (event: StorageEvent) => {
+      if (event.key === localClearKey(null) || event.key === null) {
+        void keyring.ready.then(() => keyring.resetAfterClear());
+      }
+    };
+    window.addEventListener('storage', resetGuestKeyring);
+    return () => window.removeEventListener('storage', resetGuestKeyring);
+  }, []);
+
   if (loading) {
     return (
       <main>

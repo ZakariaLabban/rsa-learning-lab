@@ -131,8 +131,9 @@ export function MyKeys({ onUse }: { onUse?: (key: PrivateKey) => Promise<void> }
           </p>
         ) : (
           <p className="helper-text">
-            Private keys are not saved: they disappear when you refresh. Contacts are saved. Export
-            a key-pair file to keep a backup.
+            Private keys held in memory disappear when you refresh or close the tab. For a signed-in
+            profile, they also disappear when the active account changes. Export a key-pair file to
+            keep a backup. Contacts are saved.
           </p>
         )}
 

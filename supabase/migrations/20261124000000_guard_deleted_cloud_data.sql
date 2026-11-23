@@ -69,10 +69,18 @@ set search_path = ''
 as $$
   select case
     when public.is_valid_exam_progress(value) then
-      value - array['version', 'attempts', 'correct', 'streak', 'best', 'seen', 'topics'] = '{}'::jsonb
+      value->'version' = '1'::jsonb
+      and greatest(
+        (value->>'attempts')::bigint,
+        (value->>'correct')::bigint,
+        (value->>'streak')::bigint,
+        (value->>'best')::bigint
+      ) <= 9007199254740991
+      and value - array['version', 'attempts', 'correct', 'streak', 'best', 'seen', 'topics'] = '{}'::jsonb
       and not exists (
         select 1 from pg_catalog.jsonb_each(value->'topics') as topics(topic, stats)
         where stats - array['attempts', 'correct'] <> '{}'::jsonb
+          or greatest((stats->>'attempts')::bigint, (stats->>'correct')::bigint) > 9007199254740991
       )
       and not exists (
         select 1 from pg_catalog.jsonb_array_elements_text(value->'seen') as ids(id)

@@ -387,7 +387,9 @@ export function KeysPage() {
       <Collapse title="Where are my private keys stored?">
         <p>
           Private keys stay in this browser only and are never sent anywhere. By default they are
-          forgotten when you close the page. Turn this on to keep them on this device:
+          forgotten when you reload or close the tab. Keys held in memory for an account are also
+          discarded when that account signs out or another account becomes active. Use this option
+          to keep them on this device.
         </p>
         <label className="check">
           <input

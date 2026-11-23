@@ -26,6 +26,9 @@ test('clears guest progress across open tabs and preserves other browser prefere
     localStorage.setItem('test-preference', 'keep');
   });
   const other = await context.newPage();
+  await other.goto('/playground');
+  await expect(other.getByRole('link', { name: 'Account', exact: true })).toBeVisible();
+  await expect(other.getByRole('link', { name: 'Privacy', exact: true })).toBeVisible();
   await other.goto('/playground/learn/practice');
   await expect(other.getByText(/First attempts: 1\/1 correct/)).toBeVisible();
   await expect(other.getByRole('link', { name: 'Privacy', exact: true })).toBeVisible();
@@ -191,6 +194,87 @@ test.describe('mocked Supabase account flow', () => {
     await expect(page.getByText('a@example.test')).toHaveCount(0);
     await page.getByRole('button', { name: 'Check account session' }).click();
     await expect(page.getByText('a@example.test')).toBeVisible();
+  });
+
+  test('only completes a PKCE callback on the account route after a browser-initiated request', async ({
+    page,
+  }) => {
+    let redirectTo = '';
+    let exchanges = 0;
+    await page.route(`${authOrigin}/auth/v1/otp?**`, async (route) => {
+      const request = route.request();
+      redirectTo = new URL(request.url()).searchParams.get('redirect_to') ?? '';
+      expect(request.postDataJSON().code_challenge).toBeTruthy();
+      await route.fulfill({ json: {} });
+    });
+    await page.route(`${authOrigin}/auth/v1/token?grant_type=pkce`, async (route) => {
+      exchanges++;
+      expect(route.request().postDataJSON()).toMatchObject({
+        auth_code: 'fixture-code',
+        code_verifier: expect.any(String),
+      });
+      await route.fulfill({
+        json: {
+          access_token: 'refreshed-token',
+          refresh_token: 'refresh-token',
+          expires_in: 3600,
+          user: { id: accountA, email: 'a@example.test' },
+        },
+      });
+    });
+    await page.route(`${authOrigin}/rest/v1/profiles?**`, (route) =>
+      route.fulfill({ json: [{ sync_enabled: true, data_deleted_at: null }] }),
+    );
+
+    await page.goto('/account?code=unsolicited');
+    await expect(page.getByRole('alert')).toContainText('invalid or expired');
+    expect(exchanges).toBe(0);
+    await page.getByLabel('Email address').fill('a@example.test');
+    await page.getByRole('button', { name: 'Send magic link' }).click();
+    await expect(page.getByText('Check your email for a sign-in link.')).toBeVisible();
+
+    const callback = new URL(redirectTo);
+    expect(callback.pathname).toBe('/account');
+    callback.searchParams.set('code', 'fixture-code');
+    const wrongPath = new URL(callback);
+    wrongPath.pathname = '/lecture';
+    await page.goto(wrongPath.href);
+    await expect(page.getByRole('link', { name: 'Privacy', exact: true })).toBeVisible();
+    expect(exchanges).toBe(0);
+
+    await page.goto(callback.href);
+    await expect(page.getByText('a@example.test')).toBeVisible();
+    expect(exchanges).toBe(1);
+    expect(new URL(page.url()).searchParams.has('code')).toBe(false);
+  });
+
+  test('warns before sign-out can discard a temporary private key', async ({ page }) => {
+    await page.addInitScript(
+      ({ authStorageKey, accountA }) => {
+        localStorage.setItem(
+          authStorageKey,
+          JSON.stringify({
+            access_token: 'test-access-token',
+            refresh_token: 'test-refresh-token',
+            expires_at: Math.floor(Date.now() / 1000) + 3600,
+            user: { id: accountA, email: 'a@example.test' },
+          }),
+        );
+      },
+      { authStorageKey, accountA },
+    );
+    await page.route(`${authOrigin}/**`, (route) =>
+      route.fulfill({ json: [{ sync_enabled: true, data_deleted_at: null }] }),
+    );
+    await page.goto('/lecture/keys');
+    await page.getByRole('button', { name: 'Save as one of my keys' }).click();
+    await expect(page.getByText(/It is now your active key/)).toBeVisible();
+    await page.getByRole('link', { name: 'Account', exact: true }).click();
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await expect(page.getByRole('alert')).toContainText('discards the private keys');
+    await page.getByRole('button', { name: 'Keep working' }).click();
+    await expect(page.getByText('a@example.test')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
   });
 
   test('links an account-deletion request to the configured administrator mailbox', async ({

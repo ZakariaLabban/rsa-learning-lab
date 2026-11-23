@@ -33,9 +33,11 @@ export function PrivacyPage() {
       </p>
       <h2>Private keys and exports</h2>
       <p>
-        Private keys stay in this tab by default. Opting to remember them saves them unencrypted in
-        browser storage. Public-key exports are suitable for sharing. A private-key export contains
-        secret key material and stays wherever you save or send it, even after clearing lab data.
+        Private keys stay in memory by default. Reloading or closing the tab discards them. For
+        signed-in profiles, signing out or switching accounts also discards private keys held only
+        in memory. Opting to remember them saves them unencrypted in browser storage. Public-key
+        exports are suitable for sharing. A private-key export contains secret key material and
+        stays wherever you save or send it, even after clearing lab data.
       </p>
       <h2>Account and cloud data</h2>
       <p>

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useKeyringStore } from '../keyring';
+import { STORAGE_KEY, useKeyringStore } from '../keyring';
 import { clearKeyVault } from '../engine/client';
 import { progressKey } from '../features/lessons/practiceProgress';
 
 import { useAuth } from './AuthProvider';
-import { dataKeyAtRevision, localClearKey, localClearRevision, localDataKey } from './localDataKey';
+import { localClearKey, purgeObsoleteLocalData } from './localDataKey';
 
 export function ClearLocalData() {
   const keyring = useKeyringStore();
@@ -25,12 +25,9 @@ export function ClearLocalData() {
     try {
       await keyring.ready;
 
-      const previousRevision = localClearRevision(accountId);
       localStorage.setItem(localClearKey(accountId), crypto.randomUUID());
       keyring.clearAll();
-      localStorage.removeItem(
-        dataKeyAtRevision(localDataKey(progressKey, accountId), previousRevision),
-      );
+      purgeObsoleteLocalData(localStorage, accountId, [STORAGE_KEY, progressKey]);
 
       setConfirming(false);
       setConfirmation('');

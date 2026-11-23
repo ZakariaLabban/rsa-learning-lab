@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { useKeyring } from '../keyring';
 import { useAuth } from './AuthProvider';
 import { auth, deleteCloudApplicationData } from '../lib/supabase';
 import { ClearLocalData } from './ClearLocalData';
@@ -10,14 +11,22 @@ import { clearAccountCache, cloudProfileChangeKey } from './accountCache';
 export function AuthPage() {
   const { session, loading, configured, guestOverride, setGuestOverride } = useAuth();
 
+  const keyring = useKeyring();
+  const hasTemporaryKeys =
+    !keyring.rememberPrivate && keyring.entries.some((entry) => entry.source === 'mine');
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState(() => {
     const query = new URLSearchParams(window.location.search);
     const fragment = new URLSearchParams(window.location.hash.slice(1));
-    return [query, fragment].some((params) => params.has('error') || params.has('error_code'))
-      ? 'This sign-in link is invalid or expired. Request a new link.'
+    const callbackFailed =
+      query.has('code') ||
+      fragment.has('access_token') ||
+      [query, fragment].some((params) => params.has('error') || params.has('error_code'));
+    return callbackFailed
+      ? 'This sign-in link is invalid or expired. Request a new link in this browser.'
       : '';
   });
 
@@ -207,6 +216,7 @@ export function AuthPage() {
           <button type="submit" disabled={busy}>
             {busy ? 'Sending...' : 'Send magic link'}
           </button>
+          <p>Open the link in the browser profile where you requested it.</p>
         </form>
       )}
 
@@ -230,9 +240,31 @@ export function AuthPage() {
               Email: <strong>{session.user.email ?? 'Unknown'}</strong>
             </p>
 
-            <button type="button" onClick={handleSignOut} disabled={busy}>
-              {busy ? 'Signing out...' : 'Sign out'}
-            </button>
+            {confirmSignOut ? (
+              <div>
+                <p role="alert">
+                  Signing out discards the private keys you are keeping in memory for this account.
+                  <Link to="/lecture/keys"> Open My Keys to export or remember them.</Link>
+                </p>
+                <button type="button" onClick={handleSignOut} disabled={busy}>
+                  Sign out and discard temporary keys
+                </button>{' '}
+                <button type="button" onClick={() => setConfirmSignOut(false)} disabled={busy}>
+                  Keep working
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  if (hasTemporaryKeys) setConfirmSignOut(true);
+                  else void handleSignOut();
+                }}
+              >
+                {busy ? 'Signing out...' : 'Sign out'}
+              </button>
+            )}
           </section>
 
           {/* CLOUD ACCOUNT STATUS */}

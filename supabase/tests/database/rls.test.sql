@@ -1,6 +1,6 @@
 begin;
 
-select plan(37);
+select plan(40);
 
 select hasnt_column('public', 'public_keys', 'd', 'public key rows have no private exponent column');
 select hasnt_column('public', 'public_keys', 'p', 'public key rows have no p prime column');
@@ -50,6 +50,15 @@ select throws_ok($$update public.exam_progress
 select throws_ok($$update public.exam_progress
   set progress = jsonb_set(progress, '{seen}', '["unexpected-id"]')$$,
   '23514', null, 'progress accepts only generated question IDs');
+select throws_ok($$update public.exam_progress
+  set progress = jsonb_set(progress, '{version}', '"1"')$$,
+  '23514', null, 'progress requires a numeric version');
+select throws_ok($$update public.exam_progress
+  set progress = jsonb_set(progress, '{attempts}', '9007199254740992')$$,
+  '23514', null, 'progress counters fit the browser safe integer range');
+select throws_ok($$update public.exam_progress
+  set progress = jsonb_set(progress, '{topics,modulus}', '{"attempts":9007199254740992,"correct":0}')$$,
+  '23514', null, 'per-topic counters fit the browser safe integer range');
 select lives_ok($$update public.exam_progress
   set progress = jsonb_set(progress, '{seen}', '["practice.v1:exam:4294967295:modulus"]')$$,
   'progress accepts generated question IDs');

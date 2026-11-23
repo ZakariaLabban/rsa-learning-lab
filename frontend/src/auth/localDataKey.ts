@@ -18,3 +18,20 @@ export function localClearRevision(accountId: string | null): string | null {
 export function dataKeyAtRevision(key: string, revision: string | null) {
   return revision === null ? key : `${key}:clear:${revision}`;
 }
+
+/** Removes old records, including writes stranded by a terminated tab. */
+export function purgeObsoleteLocalData(
+  storage: Pick<Storage, 'length' | 'key' | 'getItem' | 'removeItem'>,
+  accountId: string | null,
+  namespaces: string[],
+) {
+  const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index));
+  for (const namespace of namespaces) {
+    const base = localDataKey(namespace, accountId);
+    for (const key of keys) {
+      if (key === null || (key !== base && !key.startsWith(`${base}:clear:`))) continue;
+      const activeKey = dataKeyAtRevision(base, storage.getItem(localClearKey(accountId)));
+      if (key !== activeKey) storage.removeItem(key);
+    }
+  }
+}

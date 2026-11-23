@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { deriveKey } from '../engine/math';
 import { readProgress, recordAnswer, saveProgress } from '../features/lessons/practiceProgress';
 import { Keyring, STORAGE_KEY } from '../keyring/store';
-import { localDataKey } from './localDataKey';
+import { localDataKey, purgeObsoleteLocalData } from './localDataKey';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -91,4 +91,39 @@ it('keeps a practice write that races a clear out of the new generation', () => 
 
   saveProgress(recordAnswer(readProgress(), 'new', 'modulus', true));
   expect(readProgress().seen).toEqual(['new']);
+});
+
+it('purges the former active keyring and old generations for only the cleared account', async () => {
+  const values = new Map([
+    ['rsa-lab.local-clear:account:a', 'old'],
+    ['rsa-lab.keyring:account:a', '{}'],
+    ['rsa-lab.keyring:account:b:clear:older', '{}'],
+    ['rsa-lab.keyring', '{}'],
+  ]);
+  const storage = {
+    get length() {
+      return values.size;
+    },
+    key: (index: number) => [...values.keys()][index] ?? null,
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => void values.set(key, value),
+    removeItem: (key: string) => void values.delete(key),
+  };
+  const stale = new Keyring(storage, localDataKey(STORAGE_KEY, 'a'), () =>
+    storage.getItem('rsa-lab.local-clear:account:a'),
+  );
+  await stale.ready;
+
+  storage.setItem('rsa-lab.keyring:account:a:clear:previous', 'another tab’s data');
+  storage.setItem('rsa-lab.local-clear:account:a', 'current');
+  storage.setItem('rsa-lab.keyring:account:a:clear:current', 'new data');
+  stale.clearAll();
+  purgeObsoleteLocalData(storage, 'a', [STORAGE_KEY]);
+
+  expect([...values.keys()].sort()).toEqual([
+    'rsa-lab.keyring',
+    'rsa-lab.keyring:account:a:clear:current',
+    'rsa-lab.keyring:account:b:clear:older',
+    'rsa-lab.local-clear:account:a',
+  ]);
 });

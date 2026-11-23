@@ -456,6 +456,9 @@ export function Workshop() {
       <footer className="world-footer">
         <span>Learning by taking things apart.</span>
         <span>Textbook RSA · intentionally insecure demo keys · use demonstration data</span>
+        <span>
+          <Link to="/account">Account</Link> · <Link to="/privacy">Privacy</Link>
+        </span>
       </footer>
     </main>
   );
