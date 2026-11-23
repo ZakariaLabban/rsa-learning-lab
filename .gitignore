@@ -13,3 +13,4 @@ tmp/
 frontend/playwright-report/
 frontend/test-results/
 .vercel/
+supabase/.temp/

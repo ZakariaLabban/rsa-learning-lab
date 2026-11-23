@@ -431,3 +431,14 @@ end;
 $$;
 revoke all on function public.delete_my_data() from public, anon;
 grant execute on function public.delete_my_data() to authenticated;
+
+-- Project creation can install this SECURITY DEFINER event-trigger function when
+-- "Enable RLS on new tables automatically" is selected. It must remain callable
+-- by its event trigger, but browser roles do not need direct EXECUTE permission.
+do $$
+begin
+  if pg_catalog.to_regprocedure('public.rls_auto_enable()') is not null then
+    execute 'revoke execute on function public.rls_auto_enable() from public, anon, authenticated';
+  end if;
+end;
+$$;

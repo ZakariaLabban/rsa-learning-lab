@@ -19,6 +19,8 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_replace_me
 
 The `delete_my_data()` RPC deletes the caller's cloud rows and disables sync on their profile. It does not delete the Supabase Auth account or email address. A future explicit user choice can re-enable sync; clients must not automatically re-upload cleared local records.
 
+The project-creation option **Enable RLS on new tables automatically** is not required: this migration explicitly enables RLS on every app table. If that option was enabled, the migration revokes direct `EXECUTE` from browser roles on Supabase's `rls_auto_enable()` event-trigger function while leaving the event trigger itself intact.
+
 ## Schema and security rules
 
 - Every table has row-level security. Account-owned rows are readable only by their owner; writes are blocked after cloud-data deletion disables sync.
