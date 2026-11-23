@@ -6,7 +6,7 @@ import pytest
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
-from backend.core import (Key, decrypt_bytes, decrypt_int, encrypt_bytes, encrypt_int,
+from reference.rsa_reference import (Key, decrypt_bytes, decrypt_int, encrypt_bytes, encrypt_int,
                           extended_gcd, generate_key, inverse, modexp, oaep_decode,
                           pack_cipher, probable_prime, unpack_cipher)
 

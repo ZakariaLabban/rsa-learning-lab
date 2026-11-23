@@ -1,12 +1,9 @@
 import pytest
-from backend import core
 from reference import rsa_reference as reference
 from reference.generate_vectors import generate, OUTPUT
 
 
-def test_legacy_api_uses_reference_without_changing_default():
-    assert core.Key is reference.Key
-    assert core.generate_key is reference.generate_key
+def test_reference_supports_lecture_phi_and_crt():
     key = reference.generate_key(1024, inverse_modulus="phi")
     assert key.e * key.d % ((key.p-1)*(key.q-1)) == 1
     assert reference.decrypt_int(reference.encrypt_int(key.p, key), key, crt=True) == key.p

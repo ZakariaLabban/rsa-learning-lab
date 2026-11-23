@@ -7,7 +7,8 @@ The deployment needs no environment variables for guest cryptographic features.
 
 Key generation, encryption/decryption, private reveal and existing experiments
 run locally in browser workers. No Python API is required for deployment. Python
-is retained for independent reference checks and the legacy launcher until #45.
+is retained only for independent reference checks. The old server and launcher
+were retired in #45; see [architecture](architecture.md).
 
 Use preview deployments for PR acceptance, including real workers, direct/deep
 links, reload, both themes, mobile sizes, cancellation, wrong-key errors and
