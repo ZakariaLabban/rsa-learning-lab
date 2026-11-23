@@ -7,6 +7,7 @@
  * Storage holds decimal strings in a versioned schema; anything invalid is dropped on load.
  */
 import { bitLength, deriveKey, type PrivateKey, type PublicKey } from '../engine/math';
+import { localClearRevision } from '../auth/localDataKey';
 import { fingerprint } from '../engine/encoding';
 import demoKeys from './demo-keys.json';
 import { checkPublicKey, cleanName, KeyFileError, parseKeyFile, privateFromParts } from './files';
@@ -99,8 +100,15 @@ export class Keyring {
   };
   private listeners = new Set<() => void>();
   readonly ready: Promise<void>;
+  private clearRevision: string | null;
+  private memoryRevision = 0;
 
-  constructor(private readonly storage: StorageLike | null) {
+  constructor(
+    private readonly storage: StorageLike | null,
+    private readonly storageKey = STORAGE_KEY,
+    private readonly readClearRevision: () => string | null = () => null,
+  ) {
+    this.clearRevision = readClearRevision();
     this.ready = this.load();
   }
 
@@ -120,8 +128,10 @@ export class Keyring {
 
   /** Adds one of my key pairs. Returns the existing entry if this key is already mine. */
   async addMine(privateKey: PrivateKey, name?: string): Promise<KeyEntry> {
+    const revision = this.memoryRevision;
     await this.ready;
     const keyFingerprint = await fingerprint(privateKey);
+    this.checkClear(revision);
     const existing = this.state.entries.find(
       (entry) => entry.source === 'mine' && entry.fingerprint === keyFingerprint,
     );
@@ -143,10 +153,12 @@ export class Keyring {
 
   /** Adds someone else's PUBLIC key as an unverified contact. */
   async addContact(key: PublicKey, name?: string): Promise<KeyEntry> {
+    const revision = this.memoryRevision;
     await this.ready;
     checkPublicKey(key);
     const publicKey = { n: key.n, e: key.e },
       keyFingerprint = await fingerprint(publicKey);
+    this.checkClear(revision);
     const existing = this.state.entries.find(
       (entry) => entry.source === 'contact' && entry.fingerprint === keyFingerprint,
     );
@@ -169,7 +181,9 @@ export class Keyring {
 
   /** Imports a key file: a key pair becomes one of my keys, a public key becomes a contact. */
   async importFile(text: string, fallbackName?: string): Promise<KeyEntry> {
+    const revision = this.memoryRevision;
     const parsed = await parseKeyFile(text);
+    this.checkClear(revision);
     const name = parsed.name ?? fallbackName;
     return parsed.kind === 'pair'
       ? this.addMine(parsed.key, name)
@@ -204,17 +218,32 @@ export class Keyring {
   }
   /** Deletes my keys and contacts (memory and storage). Built-in keys stay. */
   clearAll() {
-    this.update({
+    this.storage?.removeItem(this.storageKey);
+    this.resetAfterClear();
+  }
+
+  resetAfterClear() {
+    this.acceptLocalClear();
+    this.memoryRevision++;
+    this.state = {
+      ...this.state,
       entries: this.state.entries.filter(
         (entry) => entry.source === 'demo' || entry.source === 'lecture',
       ),
       activeId: null,
       rememberPrivate: false,
-    });
-    try {
-      this.storage?.removeItem(STORAGE_KEY);
-    } catch {
-      /* Nothing stored. */
+      storageProblem: undefined,
+    };
+    this.listeners.forEach((listener) => listener());
+  }
+
+  acceptLocalClear() {
+    this.clearRevision = this.readClearRevision();
+  }
+
+  private checkClear(revision: number) {
+    if (revision !== this.memoryRevision || this.clearRevision !== this.readClearRevision()) {
+      throw new Error('Local data was cleared. Please retry.');
     }
   }
 
@@ -235,7 +264,7 @@ export class Keyring {
   }
 
   private save() {
-    if (!this.storage) return;
+    if (!this.storage || this.clearRevision !== this.readClearRevision()) return;
     const { entries, rememberPrivate, activeId } = this.state;
     const saved: StoredEntry[] = entries
       .filter((entry) => entry.source === 'contact' || (entry.source === 'mine' && rememberPrivate))
@@ -265,7 +294,7 @@ export class Keyring {
         entries.some((entry) => entry.id === activeId && entry.source !== 'mine'));
     try {
       this.storage.setItem(
-        STORAGE_KEY,
+        this.storageKey,
         JSON.stringify({
           version: SCHEMA_VERSION,
           rememberPrivate,
@@ -288,7 +317,7 @@ export class Keyring {
       activeId: string | null = null,
       storageProblem: string | undefined;
     try {
-      const raw = this.storage?.getItem(STORAGE_KEY);
+      const raw = this.storage?.getItem(this.storageKey);
       if (raw) {
         const data = JSON.parse(raw);
         if (data?.version !== SCHEMA_VERSION || !Array.isArray(data.entries))
@@ -348,7 +377,7 @@ async function restore(item: unknown, rememberPrivate: boolean): Promise<KeyEntr
   }
 }
 
-function browserStorage(): StorageLike | null {
+export function browserStorage(): StorageLike | null {
   try {
     return typeof localStorage === 'undefined' ? null : localStorage;
   } catch {
@@ -356,5 +385,5 @@ function browserStorage(): StorageLike | null {
   }
 }
 
-/** The app-wide keyring instance. Tests create their own with an in-memory storage. */
-export const keyring = new Keyring(browserStorage());
+/** The guest keyring uses the original on-device storage. */
+export const keyring = new Keyring(browserStorage(), STORAGE_KEY, () => localClearRevision(null));

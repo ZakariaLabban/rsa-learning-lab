@@ -10,7 +10,7 @@ import { Term } from '../../components/Term';
 import { Value } from '../../components/Value';
 import { generateKey, privateKeyFor } from '../../engine/client';
 import { bitLength, lcm } from '../../engine/math';
-import { keyring } from '../../keyring';
+import { useKeyringStore } from '../../keyring';
 import { EuclidTable } from '../euclid/EuclidTable';
 import { euclidInverse, parseWhole } from '../euclid/euclidModel';
 import {
@@ -28,6 +28,7 @@ type Generated = { p: bigint; q: bigint; bits: WizardSize; candidates: number };
 
 /** Key Generation Wizard (#10): the Ch 9 RSA key setup, step by step, saved to the keyring. */
 export function KeyWizard() {
+  const keyring = useKeyringStore();
   const [source, setSource] = useState<'generate' | 'type'>('generate');
   const [size, setSize] = useState<WizardSize>(16);
   const [generated, setGenerated] = useState<Generated | null>(null);

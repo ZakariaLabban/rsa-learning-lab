@@ -456,6 +456,7 @@ export default function LegacyShell({ active }: { active: boolean }) {
           <footer className="app-footer">
             Educational software · Use demonstration data. Custom RSA is not audited or
             constant-time.
+            <Link to="/account">Account</Link> · <Link to="/privacy">Privacy</Link>
           </footer>
         </main>
       </div>

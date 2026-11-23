@@ -1,6 +1,6 @@
 begin;
 
-select plan(26);
+select plan(31);
 
 select hasnt_column('public', 'public_keys', 'd', 'public key rows have no private exponent column');
 select hasnt_column('public', 'public_keys', 'p', 'public key rows have no p prime column');
@@ -75,10 +75,19 @@ select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111
 select lives_ok($$select public.delete_my_data()$$, 'owner can delete its cloud data');
 select is((select count(*) from public.public_keys), 0::bigint, 'cloud deletion removes public keys');
 select is((select count(*) from public.profiles where not sync_enabled and data_deleted_at is not null), 1::bigint,
-  'cloud deletion disables sync until the owner explicitly re-enables it');
+  'cloud deletion disables sync and records a deletion marker');
 select throws_ok($$insert into public.public_keys (id, user_id, name, n, e, fingerprint)
   values ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', auth.uid(), 'Reupload', '187', '7', repeat('d', 64))$$,
   '42501', null, 'deleted cloud data cannot be silently uploaded again');
+
+select is((select count(*) from public.contacts), 0::bigint, 'cloud deletion removes contacts');
+select is((select count(*) from public.exam_progress), 0::bigint, 'cloud deletion removes practice progress');
+select is((select count(*) from public.shared_keys), 0::bigint, 'cloud deletion removes sharing rows');
+select throws_ok($$update public.profiles set sync_enabled = true where user_id = auth.uid()$$,
+  '23514', null, 'direct profile updates cannot reopen writes after deletion');
+select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+select is((select count(*) from public.profiles where sync_enabled and data_deleted_at is null),
+  1::bigint, 'account A deletion leaves account B enabled');
 
 select * from finish();
 rollback;

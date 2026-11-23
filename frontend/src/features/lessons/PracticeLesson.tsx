@@ -1,3 +1,5 @@
+import { localClearRevision } from '../../auth/localDataKey';
+import { useAuth } from '../../auth/AuthProvider';
 import { Term } from '../../components/Term';
 import { useMemo, useState } from 'react';
 import { LessonTrace } from './LessonTrace';
@@ -5,6 +7,7 @@ import { practiceQuestions, type Difficulty } from './practiceModel';
 import { readProgress, recordAnswer, saveProgress } from './practiceProgress';
 
 export function PracticeLesson() {
+  const { accountId } = useAuth();
   const [seed, setSeed] = useState(632),
     [seedInput, setSeedInput] = useState('632'),
     [difficulty, setDifficulty] = useState<Difficulty>('intro');
@@ -14,7 +17,8 @@ export function PracticeLesson() {
     [solution, setSolution] = useState(false),
     [hint, setHint] = useState(false),
     [seedError, setSeedError] = useState('');
-  const [progress, setProgress] = useState(readProgress);
+  const [clearRevision] = useState(() => localClearRevision(accountId));
+  const [progress, setProgress] = useState(() => readProgress(accountId));
   const questions = useMemo(() => practiceQuestions(seed, difficulty), [seed, difficulty]),
     question = questions[index];
   const valid = /^\d{1,620}$/.test(answer.trim()),
@@ -28,10 +32,10 @@ export function PracticeLesson() {
   }
   function check() {
     setChecked(true);
-    if (!valid) return;
+    if (!valid || clearRevision !== localClearRevision(accountId)) return;
     const next = recordAnswer(progress, question.id, question.topic, correct);
     setProgress(next);
-    saveProgress(next);
+    saveProgress(next, accountId);
   }
   const weak = Object.entries(progress.topics)
     .filter(([, stats]) => stats.correct < stats.attempts)

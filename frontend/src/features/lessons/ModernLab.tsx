@@ -285,6 +285,9 @@ function LessonShell() {
         <footer className="world-footer">
           <span>Learning by taking things apart.</span>
           <span>Educational software · Use demonstration data · Custom RSA is unaudited</span>
+          <span>
+            <Link to="/account">Account</Link> · <Link to="/privacy">Privacy</Link>
+          </span>
         </footer>
       </main>
     </>

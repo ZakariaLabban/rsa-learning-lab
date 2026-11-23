@@ -7,7 +7,7 @@ import { teachingKey } from '../../engine/keys/keygen';
 import {
   fileSlug,
   keyPairFile,
-  keyring,
+  useKeyringStore,
   publicKeyFile,
   useKeyring,
   type KeyEntry,
@@ -44,6 +44,7 @@ function run(action: () => void, setError: (text: string) => void) {
 }
 
 function KeyCard({ entry, active }: { entry: KeyEntry; active: boolean }) {
+  const keyring = useKeyringStore();
   const [name, setName] = useState(entry.name),
     [error, setError] = useState('');
   const mine = entry.source === 'mine';
@@ -145,6 +146,7 @@ function KeyCard({ entry, active }: { entry: KeyEntry; active: boolean }) {
 }
 
 function HandMade() {
+  const keyring = useKeyringStore();
   const [fields, setFields] = useState({ p: '17', q: '11', e: '7', name: 'Lecture-style key' }),
     [error, setError] = useState(''),
     [saved, setSaved] = useState('');
@@ -253,6 +255,7 @@ function Generate() {
 }
 
 function ImportKey() {
+  const keyring = useKeyringStore();
   const [text, setText] = useState(''),
     [error, setError] = useState(''),
     [done, setDone] = useState('');
@@ -323,6 +326,7 @@ function ImportKey() {
 }
 
 export function KeysPage() {
+  const keyring = useKeyringStore();
   const state = useKeyring();
   const [tab, setTab] = useState<'hand' | 'generate' | 'import'>('hand');
   const mine = state.entries.filter((entry) => entry.source === 'mine');

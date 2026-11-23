@@ -30,6 +30,14 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
+      - name: Mocked Supabase account flows
+        env:
+          VITE_SUPABASE_URL: https://rsa-lab-account-test.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: mock-publishable-key
+          RSA_MOCK_AUTH: '1'
+        run: |
+          npm run build
+          npm run test:browser -- account.spec.ts
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

@@ -24,6 +24,4 @@ checks the final changes; actionable findings must be fixed before squash merge.
 Keep PR/check protection enabled. Review deployments can be built from the feature
 branch while independent review runs; no teammate approval is required.
 
-No analytics, storage product, domain purchase or paid build upgrade is required
-for this static deployment. Future Supabase work must explicitly extend CSP
-connect-src and configure preview/production auth redirect URLs.
+Guest features require only the static deployment. See the [Supabase setup guide](../supabase/README.md) for optional authentication, approved callback URLs, CSP and the privacy request mailbox.

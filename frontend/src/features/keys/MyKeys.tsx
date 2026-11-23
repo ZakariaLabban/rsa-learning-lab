@@ -7,7 +7,7 @@ import type { PrivateKey } from '../../engine/math';
 import {
   fileSlug,
   keyPairFile,
-  keyring,
+  useKeyringStore,
   publicKeyFile,
   useKeyring,
   type KeyEntry,
@@ -35,6 +35,7 @@ const SOURCE_LABEL = {
  * Workbench use an assignment-size key.
  */
 export function MyKeys({ onUse }: { onUse?: (key: PrivateKey) => Promise<void> }) {
+  const keyring = useKeyringStore();
   const state = useKeyring();
   const [status, setStatus] = useState(''),
     [error, setError] = useState(''),
