@@ -102,6 +102,7 @@ until its dedicated retirement issue #45; it is not part of the Vercel deploymen
 
 See [Vercel setup](docs/vercel-deployment.md), [envelope v2](docs/envelope-v2.md),
 [math contracts](docs/engine-contracts.md), [frontend structure](docs/frontend-structure.md)
-and [contributing](CONTRIBUTING.md). Planned additions include contacts/key import,
+and [contributing](CONTRIBUTING.md). Supabase project setup and database migrations are
+documented in [supabase/README.md](supabase/README.md). Planned additions include contacts/key import,
 full lesson pages, signatures UI, encrypted files, optional Supabase accounts and
 sync. These are tracked individually in the GitHub roadmap (#25).

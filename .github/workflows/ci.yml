@@ -49,3 +49,13 @@ jobs:
       - run: python -m reference.generate_vectors --check
       - run: python -m reference.generate_encoding_vectors --check
       - run: python -m reference.check_ts_outputs
+  database:
+    name: Supabase schema and RLS checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: supabase/setup-cli@v3
+        with:
+          version: latest
+      - run: supabase start
+      - run: supabase test db
