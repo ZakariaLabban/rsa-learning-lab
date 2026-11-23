@@ -1,5 +1,10 @@
 # First implementation validation
 
+> Historical record of the initial Python-server version, not the current setup
+> or acceptance checklist. The server was retired in #45. Current architecture
+> and validation commands are in [docs/architecture.md](docs/architecture.md)
+> and [README.md](README.md).
+
 Validated locally on October 22, 2026.
 
 ## Automated

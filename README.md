@@ -17,7 +17,9 @@ npm.cmd run dev
 ```
 
 For the production build, use `npm.cmd run build` followed by `npm.cmd run preview`.
-No Python server or account is required to use the browser app. After one online
+There is no Python server to start: Vite serves the app locally, and Vercel hosts
+the production build. RSA calculations run in browser workers. No account is
+required for guest use. After one online
 visit the built app also reopens and works offline; see [offline guest app](docs/offline.md).
 
 ## Three interfaces
@@ -88,8 +90,9 @@ Tests include both key sizes, CRT/non-coprime messages, leading zero bytes,
 Unicode, malformed encodings/envelopes, deterministic Python encoding fixtures,
 independent OpenSSL OAEP/PSS interoperability in both directions, AES-GCM/AAD
 integrity, browser cancellation, responsiveness and no API requests. CI runs on
-PRs and main. The old Python API/launcher remains available for compatibility
-until its dedicated retirement issue #45; it is not part of the Vercel deployment.
+PRs and main. Python is a development/test dependency only; the former Python
+API, API client, development proxy and launcher were retired in #45. See the
+[architecture and server retirement guide](docs/architecture.md).
 
 ## Structure and deployment
 
@@ -98,11 +101,10 @@ until its dedicated retirement issue #45; it is not part of the Vercel deploymen
 - `frontend/src/engine/keys/`, `worker.ts`, `client.ts`: key construction, worker execution and tab-local key ownership.
 - `frontend/src/app/`, `components/`, `features/`: routes, theme and interactive screens.
 - `reference/`: independent Python engine and reproducible public test fixtures.
-- `backend/`: retained legacy local API; no browser runtime dependency.
 
 See [Vercel setup](docs/vercel-deployment.md), [envelope v2](docs/envelope-v2.md),
 [math contracts](docs/engine-contracts.md), [frontend structure](docs/frontend-structure.md)
 and [contributing](CONTRIBUTING.md). Supabase project setup and database migrations are
-documented in [supabase/README.md](supabase/README.md). Planned additions include contacts/key import,
-full lesson pages, signatures UI, encrypted files, optional Supabase accounts and
-sync. These are tracked individually in the GitHub roadmap (#25).
+documented in [supabase/README.md](supabase/README.md). Contacts/key import, lesson
+pages, signatures and encrypted files run locally. Optional Supabase accounts and
+sync are tracked separately in the GitHub roadmap (#25).

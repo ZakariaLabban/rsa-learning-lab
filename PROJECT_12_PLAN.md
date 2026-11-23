@@ -1,5 +1,10 @@
 # Project 12 plan: RSA Learning Lab
 
+> Historical proposal, retained for project history. The Python/FastAPI runtime,
+> server key ownership and proposed file layout below are superseded by the
+> browser implementation and server retirement (#45). For the current architecture
+> and setup, use [README.md](README.md) and [docs/architecture.md](docs/architecture.md).
+
 An interactive educational web application that implements RSA with 1024-bit and 2048-bit keys, explains the mathematics, and demonstrates how practical RSA differs from textbook RSA. The user has chosen a polished web interface with substantial animation and interaction.
 
 ## 1. What the course actually asks for

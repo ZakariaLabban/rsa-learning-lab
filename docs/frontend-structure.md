@@ -11,7 +11,7 @@ unprefixed lesson routes remain in Legacy. See [animated-lessons.md](animated-le
 See [animated-workshop.md](animated-workshop.md) for switching, session retention,
 the engine trace boundary and rollback.
 
-- `app/`: URL routes, shell, theme, orientation and temporary API session state.
+- `app/`: URL routes, shell, theme, orientation and browser session state.
 - `components/`: reusable display, teaching, error and playback controls.
 - `content/glossary.ts`: term definitions and chapter references, using the slide notation
   (M/C, PU = {e, n}, PR = {d, n}, φ(n)). Every lesson/tool page uses `Term` for its key
@@ -25,11 +25,12 @@ the engine trace boundary and rollback.
 - `styles/`: readable preserved workspace styles, shared tokens and shell styles.
 
 `app/routes.ts` defines Learn, Break and Tools routes. BrowserRouter supports deep
-links, refresh and back/forward. Vite preview handles static fallback; the existing
-Python frontend server also serves these paths without capturing missing `/api`
-routes. Hosted rewrite configuration is #9. The app runs key generation and message operations in browser workers;
-the shell, worked example, key studio and existing experiments need no backend. The Encrypt / Decrypt page
-stays mounted when navigating so the message and journey are preserved. No Python files or launchers are retired here.
+links, refresh and back/forward. Vite dev/preview handles local static fallback;
+`frontend/vercel.json` provides the hosted SPA fallback. Key generation and message
+operations run in browser workers, with no Python server or `/api` proxy. The
+Encrypt / Decrypt page stays mounted when navigating so the message and journey
+are preserved. Retiring the old server does not remove the Legacy interface;
+all three interfaces use the browser engine. See [architecture](architecture.md).
 
 Shared controls:
 

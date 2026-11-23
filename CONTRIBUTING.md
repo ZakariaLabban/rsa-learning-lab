@@ -14,11 +14,14 @@ to apply formatting. From the repository root, run `python -m pytest -q` and
 `python -m reference.generate_vectors --check` in the project virtual environment.
 
 Do not gate work on whole milestones. Start scaffolding and tests early; use each
-issue's actual completion dependencies. Preserve the old Python/API workflows
-until browser replacements are accepted in #45.
+issue's actual completion dependencies. The browser is the runtime for RSA;
+Python is only for independent reference tests and fixtures. See
+[architecture](docs/architecture.md) for the retired server and local commands.
 
 The repository is public. Main-branch protection requires a pull request and passing
 `Frontend checks` and `Python reference and API checks` from GitHub Actions.
+The historical check name `Python reference and API checks` is retained because
+branch protection requires it; it now runs reference tests and fixture checks only.
 Branches must be up to date before merging. These rules apply to administrators too;
 direct pushes, force pushes and branch deletion are blocked.
 

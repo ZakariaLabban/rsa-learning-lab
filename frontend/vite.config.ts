@@ -76,7 +76,6 @@ function siteFiles(): Plugin {
 
 export default defineConfig({
   plugins: [react(), offlineServiceWorker(), siteFiles()],
-  server: { proxy: { '/api': 'http://127.0.0.1:8765' } },
   build: {
     rollupOptions: {
       input: { main: 'index.html', sw: 'src/sw.ts' },

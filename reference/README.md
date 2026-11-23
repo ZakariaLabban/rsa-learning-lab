@@ -1,9 +1,9 @@
 # Python reference
 
 `rsa_reference.py` is the preserved custom Python engine, independent of the new
-TypeScript math. `backend/core.py` re-exports its API so the local server continues
-to work. `generate_key(..., inverse_modulus="phi")` matches lecture notation;
-the default remains `lambda` to preserve existing API behavior.
+TypeScript math. It is used by tests and fixture generators, not by a web server
+or the live browser app. `generate_key(..., inverse_modulus="phi")` matches lecture
+notation; the default remains `lambda`. Tests import this module directly.
 
 Run from the root using the project virtual environment:
 
