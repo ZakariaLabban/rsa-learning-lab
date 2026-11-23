@@ -874,9 +874,6 @@
   padding-left: calc(var(--depth, 0) * 1.5rem);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .lecture .procedure li {
-    transition: background-color 0.5s var(--ease-out);
-  }
   .lecture .procedure li .mark {
     transition: transform 0.35s var(--ease-out);
   }
