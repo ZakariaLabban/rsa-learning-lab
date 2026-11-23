@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { useKeyring } from '../keyring';
 import { useAuth } from './AuthProvider';
 import { auth, deleteCloudApplicationData } from '../lib/supabase';
 import { ClearLocalData } from './ClearLocalData';
@@ -11,9 +10,6 @@ import { clearAccountCache, cloudProfileChangeKey } from './accountCache';
 export function AuthPage() {
   const { session, loading, configured, guestOverride, setGuestOverride } = useAuth();
 
-  const keyring = useKeyring();
-  const hasTemporaryKeys =
-    !keyring.rememberPrivate && keyring.entries.some((entry) => entry.source === 'mine');
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
@@ -243,25 +239,18 @@ export function AuthPage() {
             {confirmSignOut ? (
               <div>
                 <p role="alert">
-                  Signing out discards the private keys you are keeping in memory for this account.
+                  Signing out can discard temporary private keys in this and other open tabs.
                   <Link to="/lecture/keys"> Open My Keys to export or remember them.</Link>
                 </p>
                 <button type="button" onClick={handleSignOut} disabled={busy}>
-                  Sign out and discard temporary keys
+                  Sign out of this browser
                 </button>{' '}
                 <button type="button" onClick={() => setConfirmSignOut(false)} disabled={busy}>
                   Keep working
                 </button>
               </div>
             ) : (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  if (hasTemporaryKeys) setConfirmSignOut(true);
-                  else void handleSignOut();
-                }}
-              >
+              <button type="button" disabled={busy} onClick={() => setConfirmSignOut(true)}>
                 {busy ? 'Signing out...' : 'Sign out'}
               </button>
             )}

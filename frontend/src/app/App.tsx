@@ -1,8 +1,14 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, matchPath, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from '../auth/AuthProvider';
-import { localClearKey, localClearRevision, localDataKey } from '../auth/localDataKey';
+import {
+  localClearKey,
+  localClearRevision,
+  localDataKey,
+  purgeObsoleteLocalData,
+} from '../auth/localDataKey';
 import { browserStorage, Keyring, keyring, KeyringContext, STORAGE_KEY } from '../keyring';
+import { progressKey } from '../features/lessons/practiceProgress';
 import { ErrorBoundary } from './ErrorBoundary';
 import { LabThemeProvider } from './LabTheme';
 import { preferredInterface } from './interfacePreference';
@@ -121,15 +127,24 @@ function Profile({ accountId }: { accountId: string | null }) {
         ),
   );
   useEffect(() => {
+    try {
+      if (localClearRevision(accountId) !== null) {
+        purgeObsoleteLocalData(window.localStorage, accountId, [STORAGE_KEY, progressKey]);
+      }
+    } catch {
+      // Explicit clearing reports storage failures. The startup sweep is best effort.
+    }
     const clearKey = localClearKey(accountId);
     const reloadAfterClear = (event: StorageEvent) => {
       if (event.key === clearKey || event.key === null) {
         window.location.reload();
+      } else {
+        store.observePrivatePreference(event.key);
       }
     };
     window.addEventListener('storage', reloadAfterClear);
     return () => window.removeEventListener('storage', reloadAfterClear);
-  }, [accountId]);
+  }, [accountId, store]);
 
   return (
     <KeyringContext.Provider value={store}>

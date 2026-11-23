@@ -52,6 +52,13 @@ type StoredEntry = {
   createdAt: number;
 };
 
+type StoredKeyring = {
+  version: number;
+  rememberPrivate: boolean;
+  activeId: string | null;
+  entries: StoredEntry[];
+};
+
 function newId(): string {
   return crypto.randomUUID();
 }
@@ -212,14 +219,49 @@ export class Keyring {
       throw new Error('Only a key with a private part can be the active key.');
     this.update({ activeId: id });
   }
-  /** Turning this off immediately deletes saved private keys from this browser. */
+  /** Turning this off prevents other open tabs from saving private keys again. */
   setRememberPrivate(rememberPrivate: boolean) {
+    try {
+      if (!this.storage) throw new Error('Browser storage unavailable.');
+      this.storage.setItem(this.privatePreferenceKey, String(rememberPrivate));
+    } catch {
+      this.state = {
+        ...this.state,
+        storageProblem: 'This browser blocked changes to private-key storage.',
+      };
+      this.listeners.forEach((listener) => listener());
+      return;
+    }
     this.update({ rememberPrivate });
+  }
+
+  observePrivatePreference(key: string | null) {
+    if (
+      key !== this.privatePreferenceKey ||
+      !this.state.rememberPrivate ||
+      this.allowsPrivateKeys()
+    )
+      return;
+    this.state = { ...this.state, rememberPrivate: false };
+    this.listeners.forEach((listener) => listener());
+  }
+
+  private get privatePreferenceKey() {
+    return `${this.storageKey}:remember-private`;
+  }
+
+  private allowsPrivateKeys() {
+    try {
+      return this.storage?.getItem(this.privatePreferenceKey) !== 'false';
+    } catch {
+      return false;
+    }
   }
   /** Deletes my keys and contacts (memory and storage). Built-in keys stay. */
   clearAll() {
     try {
       this.storage?.removeItem(dataKeyAtRevision(this.storageKey, this.clearRevision));
+      this.storage?.setItem(this.privatePreferenceKey, 'false');
     } finally {
       this.resetAfterClear();
     }
@@ -262,9 +304,24 @@ export class Keyring {
     this.listeners.forEach((listener) => listener());
   }
 
+  private stripStoredPrivateKeys(key: string, current: string, data: StoredKeyring) {
+    if (!this.storage || this.storage.getItem(key) !== current) return;
+    this.storage.setItem(
+      key,
+      JSON.stringify({
+        ...data,
+        rememberPrivate: false,
+        activeId: null,
+        entries: data.entries.filter((entry) => entry?.source === 'contact'),
+      }),
+    );
+  }
+
   private save() {
     if (!this.storage || this.clearRevision !== this.readClearRevision()) return;
-    const { entries, rememberPrivate, activeId } = this.state;
+    const { entries, activeId } = this.state;
+    const rememberPrivate = this.state.rememberPrivate && this.allowsPrivateKeys();
+    this.state = { ...this.state, rememberPrivate };
     const saved: StoredEntry[] = entries
       .filter((entry) => entry.source === 'contact' || (entry.source === 'mine' && rememberPrivate))
       .slice(-MAX_SAVED_ENTRIES)
@@ -293,16 +350,20 @@ export class Keyring {
         entries.some((entry) => entry.id === activeId && entry.source !== 'mine'));
     const key = dataKeyAtRevision(this.storageKey, this.clearRevision);
     try {
-      this.storage.setItem(
-        key,
-        JSON.stringify({
-          version: SCHEMA_VERSION,
-          rememberPrivate,
-          activeId: keepActive ? activeId : null,
-          entries: saved,
-        }),
-      );
-      if (this.clearRevision !== this.readClearRevision()) this.storage.removeItem(key);
+      const payload = {
+        version: SCHEMA_VERSION,
+        rememberPrivate,
+        activeId: keepActive ? activeId : null,
+        entries: saved,
+      };
+      const serialized = JSON.stringify(payload);
+      this.storage.setItem(key, serialized);
+      if (this.clearRevision !== this.readClearRevision()) {
+        this.storage.removeItem(key);
+      } else if (rememberPrivate && !this.allowsPrivateKeys()) {
+        this.state = { ...this.state, rememberPrivate: false };
+        this.stripStoredPrivateKeys(key, serialized, payload);
+      }
       if (this.state.storageProblem) this.state = { ...this.state, storageProblem: undefined };
     } catch {
       this.state = {
@@ -318,12 +379,15 @@ export class Keyring {
       activeId: string | null = null,
       storageProblem: string | undefined;
     try {
-      const raw = this.storage?.getItem(dataKeyAtRevision(this.storageKey, this.clearRevision));
+      const key = dataKeyAtRevision(this.storageKey, this.clearRevision);
+      const raw = this.storage?.getItem(key);
       if (raw) {
         const data = JSON.parse(raw);
         if (data?.version !== SCHEMA_VERSION || !Array.isArray(data.entries))
           throw new Error('Unsupported keyring data.');
-        rememberPrivate = data.rememberPrivate === true;
+        rememberPrivate = data.rememberPrivate === true && this.allowsPrivateKeys();
+        if (data.rememberPrivate === true && !rememberPrivate)
+          this.stripStoredPrivateKeys(key, raw, data);
         for (const item of data.entries.slice(0, MAX_SAVED_ENTRIES)) {
           const entry = await restore(item, rememberPrivate);
           if (entry && !entries.some((e) => e.id === entry.id)) entries.push(entry);
@@ -337,7 +401,18 @@ export class Keyring {
     } catch {
       storageProblem = 'Saved keys could not be read and were ignored.';
     }
-    this.state = { ready: true, entries, activeId, rememberPrivate, storageProblem };
+    if (rememberPrivate && !this.allowsPrivateKeys()) {
+      const publicEntries = entries.filter((entry) => entry.source !== 'mine');
+      this.state = {
+        ready: true,
+        entries: publicEntries,
+        activeId: null,
+        rememberPrivate: false,
+        storageProblem,
+      };
+    } else {
+      this.state = { ready: true, entries, activeId, rememberPrivate, storageProblem };
+    }
     this.listeners.forEach((listener) => listener());
   }
 }

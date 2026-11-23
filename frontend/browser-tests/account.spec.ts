@@ -143,7 +143,8 @@ test.describe('mocked Supabase account flow', () => {
     await expect(
       other.getByText(/Cloud synchronization is disabled for this account/),
     ).toBeVisible();
-    await page.getByRole('button', { name: 'Sign out' }).click();
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await page.getByRole('button', { name: 'Sign out of this browser' }).click();
     await expect(page.getByRole('button', { name: 'Send magic link' })).toBeVisible();
     await expect(other.getByRole('button', { name: 'Send magic link' })).toBeVisible();
   });
@@ -271,7 +272,9 @@ test.describe('mocked Supabase account flow', () => {
     await expect(page.getByText(/It is now your active key/)).toBeVisible();
     await page.getByRole('link', { name: 'Account', exact: true }).click();
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();
-    await expect(page.getByRole('alert')).toContainText('discards the private keys');
+    await expect(page.getByRole('alert')).toContainText(
+      'temporary private keys in this and other open tabs',
+    );
     await page.getByRole('button', { name: 'Keep working' }).click();
     await expect(page.getByText('a@example.test')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();

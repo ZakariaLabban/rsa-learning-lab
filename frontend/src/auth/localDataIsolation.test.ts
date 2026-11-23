@@ -123,7 +123,35 @@ it('purges the former active keyring and old generations for only the cleared ac
   expect([...values.keys()].sort()).toEqual([
     'rsa-lab.keyring',
     'rsa-lab.keyring:account:a:clear:current',
+    'rsa-lab.keyring:account:a:remember-private',
     'rsa-lab.keyring:account:b:clear:older',
     'rsa-lab.local-clear:account:a',
   ]);
+});
+
+it('keeps private-key storage off when a stale tab saves a contact', async () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => void values.set(key, value),
+    removeItem: (key: string) => void values.delete(key),
+  };
+
+  const first = new Keyring(storage);
+  await first.ready;
+  first.setRememberPrivate(true);
+  const key = await first.addMine(deriveKey(61n, 53n, 17n));
+  const second = new Keyring(storage);
+  await second.ready;
+  expect(second.get(key.id)?.privateKey).toBeDefined();
+
+  first.setRememberPrivate(false);
+  await second.addContact({ n: 187n, e: 7n }, 'Contact from a stale tab');
+  const reopened = new Keyring(storage);
+  await reopened.ready;
+  expect(second.getState().rememberPrivate).toBe(false);
+  expect(reopened.get(key.id)).toBeUndefined();
+  expect(
+    reopened.getState().entries.some((entry) => entry.name === 'Contact from a stale tab'),
+  ).toBe(true);
 });
