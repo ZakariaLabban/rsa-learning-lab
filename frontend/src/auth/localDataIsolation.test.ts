@@ -155,3 +155,30 @@ it('keeps private-key storage off when a stale tab saves a contact', async () =>
     reopened.getState().entries.some((entry) => entry.name === 'Contact from a stale tab'),
   ).toBe(true);
 });
+
+it('preserves keys saved by another tab without persisting this tab’s temporary key', async () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => void values.set(key, value),
+    removeItem: (key: string) => void values.delete(key),
+  };
+  const stale = new Keyring(storage);
+  const saving = new Keyring(storage);
+  await Promise.all([stale.ready, saving.ready]);
+  const temporary = await stale.addMine(deriveKey(61n, 53n, 17n), 'Temporary');
+  saving.setRememberPrivate(true);
+  const saved = await saving.addMine(deriveKey(17n, 19n, 5n), 'Remembered');
+  const otherContact = await saving.addContact({ n: 221n, e: 11n }, 'Contact from the saving tab');
+
+  await stale.addContact({ n: 187n, e: 7n }, 'Contact from a stale tab');
+  const reopened = new Keyring(storage);
+  await reopened.ready;
+
+  expect(reopened.get(saved.id)?.privateKey).toBeDefined();
+  expect(reopened.get(otherContact.id)?.source).toBe('contact');
+  expect(reopened.get(temporary.id)).toBeUndefined();
+  expect(
+    reopened.getState().entries.some((entry) => entry.name === 'Contact from a stale tab'),
+  ).toBe(true);
+});
