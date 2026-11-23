@@ -1,0 +1,4 @@
+project_id = "rsa-learning-lab"
+
+[db.seed]
+enabled = false
