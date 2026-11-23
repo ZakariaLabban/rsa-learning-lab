@@ -182,3 +182,56 @@ it('preserves keys saved by another tab without persisting this tab’s temporar
     reopened.getState().entries.some((entry) => entry.name === 'Contact from a stale tab'),
   ).toBe(true);
 });
+
+it('retries pending key additions and removals after a storage write fails', async () => {
+  const values = new Map<string, string>();
+  let failNextSave = false;
+  let failNextRead = false;
+  const storage = {
+    getItem: (key: string) => {
+      if (failNextRead) {
+        failNextRead = false;
+        throw new Error('Storage unavailable');
+      }
+      return values.get(key) ?? null;
+    },
+    setItem: (key: string, value: string) => {
+      if (failNextSave) {
+        failNextSave = false;
+        throw new Error('Storage unavailable');
+      }
+      values.set(key, value);
+    },
+    removeItem: (key: string) => void values.delete(key),
+  };
+
+  const store = new Keyring(storage);
+  await store.ready;
+  store.setRememberPrivate(true);
+  const existing = await store.addMine(deriveKey(61n, 53n, 17n), 'Existing');
+  failNextSave = true;
+  const added = await store.addMine(deriveKey(17n, 19n, 5n), 'Pending');
+  expect(store.getState().storageProblem).toBeDefined();
+  await store.addContact({ n: 187n, e: 7n }, 'Contact');
+  const restored = new Keyring(storage);
+  await restored.ready;
+  expect(restored.get(added.id)?.privateKey).toBeDefined();
+
+  failNextSave = true;
+  store.remove(existing.id);
+  expect(store.getState().storageProblem).toBeDefined();
+  store.rename(added.id, 'Retried');
+  const reopened = new Keyring(storage);
+  await reopened.ready;
+  expect(reopened.get(existing.id)).toBeUndefined();
+  expect(reopened.get(added.id)?.name).toBe('Retried');
+  expect(store.getState().storageProblem).toBeUndefined();
+
+  failNextRead = true;
+  store.rename(added.id, 'Retried again');
+  expect(store.getState().storageProblem).toBeDefined();
+  await store.addContact({ n: 221n, e: 11n }, 'Another contact');
+  const afterReadFailure = new Keyring(storage);
+  await afterReadFailure.ready;
+  expect(afterReadFailure.get(added.id)?.name).toBe('Retried again');
+});

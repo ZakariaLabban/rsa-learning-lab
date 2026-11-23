@@ -109,6 +109,7 @@ export class Keyring {
   readonly ready: Promise<void>;
   private clearRevision: string | null;
   private memoryRevision = 0;
+  private pendingSaveBaseline: KeyringState | null = null;
 
   constructor(
     private readonly storage: StorageLike | null,
@@ -274,6 +275,7 @@ export class Keyring {
   resetAfterClear() {
     this.clearRevision = this.readClearRevision();
     this.memoryRevision++;
+    this.pendingSaveBaseline = null;
     this.state = {
       ...this.state,
       entries: this.state.entries.filter(
@@ -305,7 +307,12 @@ export class Keyring {
   private update(change: Partial<KeyringState>) {
     const previous = this.state;
     this.state = { ...previous, ...change };
-    if (this.state.ready) this.save(previous);
+    if (this.state.ready) {
+      const baseline = this.pendingSaveBaseline ?? previous;
+      this.pendingSaveBaseline =
+        change.rememberPrivate === true ? { ...baseline, rememberPrivate: false } : baseline;
+      if (this.save(this.pendingSaveBaseline)) this.pendingSaveBaseline = null;
+    }
     this.listeners.forEach((listener) => listener());
   }
 
@@ -323,9 +330,9 @@ export class Keyring {
   }
 
   private readStoredKeyring(key: string): StoredKeyring | undefined {
+    const raw = this.storage?.getItem(key);
+    if (!raw) return;
     try {
-      const raw = this.storage?.getItem(key);
-      if (!raw) return;
       const data = JSON.parse(raw) as StoredKeyring;
       if (data?.version === SCHEMA_VERSION && Array.isArray(data.entries)) return data;
     } catch {
@@ -333,64 +340,64 @@ export class Keyring {
     }
   }
 
-  private save(previous: KeyringState) {
-    if (!this.storage || this.clearRevision !== this.readClearRevision()) return;
-    const key = dataKeyAtRevision(this.storageKey, this.clearRevision);
-    const { entries, activeId } = this.state;
-    const stored = this.readStoredKeyring(key);
-    const preference = this.privateStoragePreference();
-    const rememberPrivate = this.state.rememberPrivate && preference !== 'false';
-    this.state = { ...this.state, rememberPrivate };
-
-    const oldEntries = new Map(previous.entries.map((entry) => [entry.id, entry]));
-    const removedIds = new Set(previous.entries.map((entry) => entry.id));
-    for (const entry of entries) removedIds.delete(entry.id);
-
-    const changed: StoredEntry[] = entries
-      .filter(
-        (entry) =>
-          (entry.source === 'contact' && (!stored || oldEntries.get(entry.id) !== entry)) ||
-          (entry.source === 'mine' &&
-            rememberPrivate &&
-            (!stored || !previous.rememberPrivate || oldEntries.get(entry.id) !== entry)),
-      )
-      .map((entry) => ({
-        id: entry.id,
-        name: entry.name,
-        source: entry.source as 'mine' | 'contact',
-        n: String(entry.key.n),
-        e: String(entry.key.e),
-        fingerprint: entry.fingerprint,
-        ...(entry.source === 'contact' ? { verified: entry.verified === true } : {}),
-        ...(entry.source === 'mine' && entry.privateKey
-          ? {
-              private: {
-                p: String(entry.privateKey.p),
-                q: String(entry.privateKey.q),
-                d: String(entry.privateKey.d),
-              },
-            }
-          : {}),
-        createdAt: entry.createdAt,
-      }));
-    // Apply this tab's changes to the current saved entries, including keys from other tabs.
-    const changedIds = new Set(changed.map((entry) => entry.id));
-    const keepSavedPrivate = stored?.rememberPrivate === true && preference !== 'false';
-    const retained = (stored?.entries ?? []).filter(
-      (entry) =>
-        (entry?.source === 'contact' || (entry?.source === 'mine' && keepSavedPrivate)) &&
-        !removedIds.has(entry.id) &&
-        !changedIds.has(entry.id),
-    );
-    const saved = [...retained, ...changed]
-      .sort((a, b) => a.createdAt - b.createdAt)
-      .slice(-MAX_SAVED_ENTRIES);
-    const selected = stored && previous.activeId === activeId ? stored.activeId : activeId;
-    const keepActive =
-      selected !== null &&
-      (saved.some((entry) => entry.id === selected) ||
-        entries.some((entry) => entry.id === selected && entry.source !== 'mine'));
+  private save(previous: KeyringState): boolean {
+    if (!this.storage || this.clearRevision !== this.readClearRevision()) return false;
     try {
+      const key = dataKeyAtRevision(this.storageKey, this.clearRevision);
+      const { entries, activeId } = this.state;
+      const stored = this.readStoredKeyring(key);
+      const preference = this.storage.getItem(this.privatePreferenceKey);
+      const rememberPrivate = this.state.rememberPrivate && preference !== 'false';
+      this.state = { ...this.state, rememberPrivate };
+
+      const oldEntries = new Map(previous.entries.map((entry) => [entry.id, entry]));
+      const removedIds = new Set(previous.entries.map((entry) => entry.id));
+      for (const entry of entries) removedIds.delete(entry.id);
+
+      const changed: StoredEntry[] = entries
+        .filter(
+          (entry) =>
+            (entry.source === 'contact' && (!stored || oldEntries.get(entry.id) !== entry)) ||
+            (entry.source === 'mine' &&
+              rememberPrivate &&
+              (!stored || !previous.rememberPrivate || oldEntries.get(entry.id) !== entry)),
+        )
+        .map((entry) => ({
+          id: entry.id,
+          name: entry.name,
+          source: entry.source as 'mine' | 'contact',
+          n: String(entry.key.n),
+          e: String(entry.key.e),
+          fingerprint: entry.fingerprint,
+          ...(entry.source === 'contact' ? { verified: entry.verified === true } : {}),
+          ...(entry.source === 'mine' && entry.privateKey
+            ? {
+                private: {
+                  p: String(entry.privateKey.p),
+                  q: String(entry.privateKey.q),
+                  d: String(entry.privateKey.d),
+                },
+              }
+            : {}),
+          createdAt: entry.createdAt,
+        }));
+      // Apply this tab's changes to the current saved entries, including keys from other tabs.
+      const changedIds = new Set(changed.map((entry) => entry.id));
+      const keepSavedPrivate = stored?.rememberPrivate === true && preference !== 'false';
+      const retained = (stored?.entries ?? []).filter(
+        (entry) =>
+          (entry?.source === 'contact' || (entry?.source === 'mine' && keepSavedPrivate)) &&
+          !removedIds.has(entry.id) &&
+          !changedIds.has(entry.id),
+      );
+      const saved = [...retained, ...changed]
+        .sort((a, b) => a.createdAt - b.createdAt)
+        .slice(-MAX_SAVED_ENTRIES);
+      const selected = stored && previous.activeId === activeId ? stored.activeId : activeId;
+      const keepActive =
+        selected !== null &&
+        (saved.some((entry) => entry.id === selected) ||
+          entries.some((entry) => entry.id === selected && entry.source !== 'mine'));
       const payload = {
         version: SCHEMA_VERSION,
         rememberPrivate: rememberPrivate || keepSavedPrivate || preference === 'true',
@@ -401,16 +408,21 @@ export class Keyring {
       this.storage.setItem(key, serialized);
       if (this.clearRevision !== this.readClearRevision()) {
         this.storage.removeItem(key);
-      } else if (payload.rememberPrivate && !this.allowsPrivateKeys()) {
+      } else if (
+        payload.rememberPrivate &&
+        this.storage.getItem(this.privatePreferenceKey) === 'false'
+      ) {
         this.state = { ...this.state, rememberPrivate: false };
         this.stripStoredPrivateKeys(key, serialized, payload);
       }
       if (this.state.storageProblem) this.state = { ...this.state, storageProblem: undefined };
+      return true;
     } catch {
       this.state = {
         ...this.state,
         storageProblem: 'This browser blocked saving. Keys will last only until you close the tab.',
       };
+      return false;
     }
   }
 
