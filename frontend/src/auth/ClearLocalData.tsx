@@ -4,7 +4,7 @@ import { clearKeyVault } from '../engine/client';
 import { progressKey } from '../features/lessons/practiceProgress';
 
 import { useAuth } from './AuthProvider';
-import { localClearKey, localDataKey } from './localDataKey';
+import { dataKeyAtRevision, localClearKey, localClearRevision, localDataKey } from './localDataKey';
 
 export function ClearLocalData() {
   const keyring = useKeyringStore();
@@ -25,26 +25,25 @@ export function ClearLocalData() {
     try {
       await keyring.ready;
 
-      // Clear local RSA keys and contacts, including
-      // saved private keys and in-memory personal keys.
-      keyring.clearAll();
-      clearKeyVault();
-
-      // Clear saved practice progress.
-      localStorage.removeItem(localDataKey(progressKey, accountId));
+      const previousRevision = localClearRevision(accountId);
       localStorage.setItem(localClearKey(accountId), crypto.randomUUID());
-      keyring.acceptLocalClear();
+      keyring.clearAll();
+      localStorage.removeItem(
+        dataKeyAtRevision(localDataKey(progressKey, accountId), previousRevision),
+      );
 
       setConfirming(false);
       setConfirmation('');
 
       setMessage('Your local RSA keys, contacts, and practice progress ' + 'have been cleared.');
     } catch {
+      keyring.resetAfterClear();
       setError(
         'Some local information could not be cleared. ' +
           'Please check your browser storage settings.',
       );
     } finally {
+      clearKeyVault();
       setBusy(false);
     }
   }

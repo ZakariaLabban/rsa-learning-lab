@@ -23,3 +23,7 @@ export function clearAccountCache(userId: string, storage: Pick<Storage, 'remove
     storage.removeItem(accountCacheKey(userId, section));
   }
 }
+
+export function cloudProfileChangeKey(userId: string) {
+  return `${PREFIX}.${userId}.profile-changed`;
+}

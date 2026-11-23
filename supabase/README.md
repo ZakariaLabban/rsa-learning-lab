@@ -26,12 +26,12 @@ The project-creation option **Enable RLS on new tables automatically** is not re
 - Supply the same public Supabase settings in each approved Vercel environment. Keep the Supabase origin in `frontend/vercel.json` aligned with the selected project. Use your project’s SMTP settings for external recipients and test expired and successful magic links at each approved origin.
 - To enable GitHub sign-in, register an OAuth app with GitHub, enter the provider credentials in Supabase Authentication, and use the callback URL supplied by Supabase. Set `VITE_SUPABASE_GITHUB_ENABLED=true` for the relevant frontend deployments.
 - Set `VITE_PRIVACY_CONTACT_EMAIL` to a private, monitored administrator mailbox. Verify the mailbox works before enabling the link on a public deployment. Verify the account owner through control of the sign-in address before using Supabase’s administrator tools to remove the Auth user. Review the application's cascade behavior and the provider’s retention practices before processing requests.
-- Signing in does not migrate guest data. The guest import UI previews counts only. Issue #22 must revalidate the confirmed public payload at submission time, bind it to the current authenticated account, verify that cloud writes are allowed, and use the database constraints as a second boundary. Client-side storage partitioning does not isolate people who share access to browser developer tools or the same browser profile.
+- During initial session recovery, users can explicitly continue as guests in that tab and recheck their account from the Account page. Signing in does not migrate guest data. The guest import UI previews counts only. Issue #22 must revalidate the confirmed public payload at submission time, bind it to the current authenticated account, verify that cloud writes are allowed, and use the database constraints as a second boundary. Client-side storage partitioning does not isolate people who share access to browser developer tools or the same browser profile.
 
 From `frontend`, run the mocked account browser tests with disposable credentials:
 
 ```sh
-VITE_SUPABASE_URL=https://rsa-lab-account-test.supabase.co VITE_SUPABASE_PUBLISHABLE_KEY=mock-publishable-key npm run build
+VITE_SUPABASE_URL=https://rsa-lab-account-test.supabase.co VITE_SUPABASE_PUBLISHABLE_KEY=mock-publishable-key VITE_PRIVACY_CONTACT_EMAIL=privacy@example.test npm run build
 RSA_MOCK_AUTH=1 npm run test:browser -- account.spec.ts
 ```
 

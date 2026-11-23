@@ -12,4 +12,20 @@ function configuredClient() {
   }
 }
 
-export const supabase = configuredClient();
+const supabase = configuredClient();
+export const auth = supabase?.auth ?? null;
+
+export async function readCloudProfile(accountId: string, signal: AbortSignal) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  return supabase
+    .from('profiles')
+    .select('sync_enabled, data_deleted_at')
+    .eq('user_id', accountId)
+    .abortSignal(signal)
+    .maybeSingle();
+}
+
+export async function deleteCloudApplicationData(accessToken: string) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  return supabase.rpc('delete_my_data').setHeader('Authorization', `Bearer ${accessToken}`);
+}

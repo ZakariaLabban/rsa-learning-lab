@@ -75,7 +75,13 @@ export function selectPublicGuestData(
       correct: progress.correct,
       streak: progress.streak,
       best: progress.best,
-      seen: [...progress.seen],
+      seen: progress.seen.filter((id) => {
+        const fields =
+          /^practice\.v1:(intro|exam):(0|[1-9]\d{0,9}):(modulus|totient|private-exponent|encrypt|decrypt|inverse|power|miller-rabin|crt|phi)$/.exec(
+            id,
+          );
+        return fields !== null && Number(fields[2]) <= 0xffffffff;
+      }),
       topics,
     },
   };

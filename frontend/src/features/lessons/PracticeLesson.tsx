@@ -35,7 +35,7 @@ export function PracticeLesson() {
     if (!valid || clearRevision !== localClearRevision(accountId)) return;
     const next = recordAnswer(progress, question.id, question.topic, correct);
     setProgress(next);
-    saveProgress(next, accountId);
+    saveProgress(next, accountId, clearRevision);
   }
   const weak = Object.entries(progress.topics)
     .filter(([, stats]) => stats.correct < stats.attempts)

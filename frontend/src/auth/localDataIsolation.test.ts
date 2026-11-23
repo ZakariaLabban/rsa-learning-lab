@@ -63,11 +63,32 @@ it('blocks stale keyring writes after another tab clears the active profile', as
   const second = new Keyring(storage, STORAGE_KEY, () => cleared);
   await second.ready;
 
-  first.clearAll();
   cleared = 'new revision';
-  first.acceptLocalClear();
+  first.clearAll();
   second.rename(contact.id, 'Stale tab');
   expect(storage.getItem(STORAGE_KEY)).toBeNull();
   await expect(second.addContact({ n: 221n, e: 11n })).rejects.toThrow('Local data was cleared');
   await expect(first.addContact({ n: 221n, e: 11n })).resolves.toBeDefined();
+});
+
+it('keeps a practice write that races a clear out of the new generation', () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      if (key === 'rsa-lab-practice.v1') {
+        values.set('rsa-lab.local-clear', 'new-generation');
+        values.delete(key);
+      }
+      values.set(key, value);
+    },
+    removeItem: (key: string) => void values.delete(key),
+  };
+  vi.stubGlobal('localStorage', storage);
+  saveProgress(recordAnswer(readProgress(), 'racing', 'modulus', true), null, null);
+  expect(readProgress().attempts).toBe(0);
+  expect(values.has('rsa-lab-practice.v1')).toBe(false);
+
+  saveProgress(recordAnswer(readProgress(), 'new', 'modulus', true));
+  expect(readProgress().seen).toEqual(['new']);
 });

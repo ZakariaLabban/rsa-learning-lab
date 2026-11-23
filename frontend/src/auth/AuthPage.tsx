@@ -1,14 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
-import { supabase } from '../lib/supabase';
+import { auth, deleteCloudApplicationData } from '../lib/supabase';
 import { ClearLocalData } from './ClearLocalData';
 import { GuestImportChoice } from './GuestImportChoice';
 import { CloudProfileStatus } from './CloudProfileStatus';
-import { clearAccountCache } from './accountCache';
+import { clearAccountCache, cloudProfileChangeKey } from './accountCache';
 
 export function AuthPage() {
-  const { session, loading, configured } = useAuth();
+  const { session, loading, configured, guestOverride, setGuestOverride } = useAuth();
 
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
@@ -28,7 +28,7 @@ export function AuthPage() {
   async function handleSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!supabase) {
+    if (!auth) {
       setError('Supabase is not configured.');
       return;
     }
@@ -38,7 +38,7 @@ export function AuthPage() {
     setMessage('');
 
     try {
-      const { error: authError } = await supabase.auth.signInWithOtp({
+      const { error: authError } = await auth.signInWithOtp({
         email: email.trim(),
         options: {
           emailRedirectTo: `${window.location.origin}/account`,
@@ -56,12 +56,12 @@ export function AuthPage() {
   }
 
   async function handleGitHubSignIn() {
-    if (!supabase || busy) return;
+    if (!auth || busy) return;
     setBusy(true);
     setError('');
     setMessage('');
     try {
-      const { error: authError } = await supabase.auth.signInWithOAuth({
+      const { error: authError } = await auth.signInWithOAuth({
         provider: 'github',
         options: { redirectTo: `${window.location.origin}/account` },
       });
@@ -73,7 +73,7 @@ export function AuthPage() {
   }
 
   async function handleSignOut() {
-    if (!supabase) return;
+    if (!auth) return;
 
     setBusy(true);
     setError('');
@@ -82,7 +82,7 @@ export function AuthPage() {
     setDeleteText('');
 
     try {
-      const { error: authError } = await supabase.auth.signOut({ scope: 'local' });
+      const { error: authError } = await auth.signOut({ scope: 'local' });
 
       if (authError) throw authError;
 
@@ -95,7 +95,7 @@ export function AuthPage() {
   }
 
   async function handleDeleteCloudData() {
-    if (!supabase || !session || busy || deleteText !== 'DELETE') {
+    if (!auth || !session || busy || deleteText !== 'DELETE') {
       return;
     }
 
@@ -104,9 +104,7 @@ export function AuthPage() {
     setMessage('');
 
     try {
-      const { error: deleteError } = await supabase
-        .rpc('delete_my_data')
-        .setHeader('Authorization', `Bearer ${session.access_token}`);
+      const { error: deleteError } = await deleteCloudApplicationData(session.access_token);
 
       if (deleteError) throw deleteError;
 
@@ -117,6 +115,7 @@ export function AuthPage() {
 
       try {
         clearAccountCache(session.user.id, window.localStorage);
+        localStorage.setItem(cloudProfileChangeKey(session.user.id), crypto.randomUUID());
       } catch {
         cacheCleared = false;
       }
@@ -174,7 +173,16 @@ export function AuthPage() {
 
       {loading && <p role="status">Checking your session...</p>}
 
-      {!loading && configured && !session && (
+      {guestOverride && (
+        <p>
+          Guest mode is active in this tab.{' '}
+          <button type="button" onClick={() => setGuestOverride(false)}>
+            Check account session
+          </button>
+        </p>
+      )}
+
+      {!loading && configured && !guestOverride && !session && (
         <form onSubmit={handleSignIn}>
           <label htmlFor="auth-email">Email address</label>
 
@@ -204,6 +212,7 @@ export function AuthPage() {
 
       {!loading &&
         configured &&
+        !guestOverride &&
         !session &&
         import.meta.env.VITE_SUPABASE_GITHUB_ENABLED === 'true' && (
           <button type="button" onClick={handleGitHubSignIn} disabled={busy}>

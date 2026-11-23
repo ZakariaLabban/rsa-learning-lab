@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { cloudProfileChangeKey } from './accountCache';
 import { useAuth } from './AuthProvider';
-import { supabase } from '../lib/supabase';
+import { readCloudProfile } from '../lib/supabase';
 
 type ProfileStatus = 'loading' | 'enabled' | 'disabled' | 'missing' | 'error';
 
@@ -10,28 +11,39 @@ export function CloudProfileStatus() {
   const [status, setStatus] = useState<ProfileStatus>('loading');
 
   useEffect(() => {
-    const client = supabase;
+    if (!accountId) return;
     const userId = accountId;
 
-    if (!client || !userId) return;
+    let request: AbortController | undefined;
+    function refresh() {
+      request?.abort();
+      const controller = new AbortController();
+      request = controller;
+      void readCloudProfile(userId, controller.signal)
+        .then(({ data, error }) => {
+          if (controller.signal.aborted) return;
+          if (error) setStatus('error');
+          else if (!data) setStatus('missing');
+          else if (!data.sync_enabled || data.data_deleted_at !== null) setStatus('disabled');
+          else setStatus('enabled');
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setStatus('error');
+        });
+    }
 
-    const controller = new AbortController();
+    const refreshAfterCloudChange = (event: StorageEvent) => {
+      if (event.key === cloudProfileChangeKey(userId)) refresh();
+    };
 
-    void client
-      .from('profiles')
-      .select('sync_enabled, data_deleted_at')
-      .eq('user_id', userId)
-      .abortSignal(controller.signal)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (controller.signal.aborted) return;
-        if (error) setStatus('error');
-        else if (!data) setStatus('missing');
-        else if (!data.sync_enabled || data.data_deleted_at !== null) setStatus('disabled');
-        else setStatus('enabled');
-      });
-
-    return () => controller.abort();
+    refresh();
+    window.addEventListener('focus', refresh);
+    window.addEventListener('storage', refreshAfterCloudChange);
+    return () => {
+      request?.abort();
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('storage', refreshAfterCloudChange);
+    };
   }, [accountId]);
 
   if (!accountId) return null;

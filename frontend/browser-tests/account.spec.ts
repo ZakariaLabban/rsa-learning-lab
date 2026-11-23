@@ -11,11 +11,23 @@ test('clears guest progress across open tabs and preserves other browser prefere
 }) => {
   await page.goto('/account');
   await page.evaluate(() => {
-    localStorage.setItem('rsa-lab-practice.v1', '{}');
+    localStorage.setItem(
+      'rsa-lab-practice.v1',
+      JSON.stringify({
+        version: 1,
+        attempts: 1,
+        correct: 1,
+        streak: 1,
+        best: 1,
+        seen: ['practice.v1:intro:632:modulus'],
+        topics: { modulus: { attempts: 1, correct: 1 } },
+      }),
+    );
     localStorage.setItem('test-preference', 'keep');
   });
   const other = await context.newPage();
-  await other.goto('/lecture');
+  await other.goto('/playground/learn/practice');
+  await expect(other.getByText(/First attempts: 1\/1 correct/)).toBeVisible();
   await expect(other.getByRole('link', { name: 'Privacy', exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Clear local data...' }).click();
@@ -24,6 +36,7 @@ test('clears guest progress across open tabs and preserves other browser prefere
   await page.getByLabel('Type CLEAR to confirm:').fill('CLEAR');
   await Promise.all([other.waitForEvent('load'), confirm.click()]);
   await expect(page.getByRole('status').filter({ hasText: 'have been cleared' })).toBeVisible();
+  await expect(other.getByText(/First attempts: 0\/0 correct/)).toBeVisible();
   expect(await other.evaluate(() => localStorage.getItem('rsa-lab-practice.v1'))).toBeNull();
   expect(await other.evaluate(() => localStorage.getItem('test-preference'))).toBe('keep');
 });
@@ -104,6 +117,11 @@ test.describe('mocked Supabase account flow', () => {
     ).toBeNull();
     expect(await page.evaluate(() => localStorage.getItem('rsa-lab-practice.v1'))).toBe('{}');
 
+    const other = await context.newPage();
+    await other.goto('/account');
+    await expect(other.getByText('b@example.test')).toBeVisible();
+    await expect(other.getByText(/Your profile permits cloud writes/)).toBeVisible();
+
     await page.getByRole('button', { name: 'Delete my cloud data...' }).click();
     await page.getByLabel('Type DELETE to confirm:').fill('DELETE');
     const remove = page.getByRole('button', { name: 'Permanently delete cloud data' });
@@ -119,12 +137,72 @@ test.describe('mocked Supabase account flow', () => {
       page.getByText(/Cloud synchronization is disabled for this account/),
     ).toBeVisible();
     expect(writes).toEqual(['/rest/v1/rpc/delete_my_data', '/rest/v1/rpc/delete_my_data']);
-    const other = await context.newPage();
-    await other.goto('/account');
-    await expect(other.getByText('b@example.test')).toBeVisible();
+    await expect(
+      other.getByText(/Cloud synchronization is disabled for this account/),
+    ).toBeVisible();
     await page.getByRole('button', { name: 'Sign out' }).click();
     await expect(page.getByRole('button', { name: 'Send magic link' })).toBeVisible();
     await expect(other.getByRole('button', { name: 'Send magic link' })).toBeVisible();
+  });
+
+  test('waits for account recovery and honors an explicit guest choice', async ({ page }) => {
+    await page.addInitScript(
+      ({ authStorageKey, accountA }) => {
+        localStorage.setItem(
+          authStorageKey,
+          JSON.stringify({
+            access_token: 'expired-token',
+            refresh_token: 'refresh-token',
+            expires_at: 1,
+            user: { id: accountA, email: 'a@example.test' },
+          }),
+        );
+      },
+      { authStorageKey, accountA },
+    );
+    let finishRefresh!: () => void;
+    const deferred = new Promise<void>((resolve) => {
+      finishRefresh = resolve;
+    });
+    await page.route(`${authOrigin}/auth/v1/token?grant_type=refresh_token`, async (route) => {
+      await deferred;
+      await route.fulfill({
+        json: {
+          access_token: 'refreshed-token',
+          refresh_token: 'rotated-refresh-token',
+          expires_in: 3600,
+          user: { id: accountA, email: 'a@example.test' },
+        },
+      });
+    });
+    await page.route(`${authOrigin}/rest/v1/profiles?**`, (route) =>
+      route.fulfill({ json: [{ sync_enabled: true, data_deleted_at: null }] }),
+    );
+    await page.goto('/playground/learn/practice', { waitUntil: 'domcontentloaded' });
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Checking your session' }),
+    ).toBeVisible();
+    await expect(page.getByLabel('Your answer')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Continue as guest' }).click();
+    await expect(page.getByLabel('Your answer')).toBeVisible();
+    finishRefresh();
+    await page.getByRole('link', { name: 'Account', exact: true }).click();
+    await expect(page.getByText('Guest mode is active in this tab.')).toBeVisible();
+    await expect(page.getByText('a@example.test')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Check account session' }).click();
+    await expect(page.getByText('a@example.test')).toBeVisible();
+  });
+
+  test('links an account-deletion request to the configured administrator mailbox', async ({
+    page,
+  }) => {
+    await page.goto('/privacy');
+    await expect(
+      page.getByRole('link', { name: 'Request account and email deletion' }),
+    ).toHaveAttribute(
+      'href',
+      'mailto:privacy@example.test?subject=RSA%20Learning%20Lab%20account%20deletion',
+    );
   });
 
   test('shows a recoverable error for an expired sign-in link', async ({ page }) => {

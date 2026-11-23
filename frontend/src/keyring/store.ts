@@ -7,7 +7,7 @@
  * Storage holds decimal strings in a versioned schema; anything invalid is dropped on load.
  */
 import { bitLength, deriveKey, type PrivateKey, type PublicKey } from '../engine/math';
-import { localClearRevision } from '../auth/localDataKey';
+import { dataKeyAtRevision, localClearRevision } from '../auth/localDataKey';
 import { fingerprint } from '../engine/encoding';
 import demoKeys from './demo-keys.json';
 import { checkPublicKey, cleanName, KeyFileError, parseKeyFile, privateFromParts } from './files';
@@ -218,12 +218,15 @@ export class Keyring {
   }
   /** Deletes my keys and contacts (memory and storage). Built-in keys stay. */
   clearAll() {
-    this.storage?.removeItem(this.storageKey);
-    this.resetAfterClear();
+    try {
+      this.storage?.removeItem(dataKeyAtRevision(this.storageKey, this.clearRevision));
+    } finally {
+      this.resetAfterClear();
+    }
   }
 
   resetAfterClear() {
-    this.acceptLocalClear();
+    this.clearRevision = this.readClearRevision();
     this.memoryRevision++;
     this.state = {
       ...this.state,
@@ -235,10 +238,6 @@ export class Keyring {
       storageProblem: undefined,
     };
     this.listeners.forEach((listener) => listener());
-  }
-
-  acceptLocalClear() {
-    this.clearRevision = this.readClearRevision();
   }
 
   private checkClear(revision: number) {
@@ -292,9 +291,10 @@ export class Keyring {
       activeId !== null &&
       (saved.some((entry) => entry.id === activeId) ||
         entries.some((entry) => entry.id === activeId && entry.source !== 'mine'));
+    const key = dataKeyAtRevision(this.storageKey, this.clearRevision);
     try {
       this.storage.setItem(
-        this.storageKey,
+        key,
         JSON.stringify({
           version: SCHEMA_VERSION,
           rememberPrivate,
@@ -302,6 +302,7 @@ export class Keyring {
           entries: saved,
         }),
       );
+      if (this.clearRevision !== this.readClearRevision()) this.storage.removeItem(key);
       if (this.state.storageProblem) this.state = { ...this.state, storageProblem: undefined };
     } catch {
       this.state = {
@@ -317,7 +318,7 @@ export class Keyring {
       activeId: string | null = null,
       storageProblem: string | undefined;
     try {
-      const raw = this.storage?.getItem(this.storageKey);
+      const raw = this.storage?.getItem(dataKeyAtRevision(this.storageKey, this.clearRevision));
       if (raw) {
         const data = JSON.parse(raw);
         if (data?.version !== SCHEMA_VERSION || !Array.isArray(data.entries))

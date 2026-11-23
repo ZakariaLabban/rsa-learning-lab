@@ -34,6 +34,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: https://rsa-lab-account-test.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: mock-publishable-key
+          VITE_PRIVACY_CONTACT_EMAIL: privacy@example.test
           RSA_MOCK_AUTH: '1'
         run: |
           npm run build

@@ -13,3 +13,8 @@ export function localClearRevision(accountId: string | null): string | null {
     return null;
   }
 }
+
+/** A late writer can only recreate an obsolete key after a profile is cleared. */
+export function dataKeyAtRevision(key: string, revision: string | null) {
+  return revision === null ? key : `${key}:clear:${revision}`;
+}

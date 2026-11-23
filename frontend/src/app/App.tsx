@@ -141,7 +141,17 @@ function Profile({ accountId }: { accountId: string | null }) {
 }
 
 function ActiveProfile() {
-  const { accountId } = useAuth();
+  const { accountId, loading, setGuestOverride } = useAuth();
+  if (loading) {
+    return (
+      <main>
+        <p role="status">Checking your session…</p>
+        <button type="button" onClick={() => setGuestOverride(true)}>
+          Continue as guest
+        </button>
+      </main>
+    );
+  }
   return <Profile key={localDataKey('profile', accountId)} accountId={accountId} />;
 }
 

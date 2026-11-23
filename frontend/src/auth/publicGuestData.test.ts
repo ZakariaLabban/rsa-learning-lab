@@ -61,7 +61,7 @@ describe('Public guest data security', () => {
 
   it('rejects invalid public components and drops unapproved progress fields', () => {
     const invalid = { ...myKey, key: { n: 17n, e: 17n } };
-    const progress = { ...emptyProgress(), d: 'unexpected data' };
+    const progress = { ...emptyProgress(), d: 'unexpected data', seen: ['unexpected-data'] };
 
     expect(selectPublicGuestData([invalid], progress)).toEqual({
       publicKeys: [],
@@ -97,15 +97,15 @@ describe('Public guest data security', () => {
 
     progress.attempts = 2;
     progress.correct = 1;
-    progress.seen.push('question-1');
+    progress.seen.push('practice.v1:intro:632:modulus');
 
     const result = selectPublicGuestData([], progress);
 
     expect(result.practiceProgress.attempts).toBe(2);
     expect(result.practiceProgress.correct).toBe(1);
 
-    progress.seen.push('question-2');
+    progress.seen.push('practice.v1:intro:632:totient');
 
-    expect(result.practiceProgress.seen).toEqual(['question-1']);
+    expect(result.practiceProgress.seen).toEqual(['practice.v1:intro:632:modulus']);
   });
 });

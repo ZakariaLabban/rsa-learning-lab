@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { auth } from '../lib/supabase';
 import { clearKeyVault } from '../engine/client';
 import { clearAccountCache } from './accountCache';
 
@@ -9,22 +9,26 @@ type AuthContextValue = {
   accountId: string | null;
   loading: boolean;
   configured: boolean;
+  guestOverride: boolean;
+  setGuestOverride: (enabled: boolean) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(Boolean(supabase));
+  const [loading, setLoading] = useState(Boolean(auth));
+  const [guestOverride, setGuestOverrideState] = useState(false);
+  const guestOverrideRef = useRef(false);
 
   const previousAccountId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!auth) return;
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = auth.onAuthStateChange((_event, nextSession) => {
       const nextAccountId = nextSession?.user.id ?? null;
       const previousId = previousAccountId.current;
 
@@ -37,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      if (previousId !== nextAccountId) clearKeyVault();
+      if (previousId !== nextAccountId && !guestOverrideRef.current) clearKeyVault();
       previousAccountId.current = nextAccountId;
 
       setSession(nextSession);
@@ -50,10 +54,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        session,
-        accountId: session?.user.id ?? null,
-        loading,
-        configured: Boolean(supabase),
+        session: guestOverride ? null : session,
+        accountId: guestOverride ? null : (session?.user.id ?? null),
+        loading: !guestOverride && loading,
+        configured: Boolean(auth),
+        guestOverride,
+        setGuestOverride(enabled) {
+          guestOverrideRef.current = enabled;
+          clearKeyVault();
+          setGuestOverrideState(enabled);
+        },
       }}
     >
       {children}
