@@ -19,7 +19,13 @@ function visibleTarget(selector: string): HTMLElement | undefined {
   );
 }
 type Spot = { left: number; top: number; width: number; height: number };
-type Placement = { spot: Spot | null; left: number; top: number; above: boolean };
+type Placement = {
+  spot: Spot | null;
+  left: number;
+  top: number;
+  direction: 'above' | 'below' | 'left' | 'right';
+  maxHeight: number;
+};
 
 export function LessonGuide({ path }: { path: string }) {
   const content = LESSON_GUIDES[path];
@@ -38,6 +44,7 @@ function Guide({ path, content }: { path: string; content: (typeof LESSON_GUIDES
   const card = useRef<HTMLElement>(null);
   const title = useRef<HTMLHeadingElement>(null);
   const help = useRef<HTMLButtonElement>(null);
+  const scrollBeforeTour = useRef<number | null>(null);
   const target = useRef<HTMLElement | undefined>(undefined);
   const step = typeof stage === 'number' ? content.steps[stage] : null;
   const open = stage !== null;
@@ -51,9 +58,15 @@ function Guide({ path, content }: { path: string; content: (typeof LESSON_GUIDES
     }
     dialog.current?.close();
     setStage(null);
+    if (scrollBeforeTour.current !== null) {
+      window.scrollTo({ top: scrollBeforeTour.current, behavior: 'instant' });
+      scrollBeforeTour.current = null;
+    }
     help.current?.focus({ preventScroll: true });
   }
   function move(nextStage: 'intro' | number) {
+    if (stage === 'intro' && typeof nextStage === 'number')
+      scrollBeforeTour.current = window.scrollY;
     setPlacement(null);
     setTried(false);
     setStage(nextStage);
@@ -96,24 +109,47 @@ function Guide({ path, content }: { path: string; content: (typeof LESSON_GUIDES
             ),
           }
         : null;
-      const panelHeight = panel.getBoundingClientRect().height;
+      const panelHeight = panel.scrollHeight + 4;
       const panelWidth = panel.getBoundingClientRect().width;
-      const above = Boolean(
-        spot && spot.top + spot.height + panelHeight + 28 > height && spot.top > panelHeight + 28,
-      );
-      const preferredTop = spot
-        ? above
-          ? spot.top - panelHeight - 18
-          : spot.top + spot.height + 18
-        : (height - panelHeight) / 2;
+      const gap = 18,
+        edge = 12;
+      let left = (width - panelWidth) / 2;
+      let top = edge;
+      let maxHeight = height - edge * 2;
+      let direction: Placement['direction'] = 'below';
+      if (spot) {
+        // Prefer a side when it fits; otherwise reserve a separate vertical area.
+        // The callout may scroll internally, but must never cover its own target.
+        if (width - spot.left - spot.width - gap - edge >= panelWidth) {
+          direction = 'right';
+          left = spot.left + spot.width + gap;
+          top = spot.top + spot.height / 2 - Math.min(panelHeight, maxHeight) / 2;
+        } else if (spot.left - gap - edge >= panelWidth) {
+          direction = 'left';
+          left = spot.left - panelWidth - gap;
+          top = spot.top + spot.height / 2 - Math.min(panelHeight, maxHeight) / 2;
+        } else {
+          const below = height - edge - spot.top - spot.height - gap;
+          const above = spot.top - edge - gap;
+          left = Math.max(edge, Math.min(width - panelWidth - edge, spot.left));
+          if (below >= panelHeight || below >= above) {
+            direction = 'below';
+            maxHeight = Math.max(1, below);
+            top = spot.top + spot.height + gap;
+          } else {
+            direction = 'above';
+            maxHeight = Math.max(1, above);
+            top = spot.top - gap - Math.min(panelHeight, maxHeight);
+          }
+        }
+      }
+      const usedHeight = Math.min(panelHeight, maxHeight);
       setPlacement({
         spot,
-        above,
-        left: Math.max(
-          12,
-          Math.min(width - panelWidth - 12, spot?.left ?? (width - panelWidth) / 2),
-        ),
-        top: Math.max(12, Math.min(height - panelHeight - 12, preferredTop)),
+        direction,
+        maxHeight,
+        left,
+        top: Math.max(edge, Math.min(height - usedHeight - edge, top)),
       });
     };
     const schedule = () => {
@@ -170,8 +206,12 @@ function Guide({ path, content }: { path: string; content: (typeof LESSON_GUIDES
         )}
         <section
           ref={card}
-          className={`guide-card${step && spot ? ' pointing' : ''}${placement?.above ? ' above' : ''}`}
-          style={step && placement ? { left: placement.left, top: placement.top } : undefined}
+          className={`guide-card${step && spot ? ' pointing' : ''}${placement ? ` ${placement.direction}` : ''}`}
+          style={
+            step && placement
+              ? { left: placement.left, top: placement.top, maxHeight: placement.maxHeight }
+              : undefined
+          }
         >
           <button
             type="button"

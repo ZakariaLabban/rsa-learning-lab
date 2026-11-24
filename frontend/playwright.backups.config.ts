@@ -3,9 +3,12 @@ import config from './playwright.config';
 // The retained interfaces run only in an explicit, unpublished backup-test build.
 export default defineConfig({
   ...config,
+  outputDir: './test-results-backups',
   testMatch: '**/*.spec.ts',
   testIgnore: [
     '**/lecture.spec.ts',
+    '**/accessibility.spec.ts',
+    '**/hardening.spec.ts',
     '**/account.spec.ts',
     '**/offline.spec.ts',
     '**/onboarding.spec.ts',

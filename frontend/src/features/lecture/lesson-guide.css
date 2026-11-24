@@ -172,3 +172,21 @@
     display: none;
   }
 }
+
+.lecture .guide-card.pointing.left::before {
+  content: '→';
+  right: 0.6rem;
+  top: 0.3rem;
+}
+.lecture .guide-card.pointing.right::before {
+  content: '←';
+  left: 0.6rem;
+  right: auto;
+  top: 0.3rem;
+}
+@media (max-height: 540px) and (min-width: 600px) {
+  .lecture .tour .guide-card {
+    width: min(20rem, calc(100% - 24px));
+    font-size: 0.95rem;
+  }
+}

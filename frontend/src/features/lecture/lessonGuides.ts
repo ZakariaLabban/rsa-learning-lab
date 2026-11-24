@@ -146,7 +146,7 @@ export const LESSON_GUIDES: Record<string, LessonGuideContent> = {
   '/lecture/small-e': calculated(
     'The same unpadded message is sent to three recipients with e = 3. Combine the ciphertexts and recover the message.',
     'You will see why a low exponent and repeated textbook messages can be a dangerous combination.',
-    'Start with the prepared example, or change the three moduli and ciphertexts to investigate another case.',
+    'Choose a message, exponent and three moduli that share no factors. The lab calculates the ciphertexts for you. Start with the prepared example.',
     'Advance through the CRT combination, then the cube root. Check the recovered message against all three ciphertexts.',
   ),
   '/lecture/guessing': {
@@ -182,7 +182,7 @@ export const LESSON_GUIDES: Record<string, LessonGuideContent> = {
         'By hand is for tiny teaching keys. Generate a real key makes a larger key in this browser. Import accepts an existing key file.',
       ),
       read(
-        '#keys-panel',
+        '#keys-panel .field',
         'Make a teaching key first',
         'Try the ready-made small primes. After the tour, make the key; it appears in Your keys, where you can name it, use it and export its public part.',
       ),

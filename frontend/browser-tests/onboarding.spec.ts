@@ -31,6 +31,7 @@ test('all lessons introduce themselves and spotlight their actual controls', asy
     }
     await expect(guide).not.toBeVisible();
     await expect(page.getByRole('button', { name: 'Page guide', exact: true })).toBeFocused();
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
   }
   expect(errors).toEqual([]);
 });
@@ -69,15 +70,41 @@ for (const width of [375, 1440])
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.addInitScript((value) => localStorage.setItem('rsa-lab-theme', value), theme);
       await page.goto('/lecture/gcd');
-      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      await expect(page.getByRole('dialog')).toBeVisible();
+      expect(
+        (
+          await new AxeBuilder({ page })
+            .include('dialog')
+            .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+            .analyze()
+        ).violations,
+      ).toEqual([]);
       await page.getByRole('button', { name: 'Show me how' }).click();
       for (let index = 0; index < LESSON_GUIDES['/lecture/gcd'].steps.length; index++) {
-        const card = page.locator('.guide-card');
-        const bounds = (await card.boundingBox())!;
-        expect(bounds.x).toBeGreaterThanOrEqual(0);
-        expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
-        expect(bounds.y).toBeGreaterThanOrEqual(0);
-        expect(bounds.y + bounds.height).toBeLessThanOrEqual(851);
+        await expect
+          .poll(async () => {
+            const bounds = await page.locator('.guide-card').boundingBox();
+            const spot = await page.locator('.guide-spot').boundingBox();
+            if (!bounds || !spot) return false;
+            const overlap =
+              Math.max(
+                0,
+                Math.min(bounds.x + bounds.width, spot.x + spot.width) - Math.max(bounds.x, spot.x),
+              ) *
+              Math.max(
+                0,
+                Math.min(bounds.y + bounds.height, spot.y + spot.height) -
+                  Math.max(bounds.y, spot.y),
+              );
+            return (
+              bounds.x >= 0 &&
+              bounds.x + bounds.width <= width &&
+              bounds.y >= 0 &&
+              bounds.y + bounds.height <= 851 &&
+              overlap === 0
+            );
+          })
+          .toBe(true);
         await page
           .getByRole('dialog')
           .getByRole('button', {
@@ -134,5 +161,68 @@ test('tour supports keyboard focus and browser history without leaving an overla
   await page.goBack();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('link', { name: 'Start with lesson 1' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+});
+
+for (const viewport of [
+  { width: 375, height: 812 },
+  { width: 812, height: 375 },
+]) {
+  test(`callouts leave their controls visible at ${viewport.width}x${viewport.height}`, async ({
+    page,
+  }) => {
+    test.setTimeout(120000);
+    await page.setViewportSize(viewport);
+    for (const path of ['/lecture/gcd', '/lecture/keys', '/lecture/start']) {
+      await page.goto(path);
+      await page.getByRole('button', { name: 'Show me how' }).click();
+      for (let i = 0; i < LESSON_GUIDES[path].steps.length; i++) {
+        await expect(page.locator('.guide-spot')).toBeVisible();
+        await expect
+          .poll(async () => {
+            const card = (await page.locator('.guide-card').boundingBox())!;
+            const spot = (await page.locator('.guide-spot').boundingBox())!;
+            return (
+              Math.max(
+                0,
+                Math.min(card.x + card.width, spot.x + spot.width) - Math.max(card.x, spot.x),
+              ) *
+              Math.max(
+                0,
+                Math.min(card.y + card.height, spot.y + spot.height) - Math.max(card.y, spot.y),
+              )
+            );
+          })
+          .toBe(0);
+        await page
+          .getByRole('dialog')
+          .getByRole('button', {
+            name: i === LESSON_GUIDES[path].steps.length - 1 ? 'Finish & explore' : 'Next →',
+            exact: true,
+          })
+          .click();
+      }
+    }
+  });
+}
+
+test('guides still open and can be skipped if preference storage is blocked', async ({ page }) => {
+  await page.addInitScript(() => {
+    const read = Storage.prototype.getItem;
+    Storage.prototype.getItem = function (key) {
+      if (key.startsWith('rsa-lab-guide.')) throw new Error('Blocked');
+      return read.call(this, key);
+    };
+    const write = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key.startsWith('rsa-lab-guide.')) throw new Error('Blocked');
+      return write.call(this, key, value);
+    };
+  });
+  await page.goto('/lecture/gcd');
+  await page.getByLabel('Don’t open automatically for this lesson').check();
+  await page.getByRole('button', { name: 'Skip for now' }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await page.getByRole('button', { name: 'Page guide', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
 });

@@ -1,31 +1,11 @@
+import { disableLessonGuides } from './helpers/lessonGuides';
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
-test.beforeEach(async ({ context }) => {
-  await context.addInitScript(() => {
-    for (const path of [
-      'start',
-      'gcd',
-      'inverse',
-      'power',
-      'rsa',
-      'why',
-      'signatures',
-      'primality',
-      'crt',
-      'factoring',
-      'small-e',
-      'guessing',
-      'keys',
-      'contacts',
-      'messages',
-      'practice',
-    ])
-      localStorage.setItem(`rsa-lab-guide.v1:/lecture/${path}`, 'hidden');
-  });
-});
+test.beforeEach(async ({ context }) => disableLessonGuides(context));
+
 import { preview, type PreviewServer } from 'vite';
 
 /*

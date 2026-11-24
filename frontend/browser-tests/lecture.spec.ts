@@ -1,29 +1,8 @@
+import { disableLessonGuides } from './helpers/lessonGuides';
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
-test.beforeEach(async ({ context }) => {
-  await context.addInitScript(() => {
-    for (const path of [
-      'start',
-      'gcd',
-      'inverse',
-      'power',
-      'rsa',
-      'why',
-      'signatures',
-      'primality',
-      'crt',
-      'factoring',
-      'small-e',
-      'guessing',
-      'keys',
-      'contacts',
-      'messages',
-      'practice',
-    ])
-      localStorage.setItem(`rsa-lab-guide.v1:/lecture/${path}`, 'hidden');
-  });
-});
+test.beforeEach(async ({ context }) => disableLessonGuides(context));
 
 const references = JSON.parse(
   readFileSync(

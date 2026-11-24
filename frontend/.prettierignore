@@ -4,3 +4,8 @@ package-lock.json
 src/engine/__vectors__/*.json
 playwright-report
 test-results
+
+dist-backups
+test-results-backups
+
+.vercel

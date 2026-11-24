@@ -47,7 +47,9 @@ jobs:
         if: failure()
         with:
           name: browser-test-results
-          path: frontend/test-results
+          path: |
+            frontend/test-results
+            frontend/test-results-backups
   python:
     name: Python reference and API checks
     runs-on: ubuntu-latest

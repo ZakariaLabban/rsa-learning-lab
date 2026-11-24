@@ -1,28 +1,8 @@
+import { disableLessonGuides } from './helpers/lessonGuides';
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
-test.beforeEach(async ({ context }) => {
-  await context.addInitScript(() => {
-    for (const path of [
-      'start',
-      'gcd',
-      'inverse',
-      'power',
-      'rsa',
-      'why',
-      'signatures',
-      'primality',
-      'crt',
-      'factoring',
-      'small-e',
-      'guessing',
-      'keys',
-      'contacts',
-      'messages',
-      'practice',
-    ])
-      localStorage.setItem(`rsa-lab-guide.v1:/lecture/${path}`, 'hidden');
-  });
-});
+test.beforeEach(async ({ context }) => disableLessonGuides(context));
 
 const authOrigin = 'https://rsa-lab-account-test.supabase.co';
 const authStorageKey = 'sb-rsa-lab-account-test-auth-token';
@@ -100,6 +80,8 @@ test.describe('mocked Supabase account flow', () => {
     });
 
     await page.goto('/account');
+    await expect(page.getByLabel('Email address')).toBeVisible();
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.getByLabel('Email address').fill('a@example.test');
     await page.getByRole('button', { name: 'Send magic link' }).click();
     await expect(page.getByText('Check your email for a sign-in link.')).toBeVisible();
@@ -128,6 +110,7 @@ test.describe('mocked Supabase account flow', () => {
 
     await sessionFor(accountA, 'a');
     await expect(page.getByText('a@example.test')).toBeVisible();
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.getByRole('radio', { name: /Review this public data/ }).check();
     await expect(page.getByText(/separate confirmation/)).toBeVisible();
     await page.getByRole('button', { name: 'Delete my cloud data...' }).click();
