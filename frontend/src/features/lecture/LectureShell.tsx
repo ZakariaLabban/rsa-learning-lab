@@ -1,3 +1,4 @@
+import { AccountLink } from '../../auth/AccountLink';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { Moon, PanelLeft, Sun } from 'lucide-react';
@@ -230,9 +231,7 @@ export function LectureShell() {
           RSA Lab
         </Link>
         <span className="tagline">Learn RSA step by step</span>
-        <Link to="/account" className="alt">
-          Account
-        </Link>
+        <AccountLink />
         <button
           type="button"
           className="theme"

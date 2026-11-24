@@ -159,7 +159,9 @@ export function AuthPage() {
       <h1 className="account-title">RSA Lab Account</h1>
 
       <p className="lead">
-        Sign in to access optional account features. You can always use RSA Lab without an account.
+        {session
+          ? 'You are signed in. Continue to the lab to pick up your lessons.'
+          : 'Sign in to access optional account features. You can always use RSA Lab without an account.'}
       </p>
 
       <p>
@@ -221,6 +223,12 @@ export function AuthPage() {
 
             <p>
               Email: <strong>{session.user.email ?? 'Unknown'}</strong>
+            </p>
+
+            <p>
+              <Link to="/" className="button primary">
+                Continue to the lab →
+              </Link>
             </p>
 
             {confirmSignOut ? (

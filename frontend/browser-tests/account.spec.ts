@@ -31,7 +31,7 @@ test('clears guest progress across open tabs and preserves other browser prefere
   });
   const other = await context.newPage();
   await other.goto('/');
-  await expect(other.getByRole('link', { name: 'Account', exact: true })).toBeVisible();
+  await expect(other.getByRole('link', { name: /^Account:/ })).toBeVisible();
   await expect(other.getByRole('link', { name: 'Privacy', exact: true })).toBeVisible();
   await other.goto('/lecture/practice');
   await expect(other.getByRole('heading', { name: /Practice with the lecture/ })).toBeVisible();
@@ -200,7 +200,10 @@ test.describe('mocked Supabase account flow', () => {
     await page.getByRole('button', { name: 'Continue as guest' }).click();
     await expect(page.getByLabel('Your answer').first()).toBeVisible();
     finishRefresh();
-    await page.getByRole('link', { name: 'Account', exact: true }).click();
+    await expect(
+      page.getByRole('link', { name: 'Account: guest mode is active', exact: true }),
+    ).toContainText('Guest mode');
+    await page.getByRole('link', { name: /^Account:/ }).click();
     await expect(page.getByText('Guest mode is active in this tab.')).toBeVisible();
     await expect(page.getByText('a@example.test')).toHaveCount(0);
     await page.getByRole('button', { name: 'Check account session' }).click();
@@ -209,6 +212,7 @@ test.describe('mocked Supabase account flow', () => {
 
   test('only completes a PKCE callback on the account route after a browser-initiated request', async ({
     page,
+    context,
   }) => {
     let redirectTo = '';
     let exchanges = 0;
@@ -257,7 +261,65 @@ test.describe('mocked Supabase account flow', () => {
     await expect(page.getByText('a@example.test')).toBeVisible();
     expect(exchanges).toBe(1);
     expect(new URL(page.url()).searchParams.has('code')).toBe(false);
+    // Returning to the lab must visibly retain the real authenticated session.
+    await page.getByRole('link', { name: 'Continue to the lab' }).click();
+    const signedIn = page.getByRole('link', {
+      name: 'Account: signed in a@example.test',
+      exact: true,
+    });
+    await expect(signedIn).toBeVisible();
+    await expect(signedIn).toContainText('Signed in');
+    await expect(signedIn).toContainText('a@example.test');
+    await page.reload();
+    await expect(signedIn).toBeVisible();
+    const other = await context.newPage();
+    await other.goto('/lecture/gcd');
+    await expect(
+      other.getByRole('link', { name: 'Account: signed in a@example.test', exact: true }),
+    ).toBeVisible();
+    await signedIn.click();
+    await page.route(`${authOrigin}/auth/v1/logout**`, (route) =>
+      route.fulfill({ status: 200, json: {} }),
+    );
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await page.getByRole('button', { name: 'Sign out of this browser' }).click();
+    await expect(page.getByLabel('Email address')).toBeVisible();
+    await expect(other.getByRole('link', { name: 'Account: sign in', exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Back to RSA Lab' }).click();
+    await expect(page.getByRole('link', { name: 'Account: sign in', exact: true })).toBeVisible();
   });
+
+  for (const theme of ['light', 'dark']) {
+    test(`signed-in identity fits small screens in ${theme}`, async ({ page }) => {
+      const email = 'a-very-long-student-account-name-for-the-header@example.test';
+      await page.addInitScript(
+        ({ authStorageKey, accountA, email, theme }) => {
+          localStorage.setItem('rsa-lab-theme', theme);
+          localStorage.setItem(
+            authStorageKey,
+            JSON.stringify({
+              access_token: 'test-token',
+              refresh_token: 'test-refresh',
+              expires_at: Math.floor(Date.now() / 1000) + 3600,
+              user: { id: accountA, email },
+            }),
+          );
+        },
+        { authStorageKey, accountA, email, theme },
+      );
+      await page.goto('/');
+      const link = page.getByRole('link', { name: `Account: signed in ${email}`, exact: true });
+      for (const width of [320, 375, 1440]) {
+        await page.setViewportSize({ width, height: 850 });
+        await expect(link).toBeVisible();
+        await expect(link).toContainText('Signed in');
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true,
+        );
+        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      }
+    });
+  }
 
   test('warns before sign-out can discard a temporary private key', async ({ page }) => {
     await page.addInitScript(
@@ -280,7 +342,7 @@ test.describe('mocked Supabase account flow', () => {
     await page.goto('/lecture/keys');
     await page.getByRole('button', { name: 'Save as one of my keys' }).click();
     await expect(page.getByText(/It is now your active key/)).toBeVisible();
-    await page.getByRole('link', { name: 'Account', exact: true }).click();
+    await page.getByRole('link', { name: /^Account:/ }).click();
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();
     await expect(page.getByRole('alert')).toContainText(
       'temporary private keys in this and other open tabs',
