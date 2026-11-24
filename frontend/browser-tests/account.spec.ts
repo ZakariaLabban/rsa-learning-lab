@@ -375,3 +375,31 @@ test.describe('mocked Supabase account flow', () => {
     await expect(page.getByRole('button', { name: 'Send magic link' })).toBeEnabled();
   });
 });
+test('a guest explicitly imports a shared public key and a revoked link stops resolving', async ({
+  page,
+}) => {
+  test.skip(process.env.RSA_MOCK_AUTH !== '1', 'Requires mocked Supabase.');
+  const slug = 'a'.repeat(48);
+  const { createHash } = await import('node:crypto');
+  const fingerprint = createHash('sha256')
+    .update('rsa-lab.key.v2\0')
+    .update(Buffer.from([0, 0, 0, 1, 187, 0, 0, 0, 1, 7]))
+    .digest('hex');
+  let revoked = false;
+  await page.route(`${authOrigin}/rest/v1/rpc/get_shared_key`, (route) => {
+    expect(route.request().postDataJSON()).toEqual({ share_slug: slug });
+    return route.fulfill({
+      json: revoked ? [] : [{ name: 'Shared teaching key', n: '187', e: '7', fingerprint }],
+    });
+  });
+  await page.goto('/k/' + slug);
+  await expect(page.getByRole('heading', { name: 'Shared teaching key' })).toBeVisible();
+  await expect(page.getByText(fingerprint, { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Add to contacts' }).click();
+  await expect(page.getByRole('status')).toContainText('Contact added');
+  revoked = true;
+  await page.reload();
+  await expect(page.getByRole('status')).toContainText('revoked');
+  await page.getByRole('link', { name: 'Back to Contacts' }).click();
+  await expect(page.getByText('Shared teaching key', { exact: true })).toBeVisible();
+});

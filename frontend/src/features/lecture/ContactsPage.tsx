@@ -1,3 +1,5 @@
+import { ShareLinks, shareSlug } from '../contacts/ShareLinks';
+import { useNavigate } from 'react-router-dom';
 import { LessonArticle } from './parts';
 import { useEffect, useRef, useState } from 'react';
 import { downloadBlob } from '../../components/download';
@@ -10,7 +12,9 @@ import { Collapse, CopyText, Idea, SlideRef, UsedFor, Words, LessonHeader } from
 function ShareMine({ entries }: { entries: readonly KeyEntry[] }) {
   const [id, setId] = useState(entries[0]?.id ?? '');
   const entry = entries.find((item) => item.id === id) ?? entries[0];
-  const [qr, setQr] = useState(''),
+  const [selection, setSelection] = useState<{ id: string; url: string }>();
+  const link = selection?.id === entry?.id ? selection?.url : undefined;
+  const [qr, setQr] = useState<{ source: string; url: string }>(),
     [qrError, setQrError] = useState('');
   const text = entry ? shareText(entry) : '';
   useEffect(() => {
@@ -18,31 +22,38 @@ function ShareMine({ entries }: { entries: readonly KeyEntry[] }) {
     let cancelled = false;
     import('qrcode')
       .then((module) =>
-        module.toDataURL(text, { errorCorrectionLevel: 'M', margin: 4, width: 512 }),
+        module.toDataURL(link || text, { errorCorrectionLevel: 'M', margin: 4, width: 512 }),
       )
       .then((url) => {
         if (!cancelled) {
-          setQr(url);
+          setQr({ source: link || text, url });
           setQrError('');
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setQr('');
+          setQr(undefined);
           setQrError('The QR code could not be made. Copy the text or download the file instead.');
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [text]);
+  }, [text, link]);
   if (!entry)
     return <p className="note">Make a key on the Keys page first, or share a demo key.</p>;
   return (
     <>
       <div className="field">
         <label htmlFor="share-key">Which key?</label>
-        <select id="share-key" value={entry.id} onChange={(event) => setId(event.target.value)}>
+        <select
+          id="share-key"
+          value={entry.id}
+          onChange={(event) => {
+            setSelection(undefined);
+            setId(event.target.value);
+          }}
+        >
           {entries.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name} ({item.bits}-bit)
@@ -69,9 +80,14 @@ function ShareMine({ entries }: { entries: readonly KeyEntry[] }) {
           Download .pub file
         </button>
       </div>
+      <ShareLinks
+        key={entry.id}
+        entry={entry}
+        onLink={(url) => setSelection({ id: entry.id, url })}
+      />
       <Collapse title="Show a QR code to scan">
-        {qr ? (
-          <img className="qr" src={qr} alt={`QR code of the public key ${entry.name}`} />
+        {qr && qr.source === (link || text) ? (
+          <img className="qr" src={qr.url} alt={`QR code of the public key ${entry.name}`} />
         ) : (
           <p role="status">{qrError || 'Making the QR code…'}</p>
         )}
@@ -82,6 +98,7 @@ function ShareMine({ entries }: { entries: readonly KeyEntry[] }) {
 }
 
 function AddContact() {
+  const navigate = useNavigate();
   const keyring = useKeyringStore();
   const [text, setText] = useState(''),
     [name, setName] = useState(''),
@@ -89,6 +106,11 @@ function AddContact() {
     [done, setDone] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
   async function add(value = text) {
+    const slug = shareSlug(value.trim());
+    if (slug) {
+      navigate('/k/' + slug);
+      return;
+    }
     try {
       const parsed = await parseContact(value.trim());
       const entry = await keyring.addContact(parsed.key, name.trim() || parsed.name);

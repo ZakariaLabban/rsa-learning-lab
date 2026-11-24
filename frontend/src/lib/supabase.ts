@@ -157,3 +157,55 @@ export async function deleteCloudApplicationData(accessToken: string) {
   if (!supabase) throw new Error('Supabase is not configured.');
   return supabase.rpc('delete_my_data').setHeader('Authorization', `Bearer ${accessToken}`);
 }
+
+export async function shareKeys(
+  accountId: string,
+  create?: { name: string; n: string; e: string; fingerprint: string },
+  revoke?: string,
+) {
+  if (!supabase) throw new Error('Online sharing is unavailable.');
+  if (create) {
+    const slug = Array.from(crypto.getRandomValues(new Uint8Array(24)), (byte) =>
+      byte.toString(16).padStart(2, '0'),
+    ).join('');
+    const { error } = await supabase
+      .from('shared_keys')
+      .insert({ ...create, slug, user_id: accountId });
+    if (error) throw error;
+    return slug;
+  }
+  if (revoke) {
+    const { error } = await supabase
+      .from('shared_keys')
+      .update({ revoked_at: new Date().toISOString() })
+      .eq('user_id', accountId)
+      .eq('slug', revoke)
+      .select('slug')
+      .single();
+    if (error) throw error;
+  }
+  return null;
+}
+
+export async function listSharedKeys(accountId: string, fingerprint: string) {
+  if (!supabase) throw new Error('Online sharing is unavailable.');
+  const { data, error } = await supabase
+    .from('shared_keys')
+    .select('slug,name')
+    .eq('fingerprint', fingerprint)
+    .eq('user_id', accountId)
+    .is('revoked_at', null)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data as { slug: string; name: string }[];
+}
+
+export async function lookupSharedKey(slug: string, signal: AbortSignal) {
+  if (!supabase) throw new Error('Online sharing is unavailable.');
+  const { data, error } = await supabase
+    .rpc('get_shared_key', { share_slug: slug })
+    .abortSignal(signal)
+    .maybeSingle();
+  if (error) throw error;
+  return data as { name: string; n: string; e: string; fingerprint: string } | null;
+}
