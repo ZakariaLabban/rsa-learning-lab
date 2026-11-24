@@ -202,3 +202,22 @@ export function makeSyncBase<T>(
 ): SyncEntityBase {
   return { revision, hash: value === null ? '' : hash(value), deleted };
 }
+
+/** Only treat an absent local record as deleted when someone explicitly removed it. */
+export function ignoreStaleTabOmissions(
+  checkpoint: SyncCheckpoint,
+  local: PublicSnapshot,
+  deletedIds: ReadonlySet<string>,
+): SyncCheckpoint {
+  const dropUnloaded = (bases: SyncCheckpoint['contacts'], records: CloudPublicKey[]) => {
+    const loadedIds = new Set(records.map(({ id }) => id));
+    return Object.fromEntries(
+      Object.entries(bases).filter(([id]) => loadedIds.has(id) || deletedIds.has(id)),
+    );
+  };
+  return {
+    ...checkpoint,
+    publicKeys: dropUnloaded(checkpoint.publicKeys, local.publicKeys),
+    contacts: dropUnloaded(checkpoint.contacts, local.contacts),
+  };
+}
