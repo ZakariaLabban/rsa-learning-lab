@@ -10,6 +10,7 @@ export type PracticeProgress = {
   topics: Partial<Record<PracticeTopic, { attempts: number; correct: number }>>;
 };
 export const progressKey = 'rsa-lab-practice.v1';
+export const PRACTICE_PROGRESS_CHANGED = 'rsa-lab:practice-progress-changed';
 export const emptyProgress = (): PracticeProgress => ({
   version: 1,
   attempts: 0,
@@ -109,7 +110,38 @@ export function saveProgress(
     const key = dataKeyAtRevision(localDataKey(progressKey, accountId), revision);
     localStorage.setItem(key, JSON.stringify(value));
     if (revision !== localClearRevision(accountId)) localStorage.removeItem(key);
+    else if (typeof window !== 'undefined')
+      window.dispatchEvent(new Event(PRACTICE_PROGRESS_CHANGED));
   } catch {
     /* Practice remains usable without storage. */
   }
+}
+
+/** Combines explicitly imported guest practice history with this account's local history. */
+export function mergePracticeProgress(
+  account: PracticeProgress,
+  guest: PracticeProgress,
+): PracticeProgress {
+  const add = (left: number, right: number) => Math.min(Number.MAX_SAFE_INTEGER, left + right);
+  const topics = { ...account.topics };
+  for (const [topic, stats] of Object.entries(guest.topics)) {
+    if (!stats) continue;
+    const current = topics[topic as keyof typeof topics] ?? { attempts: 0, correct: 0 };
+    topics[topic as keyof typeof topics] = {
+      attempts: add(current.attempts, stats.attempts),
+      correct: add(current.correct, stats.correct),
+    };
+  }
+  const attempts = add(account.attempts, guest.attempts);
+  const correct = Math.min(attempts, add(account.correct, guest.correct));
+  const streak = Math.min(correct, Math.max(account.streak, guest.streak));
+  return {
+    version: 1,
+    attempts,
+    correct,
+    streak,
+    best: Math.min(correct, Math.max(account.best, guest.best, streak)),
+    seen: [...new Set([...account.seen, ...guest.seen])].slice(-128),
+    topics,
+  };
 }

@@ -6,7 +6,9 @@ import { auth, deleteCloudApplicationData } from '../lib/supabase';
 import { ClearLocalData } from './ClearLocalData';
 import { GuestImportChoice } from './GuestImportChoice';
 import { CloudProfileStatus } from './CloudProfileStatus';
+import { CloudSyncStatus } from './CloudSyncStatus';
 import { clearAccountCache, cloudProfileChangeKey } from './accountCache';
+import { clearSyncCheckpoint } from './cloudSync';
 
 export function AuthPage() {
   const { session, loading, configured, guestOverride, setGuestOverride } = useAuth();
@@ -121,6 +123,7 @@ export function AuthPage() {
 
       try {
         clearAccountCache(session.user.id, window.localStorage);
+        clearSyncCheckpoint(session.user.id, window.localStorage);
         localStorage.setItem(cloudProfileChangeKey(session.user.id), crypto.randomUUID());
       } catch {
         cacheCleared = false;
@@ -253,6 +256,7 @@ export function AuthPage() {
 
           {/* CLOUD ACCOUNT STATUS */}
           <CloudProfileStatus key={`${session.user.id}-${profileRevision}`} />
+          <CloudSyncStatus />
 
           {/* GUEST DATA IMPORT */}
           <GuestImportChoice key={session.user.id} />

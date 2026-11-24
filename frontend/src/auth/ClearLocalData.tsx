@@ -5,6 +5,7 @@ import { progressKey } from '../features/lessons/practiceProgress';
 
 import { useAuth } from './AuthProvider';
 import { localClearKey, purgeObsoleteLocalData } from './localDataKey';
+import { clearSyncCheckpoint } from './cloudSync';
 
 export function ClearLocalData() {
   const keyring = useKeyringStore();
@@ -26,6 +27,7 @@ export function ClearLocalData() {
       await keyring.ready;
 
       localStorage.setItem(localClearKey(accountId), crypto.randomUUID());
+      if (accountId) clearSyncCheckpoint(accountId, localStorage);
       keyring.clearAll();
       purgeObsoleteLocalData(localStorage, accountId, [STORAGE_KEY, progressKey]);
 

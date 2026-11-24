@@ -18,8 +18,10 @@ export type KeyEntry = {
   name: string;
   source: KeySource;
   key: PublicKey;
-  /** Present for mine/demo/lecture entries, never for contacts. */
+  /** Present when this device has the private part; cloud-only public keys omit it. */
   privateKey?: PrivateKey;
+  /** Marks public-only entries that belong to the authenticated cloud keyring. */
+  cloudManaged?: boolean;
   bits: number;
   fingerprint: string;
   /** Contacts only: the user compared the fingerprint with its owner. */
@@ -38,7 +40,7 @@ export type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 export const STORAGE_KEY = 'rsa-lab.keyring';
 const SCHEMA_VERSION = 1;
-const MAX_SAVED_ENTRIES = 200;
+const MAX_SAVED_ENTRIES = 600;
 
 type StoredEntry = {
   id: string;
@@ -49,6 +51,7 @@ type StoredEntry = {
   fingerprint: string;
   verified?: boolean;
   private?: { p: string; q: string; d: string };
+  cloudManaged?: boolean;
   createdAt: number;
 };
 
@@ -61,6 +64,58 @@ type StoredKeyring = {
 
 function newId(): string {
   return crypto.randomUUID();
+}
+
+async function cloudMineEntry(
+  value: { id: string; name: string; n: string; e: string; fingerprint: string },
+  current?: KeyEntry,
+): Promise<KeyEntry> {
+  const key = { n: BigInt(value.n), e: BigInt(value.e) };
+  checkPublicKey(key);
+  const keyFingerprint = await fingerprint(key);
+  if (keyFingerprint !== value.fingerprint)
+    throw new KeyFileError('Public-key fingerprint mismatch.');
+  const privateKey =
+    current?.source === 'mine' && current.key.n === key.n && current.key.e === key.e
+      ? current.privateKey
+      : undefined;
+  return {
+    id: value.id,
+    name: cleanName(value.name),
+    source: 'mine',
+    key,
+    ...(privateKey ? { privateKey } : {}),
+    cloudManaged: true,
+    bits: bitLength(key.n),
+    fingerprint: keyFingerprint,
+    createdAt: current?.createdAt ?? Date.now(),
+  };
+}
+
+async function cloudContactEntry(value: {
+  id: string;
+  name: string;
+  n: string;
+  e: string;
+  fingerprint: string;
+  verified: boolean;
+}): Promise<KeyEntry> {
+  const key = { n: BigInt(value.n), e: BigInt(value.e) };
+  checkPublicKey(key);
+  const keyFingerprint = await fingerprint(key);
+  if (keyFingerprint !== value.fingerprint)
+    throw new KeyFileError('Public-key fingerprint mismatch.');
+  return {
+    id: value.id,
+    name: cleanName(value.name),
+    source: 'contact',
+    key,
+    cloudManaged: true,
+    bits: bitLength(key.n),
+    fingerprint: keyFingerprint,
+    verified: value.verified === true,
+    createdAt: Date.now(),
+  };
 }
 
 async function builtins(): Promise<KeyEntry[]> {
@@ -159,6 +214,152 @@ export class Keyring {
     return entry;
   }
 
+  /** Adds a public-only copy of one of the user's keys received from another device. */
+  async addPublicMine(value: {
+    id: string;
+    name: string;
+    n: string;
+    e: string;
+    fingerprint: string;
+  }): Promise<KeyEntry> {
+    const revision = this.memoryRevision;
+    await this.ready;
+    const key = { n: BigInt(value.n), e: BigInt(value.e) };
+    checkPublicKey(key);
+    const keyFingerprint = await fingerprint(key);
+    if (keyFingerprint !== value.fingerprint)
+      throw new KeyFileError('Public-key fingerprint mismatch.');
+    this.checkClear(revision);
+    const sameId = this.get(value.id);
+    if (sameId && sameId.fingerprint !== keyFingerprint)
+      throw new KeyFileError('A different key already uses this identifier.');
+    const existing = this.state.entries.find(
+      (entry) => entry.source === 'mine' && entry.fingerprint === keyFingerprint,
+    );
+    if (existing) {
+      if (
+        existing.id === value.id &&
+        existing.name === cleanName(value.name) &&
+        existing.cloudManaged === true
+      )
+        return existing;
+      const managed = { ...existing, name: cleanName(value.name), cloudManaged: true };
+      this.replace(managed);
+      return managed;
+    }
+    const entry: KeyEntry = {
+      id: value.id,
+      name: cleanName(value.name),
+      source: 'mine',
+      key,
+      cloudManaged: true,
+      bits: bitLength(key.n),
+      fingerprint: keyFingerprint,
+      createdAt: Date.now(),
+    };
+    this.update({ entries: [...this.state.entries, entry] });
+    return entry;
+  }
+
+  /** Merges an authenticated cloud snapshot into this account's local keyring. */
+  async applyCloudPublicData(
+    expected: {
+      publicKeys: { id: string; name: string; n: string; e: string; fingerprint: string }[];
+      contacts: {
+        id: string;
+        name: string;
+        n: string;
+        e: string;
+        fingerprint: string;
+        verified: boolean;
+      }[];
+    },
+    next: {
+      publicKeys: { id: string; name: string; n: string; e: string; fingerprint: string }[];
+      contacts: {
+        id: string;
+        name: string;
+        n: string;
+        e: string;
+        fingerprint: string;
+        verified: boolean;
+      }[];
+    },
+  ) {
+    await this.ready;
+    const expectedMine = new Map(expected.publicKeys.map((entry) => [entry.id, entry]));
+    const expectedContacts = new Map(expected.contacts.map((entry) => [entry.id, entry]));
+    const nextMine = new Map(next.publicKeys.map((entry) => [entry.id, entry]));
+    const nextContacts = new Map(next.contacts.map((entry) => [entry.id, entry]));
+    const mineIds = new Set([...expectedMine.keys(), ...nextMine.keys()]);
+    const contactIds = new Set([...expectedContacts.keys(), ...nextContacts.keys()]);
+    const currentMine = new Map(
+      this.state.entries
+        .filter((entry) => entry.source === 'mine')
+        .map((entry) => [entry.id, entry]),
+    );
+    const currentContacts = new Map(
+      this.state.entries
+        .filter((entry) => entry.source === 'contact')
+        .map((entry) => [entry.id, entry]),
+    );
+    const changedMine = new Map<string, KeyEntry | null>();
+    const changedContacts = new Map<string, KeyEntry | null>();
+    const valueOf = (entry: KeyEntry | undefined) =>
+      entry
+        ? {
+            id: entry.id,
+            name: entry.name,
+            n: String(entry.key.n),
+            e: String(entry.key.e),
+            fingerprint: entry.fingerprint,
+            ...(entry.source === 'contact' ? { verified: entry.verified === true } : {}),
+          }
+        : null;
+
+    for (const id of mineIds) {
+      const current = currentMine.get(id);
+      if (JSON.stringify(valueOf(current)) !== JSON.stringify(expectedMine.get(id) ?? null))
+        continue;
+      const target = nextMine.get(id);
+      changedMine.set(id, target ? await cloudMineEntry(target, current) : null);
+    }
+    for (const id of contactIds) {
+      const current = currentContacts.get(id);
+      if (JSON.stringify(valueOf(current)) !== JSON.stringify(expectedContacts.get(id) ?? null))
+        continue;
+      const target = nextContacts.get(id);
+      changedContacts.set(id, target ? await cloudContactEntry(target) : null);
+    }
+
+    // Fingerprint checks above await. Recheck against the latest in-memory state before commit
+    // so a user edit made during that work cannot be overwritten by this older cloud reply.
+    for (const id of changedMine.keys()) {
+      const current = this.state.entries.find(
+        (entry) => entry.source === 'mine' && entry.id === id,
+      );
+      if (JSON.stringify(valueOf(current)) !== JSON.stringify(expectedMine.get(id) ?? null))
+        changedMine.delete(id);
+    }
+    for (const id of changedContacts.keys()) {
+      const current = this.state.entries.find(
+        (entry) => entry.source === 'contact' && entry.id === id,
+      );
+      if (JSON.stringify(valueOf(current)) !== JSON.stringify(expectedContacts.get(id) ?? null))
+        changedContacts.delete(id);
+    }
+
+    if (changedMine.size === 0 && changedContacts.size === 0) return;
+    const entries = this.state.entries.filter((entry) => {
+      if (entry.source === 'mine' && changedMine.has(entry.id)) return false;
+      if (entry.source === 'contact' && changedContacts.has(entry.id)) return false;
+      return true;
+    });
+    for (const entry of [...changedMine.values(), ...changedContacts.values()])
+      if (entry) entries.push(entry);
+    this.update({ entries });
+  }
+
   /** Adds someone else's PUBLIC key as an unverified contact. */
   async addContact(key: PublicKey, name?: string): Promise<KeyEntry> {
     const revision = this.memoryRevision;
@@ -181,6 +382,55 @@ export class Keyring {
       bits: bitLength(publicKey.n),
       fingerprint: keyFingerprint,
       verified: false,
+      createdAt: Date.now(),
+    };
+    this.update({ entries: [...this.state.entries, entry] });
+    return entry;
+  }
+
+  /** Imports an explicitly approved public contact while preserving its stable sync ID. */
+  async addPublicContact(value: {
+    id: string;
+    name: string;
+    n: string;
+    e: string;
+    fingerprint: string;
+    verified: boolean;
+  }): Promise<KeyEntry> {
+    const revision = this.memoryRevision;
+    await this.ready;
+    const key = { n: BigInt(value.n), e: BigInt(value.e) };
+    checkPublicKey(key);
+    const keyFingerprint = await fingerprint(key);
+    if (keyFingerprint !== value.fingerprint)
+      throw new KeyFileError('Public-key fingerprint mismatch.');
+    this.checkClear(revision);
+    const byId = this.get(value.id);
+    if (byId) {
+      if (byId.source !== 'contact' || byId.fingerprint !== keyFingerprint)
+        throw new KeyFileError('A different key already uses this identifier.');
+      if (byId.cloudManaged) return byId;
+      const managed = { ...byId, cloudManaged: true };
+      this.replace(managed);
+      return managed;
+    }
+    const duplicate = this.state.entries.find(
+      (entry) => entry.source === 'contact' && entry.fingerprint === keyFingerprint,
+    );
+    if (duplicate) {
+      const managed = { ...duplicate, cloudManaged: true };
+      this.replace(managed);
+      return managed;
+    }
+    const entry: KeyEntry = {
+      id: value.id,
+      name: cleanName(value.name),
+      source: 'contact',
+      key,
+      cloudManaged: true,
+      bits: bitLength(key.n),
+      fingerprint: keyFingerprint,
+      verified: value.verified === true,
       createdAt: Date.now(),
     };
     this.update({ entries: [...this.state.entries, entry] });
@@ -324,7 +574,23 @@ export class Keyring {
         ...data,
         rememberPrivate: false,
         activeId: null,
-        entries: data.entries.filter((entry) => entry?.source === 'contact'),
+        entries: data.entries
+          .filter(
+            (entry) =>
+              entry?.source === 'contact' ||
+              (entry?.source === 'mine' && entry.cloudManaged === true),
+          )
+          .map((entry) => ({
+            id: entry.id,
+            name: entry.name,
+            source: entry.source,
+            n: entry.n,
+            e: entry.e,
+            fingerprint: entry.fingerprint,
+            ...(entry.cloudManaged ? { cloudManaged: true } : {}),
+            ...(entry.source === 'contact' ? { verified: entry.verified === true } : {}),
+            createdAt: entry.createdAt,
+          })),
       }),
     );
   }
@@ -359,7 +625,7 @@ export class Keyring {
           (entry) =>
             (entry.source === 'contact' && (!stored || oldEntries.get(entry.id) !== entry)) ||
             (entry.source === 'mine' &&
-              rememberPrivate &&
+              (entry.cloudManaged === true || (entry.privateKey && rememberPrivate)) &&
               (!stored || !previous.rememberPrivate || oldEntries.get(entry.id) !== entry)),
         )
         .map((entry) => ({
@@ -369,8 +635,9 @@ export class Keyring {
           n: String(entry.key.n),
           e: String(entry.key.e),
           fingerprint: entry.fingerprint,
+          ...(entry.cloudManaged ? { cloudManaged: true } : {}),
           ...(entry.source === 'contact' ? { verified: entry.verified === true } : {}),
-          ...(entry.source === 'mine' && entry.privateKey
+          ...(entry.source === 'mine' && entry.privateKey && rememberPrivate
             ? {
                 private: {
                   p: String(entry.privateKey.p),
@@ -386,7 +653,9 @@ export class Keyring {
       const keepSavedPrivate = stored?.rememberPrivate === true && preference !== 'false';
       const retained = (stored?.entries ?? []).filter(
         (entry) =>
-          (entry?.source === 'contact' || (entry?.source === 'mine' && keepSavedPrivate)) &&
+          (entry?.source === 'contact' ||
+            (entry?.source === 'mine' &&
+              (entry.cloudManaged === true || (Boolean(entry.private) && keepSavedPrivate)))) &&
           !removedIds.has(entry.id) &&
           !changedIds.has(entry.id),
       );
@@ -455,7 +724,7 @@ export class Keyring {
       storageProblem = 'Saved keys could not be read and were ignored.';
     }
     if (rememberPrivate && !this.allowsPrivateKeys()) {
-      const publicEntries = entries.filter((entry) => entry.source !== 'mine');
+      const publicEntries = entries.filter((entry) => !entry.privateKey);
       this.state = {
         ready: true,
         entries: publicEntries,
@@ -476,15 +745,16 @@ async function restore(item: unknown, rememberPrivate: boolean): Promise<KeyEntr
     const s = item as StoredEntry;
     if (!s || typeof s !== 'object' || typeof s.id !== 'string' || s.id.length > 64) return null;
     if (s.source !== 'mine' && s.source !== 'contact') return null;
-    if (s.source === 'mine' && (!rememberPrivate || !s.private)) return null;
+    if (s.source === 'mine' && !s.private && s.cloudManaged !== true) return null;
+    if (s.source === 'mine' && s.private && !rememberPrivate) return null;
     const digits = (v: unknown) => {
       if (typeof v !== 'string' || !/^[0-9]{1,1300}$/.test(v)) throw new Error();
       return BigInt(v);
     };
     const key = { n: digits(s.n), e: digits(s.e) };
     const privateKey =
-      s.source === 'mine'
-        ? privateFromParts(digits(s.private!.p), digits(s.private!.q), key.e, digits(s.private!.d))
+      s.source === 'mine' && rememberPrivate && s.private
+        ? privateFromParts(digits(s.private.p), digits(s.private.q), key.e, digits(s.private.d))
         : undefined;
     if (privateKey && privateKey.n !== key.n) return null;
     checkPublicKey(key);
@@ -496,6 +766,7 @@ async function restore(item: unknown, rememberPrivate: boolean): Promise<KeyEntr
       source: s.source,
       key,
       ...(privateKey ? { privateKey } : {}),
+      ...(s.cloudManaged === true ? { cloudManaged: true } : {}),
       bits: bitLength(key.n),
       fingerprint: keyFingerprint,
       ...(s.source === 'contact' ? { verified: s.verified === true } : {}),

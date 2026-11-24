@@ -109,7 +109,6 @@ API, API client, development proxy and launcher were retired in #45. See the
 
 See [Vercel setup](docs/vercel-deployment.md), [envelope v2](docs/envelope-v2.md),
 [math contracts](docs/engine-contracts.md), [frontend structure](docs/frontend-structure.md)
-and [contributing](CONTRIBUTING.md). Supabase project setup and database migrations are
-documented in [supabase/README.md](supabase/README.md). Contacts/key import, lesson
-pages, signatures and encrypted files run locally. Optional Supabase accounts and
-sync are tracked separately in the GitHub roadmap (#25).
+and [contributing](CONTRIBUTING.md). Supabase project setup, account sync, and database
+migrations are documented in [supabase/README.md](supabase/README.md). Guest mode and
+cryptographic operations continue to work locally.
