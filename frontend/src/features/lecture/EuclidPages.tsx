@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { extendedEuclid, gcdTable, parseWhole, type EeaResult, type GcdRow } from './model';
@@ -123,7 +124,7 @@ export function GcdPage() {
     }
   };
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Greatest common divisor" />
       <Idea>
         The <b>gcd</b> of two numbers is the biggest number that divides both. Euclid’s trick:
@@ -152,7 +153,7 @@ export function GcdPage() {
         <Field id="gcd-b" label="b" value={bText} onChange={setB} />
       </InputForm>
       {run && <GcdSteps key={`${run.a}-${run.b}`} run={run} />}
-    </article>
+    </LessonArticle>
   );
 }
 
@@ -498,7 +499,7 @@ export function InversePage() {
     }
   };
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Inverse of b mod m" />
       <Idea>
         The <b>inverse</b> of b mod m is the number x with b × x = 1 (mod m). It “undoes”
@@ -534,6 +535,6 @@ export function InversePage() {
           <EeaSteps key={`${run.m}-${run.b}`} run={run} />
         </>
       )}
-    </article>
+    </LessonArticle>
   );
 }

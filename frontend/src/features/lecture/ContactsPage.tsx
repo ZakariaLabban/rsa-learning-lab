@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useEffect, useRef, useState } from 'react';
 import { downloadBlob } from '../../components/download';
 import { groupFingerprint } from '../../engine/encoding';
@@ -241,7 +242,7 @@ export function ContactsPage() {
   const shareable = state.entries.filter((entry) => entry.source !== 'contact');
   const mine = state.entries.find((entry) => entry.source === 'mine');
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Contacts and sharing keys" />
       <Idea>
         To send someone an encrypted message you need <b>their public key</b>. Public keys are safe
@@ -273,6 +274,6 @@ export function ContactsPage() {
           ))}
         </ul>
       )}
-    </article>
+    </LessonArticle>
   );
 }

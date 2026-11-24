@@ -1,5 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import {
+  Children,
+  isValidElement,
   useEffect,
   useRef,
   useState,
@@ -10,6 +12,26 @@ import {
 import { clauseNumber } from './lessons';
 import type { PowerResult } from './model';
 import { WORDS, type WordKey } from './words';
+
+// Keep reference notes in their own column instead of floating them out of the article.
+export function LessonArticle({ children }: { children: ReactNode }) {
+  const items = Children.toArray(children);
+  const isNote = (child: ReactNode) =>
+    isValidElement(child) &&
+    (child.type === UsedFor || child.type === SlideRef || child.type === Words);
+  const notes = items.filter(isNote);
+  return (
+    <article className="lesson-article">
+      <div className="lesson-content">{items.filter((child) => !isNote(child))}</div>
+      {notes.length > 0 && (
+        <aside className="lesson-notes" aria-label="Lesson reference">
+          <h2 className="notes-title">Lesson reference</h2>
+          {notes}
+        </aside>
+      )}
+    </article>
+  );
+}
 
 // minus sign like in the slides
 export const fmt = (value: bigint | number) => String(value).replace('-', '−');

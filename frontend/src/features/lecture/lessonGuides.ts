@@ -167,7 +167,7 @@ export const LESSON_GUIDES: Record<string, LessonGuideContent> = {
         'Next step and Back let you compare the candidate ciphertexts. Matching one reveals the predictable message.',
       ),
       read(
-        '#lesson article > .collapse:last-of-type summary',
+        '#lesson .lesson-content > .collapse:last-of-type summary',
         'Compare real encryption',
         'Open this experiment after the tour to encrypt twice with textbook RSA and OAEP. Textbook results repeat; properly randomized OAEP results differ.',
       ),
@@ -187,7 +187,7 @@ export const LESSON_GUIDES: Record<string, LessonGuideContent> = {
         'Try the ready-made small primes. After the tour, make the key; it appears in Your keys, where you can name it, use it and export its public part.',
       ),
       read(
-        '#lesson article > details:last-of-type summary',
+        '#lesson .lesson-content > details:last-of-type summary',
         'Choose what stays on this device',
         'Open this section to inspect private-key storage. Private keys are temporary by default. Remembering them stores them unencrypted on this device.',
       ),

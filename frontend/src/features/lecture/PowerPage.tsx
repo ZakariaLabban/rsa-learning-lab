@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { parseWhole, power, type PowerResult } from './model';
@@ -181,7 +182,7 @@ export function PowerPage() {
     }
   };
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Powers mod n" />
       <Idea>
         To compute <Num>a^b mod n</Num> you never need the giant number a^b. Square, reduce mod n,
@@ -230,6 +231,6 @@ export function PowerPage() {
           </TabPanel>
         </>
       )}
-    </article>
+    </LessonArticle>
   );
 }

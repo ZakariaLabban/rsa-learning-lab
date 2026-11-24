@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { signByHand, type SignatureRun } from './advanced';
@@ -114,7 +115,7 @@ export function SignaturesPage() {
   const set = (key: keyof typeof fields) => (value: string) =>
     setFields((old) => ({ ...old, [key]: value }));
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Digital signatures" />
       <Idea>
         Encryption uses the receiver’s public key. A signature turns this around: the sender
@@ -164,6 +165,6 @@ export function SignaturesPage() {
           <Link to="/lecture/messages">Messages</Link> page by choosing “Also sign”.
         </p>
       </Collapse>
-    </article>
+    </LessonArticle>
   );
 }

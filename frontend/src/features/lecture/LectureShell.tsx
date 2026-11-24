@@ -267,12 +267,12 @@ export function LectureShell() {
             <Route path="*" element={<NotFound />} />
           </Routes>
           <LessonNav path={current} />
-          <LessonGuide key={current} path={current} />
           <footer className="app-footer">
             <Link to="/privacy">Privacy</Link>
           </footer>
         </main>
       </div>
+      <LessonGuide key={current} path={current} />
     </div>
   );
 }

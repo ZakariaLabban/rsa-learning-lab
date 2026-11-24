@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useState } from 'react';
 import { millerRabinRun, parseWhole, power, type MillerRabinRun } from './model';
 import {
@@ -158,7 +159,7 @@ export function PrimalityPage() {
     calculate(n, a);
   };
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Is n prime?" />
       <Idea>
         Checking every divisor is far too slow for huge numbers. Miller–Rabin instead tests a clever
@@ -195,6 +196,6 @@ export function PrimalityPage() {
         </button>
       </div>
       {run && <Steps key={`${run.n}-${run.a}`} run={run} />}
-    </article>
+    </LessonArticle>
   );
 }

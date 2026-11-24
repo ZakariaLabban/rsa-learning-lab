@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { parseEnvelope, utf8 } from '../../engine/encoding';
@@ -200,7 +201,7 @@ export function FactoringPage() {
     calculate(values);
   };
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Break a small key by factoring n" />
       <Idea>
         RSA is safe only because factoring n = p × q is hard when p and q are huge. If n is small,
@@ -246,7 +247,7 @@ export function FactoringPage() {
           C={state.C}
         />
       )}
-    </article>
+    </LessonArticle>
   );
 }
 
@@ -400,7 +401,7 @@ export function BroadcastPage() {
   const set = (key: keyof typeof fields) => (value: string) =>
     setFields((old) => ({ ...old, [key]: value }));
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Same message, three recipients, e = 3" />
       <Idea>
         A small e makes encryption fast, but if one message M is sent to e different people, the
@@ -450,7 +451,7 @@ export function BroadcastPage() {
           M={state.M}
         />
       )}
-    </article>
+    </LessonArticle>
   );
 }
 
@@ -509,7 +510,7 @@ export function GuessingPage() {
   }
   const steps = useSteps(3);
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="YES or NO? Guessing the message" />
       <Idea>
         Textbook RSA always gives the same ciphertext for the same message. If there are only a few
@@ -651,6 +652,6 @@ export function GuessingPage() {
           </>
         )}
       </Collapse>
-    </article>
+    </LessonArticle>
   );
 }
