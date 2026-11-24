@@ -1,4 +1,4 @@
-import type { PracticeProgress } from '../features/lessons/practiceProgress';
+import { emptyProgress, type PracticeProgress } from '../features/lessons/practiceProgress';
 import {
   emptySyncCheckpoint,
   hashSyncValue,
@@ -307,7 +307,7 @@ export async function synchronizePublicData(args: {
           hashSyncValue(value),
         );
       } else if (decision.kind === 'pull') {
-        progress = decision.value?.progress ?? localProgress;
+        progress = decision.value?.progress ?? emptyProgress();
         progressBase = remoteProgress
           ? makeSyncBase(
               remoteProgress.deleted_at === null ? { progress: remoteProgress.progress } : null,
