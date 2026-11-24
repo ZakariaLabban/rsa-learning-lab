@@ -5,7 +5,7 @@ const MESSAGE = {
   syncing: 'Syncing approved public data…',
   synced: 'Your approved public data is synchronized.',
   offline: 'You are offline. Local changes are saved and will sync when you reconnect.',
-  disabled: 'Cloud sync is paused. Your local data remains available on this device.',
+  disabled: 'Cloud sync is disabled. Your local data remains available on this device.',
   error: 'Could not synchronize. Your local data is safe; check the connection and retry.',
 } satisfies Record<ReturnType<typeof useCloudSync>['status'], string>;
 
