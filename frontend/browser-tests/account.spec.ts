@@ -317,6 +317,10 @@ test.describe('mocked Supabase account flow', () => {
           true,
         );
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+        if (width === 1440) {
+          await link.hover();
+          expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+        }
       }
     });
   }

@@ -28,7 +28,10 @@ export function AccountLink() {
         <CircleUserRound size={18} aria-hidden="true" />
       )}
       <span className="account-link-copy">
-        <span>{label}</span>
+        <span>
+          {label}
+          {session && ' '}
+        </span>
         {session && <small className="account-link-email">{identity}</small>}
       </span>
     </Link>

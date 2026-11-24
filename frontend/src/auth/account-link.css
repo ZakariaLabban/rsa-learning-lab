@@ -52,3 +52,7 @@
     column-gap: 0.5rem;
   }
 }
+
+.lecture .bar .account-link:hover .account-link-email {
+  color: var(--on-band);
+}
