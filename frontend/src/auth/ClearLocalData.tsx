@@ -46,7 +46,7 @@ export function ClearLocalData() {
   }
 
   return (
-    <section>
+    <section className="account-danger">
       <hr style={{ margin: '32px 0' }} />
 
       <h2>Clear Local Data</h2>

@@ -1,3 +1,4 @@
+import { AccountLayout } from './AccountLayout';
 import { Link } from 'react-router-dom';
 
 const supportEmail = import.meta.env.VITE_PRIVACY_CONTACT_EMAIL?.trim();
@@ -8,17 +9,10 @@ const deletionRequest =
 
 export function PrivacyPage() {
   return (
-    <main
-      style={{
-        maxWidth: 720,
-        margin: '60px auto',
-        padding: '24px',
-        lineHeight: 1.7,
-      }}
-    >
+    <AccountLayout>
       <Link to="/account">← Back to Account</Link>
 
-      <h1>Privacy and Data</h1>
+      <h1 className="account-title">Privacy and Data</h1>
 
       <p>
         RSA Learning Lab is an educational application. You can use its RSA lessons and
@@ -80,6 +74,6 @@ export function PrivacyPage() {
       <p>
         <Link to="/account">Return to your account</Link>
       </p>
-    </main>
+    </AccountLayout>
   );
 }

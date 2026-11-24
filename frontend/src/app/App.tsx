@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { BrowserRouter, matchPath, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from '../auth/AuthProvider';
 import {
   localClearKey,
@@ -11,7 +11,7 @@ import { browserStorage, Keyring, keyring, KeyringContext, STORAGE_KEY } from '.
 import { progressKey } from '../features/lessons/practiceProgress';
 import { ErrorBoundary } from './ErrorBoundary';
 import { LabThemeProvider } from './LabTheme';
-import { preferredInterface } from './interfacePreference';
+import { lectureRedirect } from './lectureRedirect';
 
 const AuthPage = lazy(() =>
   import('../auth/AuthPage').then((module) => ({
@@ -25,87 +25,34 @@ const PrivacyPage = lazy(() =>
   })),
 );
 
-const LegacyShell = lazy(() => import('./LegacyShell'));
-
 const LectureShell = lazy(() =>
   import('../features/lecture/LectureShell').then((module) => ({
     default: module.LectureShell,
   })),
 );
 
-const ModernLab = lazy(() =>
-  import('../features/lessons/ModernLab').then((module) => ({
-    default: module.ModernLab,
-  })),
-);
+// Vite eliminates this branch and its backup modules from production builds.
+const BackupExperiences =
+  import.meta.env.MODE === 'backup-test' ? lazy(() => import('./BackupExperiences')) : null;
 
 function Experiences() {
-  const { pathname } = useLocation();
-
-  const account = pathname === '/account' || pathname === '/account/';
-  const privacy = pathname === '/privacy' || pathname === '/privacy/';
-
-  const atRoot = Boolean(matchPath('/', pathname));
-
-  const lecture =
-    !account &&
-    !privacy &&
-    (Boolean(matchPath('/lecture/*', pathname)) ||
-      Boolean(matchPath('/lecture', pathname)) ||
-      (atRoot && preferredInterface() === 'lecture'));
-
-  const workshop =
-    !account &&
-    !privacy &&
-    !lecture &&
-    (Boolean(matchPath('/playground/*', pathname)) ||
-      (atRoot && preferredInterface() === 'workshop'));
-
-  const classic = !account && !privacy && !lecture && !workshop;
-
-  const [visitedLegacy, setVisitedLegacy] = useState(classic);
-
-  useEffect(() => {
-    if (classic) setVisitedLegacy(true);
-  }, [classic]);
-
-  return (
-    <>
-      {account && (
-        <Suspense fallback={<p role="status">Opening account...</p>}>
-          <AuthPage />
-        </Suspense>
-      )}
-
-      {privacy && (
-        <Suspense fallback={<p role="status">Opening privacy page...</p>}>
-          <PrivacyPage />
-        </Suspense>
-      )}
-
-      {lecture && (
-        <Suspense fallback={<p role="status">Opening the lecture lab…</p>}>
-          <LectureShell />
-        </Suspense>
-      )}
-
-      {workshop && (
-        <div className="workshop-host">
-          <Suspense fallback={<p role="status">Opening the workshop…</p>}>
-            <ModernLab />
-          </Suspense>
-        </div>
-      )}
-
-      {!account && !privacy && (visitedLegacy || classic) && (
-        <div hidden={!classic} inert={!classic} aria-hidden={!classic || undefined}>
-          <Suspense fallback={<p role="status">Opening the Legacy lab…</p>}>
-            <LegacyShell active={classic} />
-          </Suspense>
-        </div>
-      )}
-    </>
+  const { pathname, search, hash } = useLocation();
+  if (BackupExperiences)
+    return (
+      <Suspense fallback={<p role="status">Opening backup test…</p>}>
+        <BackupExperiences />
+      </Suspense>
+    );
+  const redirect = lectureRedirect(pathname);
+  if (redirect) return <Navigate replace to={`${redirect}${search}${hash}`} />;
+  const page = /^\/account\/?$/i.test(pathname) ? (
+    <AuthPage />
+  ) : /^\/privacy\/?$/i.test(pathname) ? (
+    <PrivacyPage />
+  ) : (
+    <LectureShell />
   );
+  return <Suspense fallback={<p role="status">Opening RSA Lab…</p>}>{page}</Suspense>;
 }
 
 function Guarded() {

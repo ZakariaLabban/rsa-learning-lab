@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { Moon, PanelLeft, Sun } from 'lucide-react';
 import { useLabTheme } from '../../app/LabTheme';
-import { rememberInterface } from '../../app/interfacePreference';
+import { LessonGuide } from './LessonGuide';
 import { BroadcastPage, FactoringPage, GuessingPage } from './AttackPages';
 import { ContactsPage } from './ContactsPage';
 import { CrtPage } from './CrtPage';
@@ -110,10 +110,6 @@ function Home() {
           </ol>
         </section>
       ))}
-      <p className="more">
-        Prefer the animated workshop? It is still here:{' '}
-        <Link to="/playground">open the workshop</Link>.
-      </p>
     </article>
   );
 }
@@ -203,7 +199,7 @@ export function LectureShell() {
       /* the choice just is not remembered */
     }
   };
-  useEffect(() => rememberInterface('lecture'), []);
+
   useEffect(() => {
     window.scrollTo(0, 0);
     const lesson = LESSONS.find((item) => item.path === current);
@@ -234,9 +230,6 @@ export function LectureShell() {
           RSA Lab
         </Link>
         <span className="tagline">Learn RSA step by step</span>
-        <Link to="/playground" className="alt">
-          Animated workshop
-        </Link>
         <Link to="/account" className="alt">
           Account
         </Link>
@@ -274,6 +267,7 @@ export function LectureShell() {
             <Route path="*" element={<NotFound />} />
           </Routes>
           <LessonNav path={current} />
+          <LessonGuide key={current} path={current} />
           <footer className="app-footer">
             <Link to="/privacy">Privacy</Link>
           </footer>

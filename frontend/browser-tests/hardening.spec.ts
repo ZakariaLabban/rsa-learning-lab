@@ -1,4 +1,9 @@
+import { disableLessonGuides } from './helpers/lessonGuides';
 import { expect, test } from '@playwright/test';
+
+test.beforeEach(async ({ context }) => disableLessonGuides(context));
+
+// These regression checks inspect the page behind the optional onboarding dialog.
 
 test.describe('unknown addresses', () => {
   test('an unknown lesson shows a 404 page with a way back, and is marked noindex', async ({
@@ -22,12 +27,16 @@ test.describe('unknown addresses', () => {
     await expect(page).toHaveURL(/\/lecture\/start$/);
   });
 
-  test('unknown workshop and Legacy addresses also say so', async ({ page }) => {
+  test('retired interfaces return to the course map and unknown public addresses show 404', async ({
+    page,
+  }) => {
     await page.goto('/playground/nope');
-    await expect(page.locator('#lesson-title')).toHaveText('Page not found');
-    await expect(page.getByText('This lesson address does not exist.')).toBeVisible();
+    await expect(page).toHaveURL('/');
+    await expect(
+      page.getByRole('heading', { name: 'Learn RSA, one step at a time' }),
+    ).toBeVisible();
     await page.goto('/nope');
-    await expect(page.getByRole('heading', { name: 'Page not found.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Page not found', exact: true })).toBeVisible();
   });
 });
 
@@ -140,13 +149,11 @@ test.describe('per-page canonical links (when the build has a public address)', 
 });
 
 test.describe('leaving a page leaves nothing behind', () => {
-  test('noindex and the lesson description are removed when the workshop takes over', async ({
-    page,
-  }) => {
+  test('leaving an unknown lesson for Account clears its noindex metadata', async ({ page }) => {
     await page.goto('/lecture/not-a-lesson');
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
-    await page.getByRole('link', { name: 'Animated workshop' }).click();
-    await expect(page).toHaveURL(/\/playground$/);
+    await page.getByRole('link', { name: 'Account', exact: true }).click();
+    await expect(page).toHaveURL(/\/account$/);
     await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /RSA/);
   });

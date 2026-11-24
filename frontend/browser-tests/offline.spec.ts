@@ -1,7 +1,11 @@
+import { disableLessonGuides } from './helpers/lessonGuides';
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+
+test.beforeEach(async ({ context }) => disableLessonGuides(context));
+
 import { preview, type PreviewServer } from 'vite';
 
 /*
@@ -113,27 +117,29 @@ test('after the first visit, deep links reload offline and keygen/encrypt/decryp
     ),
   ).toBe('unreachable');
   for (const [path, heading] of [
-    ['/playground/learn/crt', 'One number, several residues'],
-    ['/playground/break/factoring', 'Measure the tiny cases'],
-    ['/learn/why-rsa-works', 'Prove it with your numbers'],
+    ['/lecture/crt', 'Chinese Remainder Theorem'],
+    ['/lecture/factoring', 'Break a small key by factoring n'],
+    ['/lecture/why', 'Why RSA works'],
   ]) {
     await page.goto(`${ORIGIN}${path}`);
     await expect(page.getByRole('heading', { name: heading }), path).toBeVisible();
   }
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Prove it with your numbers' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Why RSA works' })).toBeVisible();
 
-  await page.goto(`${ORIGIN}/learn/keys`);
-  await page.getByRole('button', { name: /1024.*bit/ }).click();
-  await page.getByRole('button', { name: 'Generate key pair', exact: true }).click();
-  await expect(page.locator('.history-row')).toHaveCount(1, { timeout: 90000 });
-  await page.getByRole('link', { name: 'Encrypt / Decrypt', exact: true }).click();
+  await page.goto(`${ORIGIN}/lecture/keys`);
+  await page.getByRole('tab', { name: 'Generate a real key' }).click();
+  await page.getByLabel('Key size').selectOption('1024');
+  await page.getByRole('button', { name: 'Generate a key', exact: true }).click();
+  await expect(page.locator('.keylist').first().locator('.keycard')).toHaveCount(1, {
+    timeout: 90000,
+  });
+  await page.goto(`${ORIGIN}/lecture/messages`);
   await page.getByLabel('Message to encrypt').fill('Offline message');
-  await page.getByLabel('Padding', { exact: true }).selectOption('oaep');
   await page.getByRole('button', { name: 'Encrypt message', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Copy envelope' })).toBeVisible();
+  await page.getByRole('button', { name: 'Use the envelope I just made' }).click();
   await page.getByRole('button', { name: 'Decrypt', exact: true }).click();
-  await expect(page.locator('.recovered-message')).toHaveText('Offline message');
+  await expect(page.locator('.recovered')).toHaveText('Offline message');
 
   // The browser's own offline signal shows the notice, and it clears when back online.
   await context.setOffline(true);
@@ -147,7 +153,7 @@ test('a new version waits for the user, then replaces the old cache without user
   page,
 }) => {
   server = await startServer();
-  await page.goto(`${ORIGIN}/playground`);
+  await page.goto(`${ORIGIN}/`);
   await waitForOfflineInstall(page);
   const [oldCache] = await shellCaches(page);
 
@@ -169,8 +175,8 @@ test('a new version waits for the user, then replaces the old cache without user
   // so the page never mixes builds and the old version stays fully offline-ready.
   await page.reload();
   expect(await newBuildMarkers(page)).toBe(0);
-  await page.goto(`${ORIGIN}/playground/learn/signatures`);
-  await expect(page.getByRole('heading', { name: 'Why hash first?' })).toBeVisible();
+  await page.goto(`${ORIGIN}/lecture/signatures`);
+  await expect(page.getByRole('heading', { name: 'Digital signatures' })).toBeVisible();
   expect(await newBuildMarkers(page)).toBe(0);
   await expect(notice).toBeVisible();
 

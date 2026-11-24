@@ -1,5 +1,8 @@
+import { disableLessonGuides } from './helpers/lessonGuides';
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+
+test.beforeEach(async ({ context }) => disableLessonGuides(context));
 
 const references = JSON.parse(
   readFileSync(

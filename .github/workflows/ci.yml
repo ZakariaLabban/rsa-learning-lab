@@ -30,12 +30,16 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
+      - name: Retained interface regression checks (unpublished build)
+        run: |
+          npm run build -- --mode backup-test --outDir dist-backups
+          npm run test:browser -- --config playwright.backups.config.ts
       - name: Mocked Supabase account flows
         env:
           VITE_SUPABASE_URL: https://rsa-lab-account-test.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: mock-publishable-key
           VITE_PRIVACY_CONTACT_EMAIL: privacy@example.test
-          RSA_MOCK_AUTH: '1'
+          RSA_MOCK_AUTH: "1"
         run: |
           npm run build
           npm run test:browser -- account.spec.ts
@@ -43,7 +47,9 @@ jobs:
         if: failure()
         with:
           name: browser-test-results
-          path: frontend/test-results
+          path: |
+            frontend/test-results
+            frontend/test-results-backups
   python:
     name: Python reference and API checks
     runs-on: ubuntu-latest
@@ -51,7 +57,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: "3.11"
           cache: pip
       - run: python -m pip install -r requirements.lock.txt
       - run: python -m pytest -q

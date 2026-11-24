@@ -1,5 +1,8 @@
+import { disableLessonGuides } from './helpers/lessonGuides';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+
+test.beforeEach(async ({ context }) => disableLessonGuides(context));
 
 /**
  * Automated accessibility checks (axe, WCAG 2.0/2.1 A and AA) for every page of the lecture view,

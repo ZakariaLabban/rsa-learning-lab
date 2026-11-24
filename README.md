@@ -22,26 +22,31 @@ the production build. RSA calculations run in browser workers. No account is
 required for guest use. After one online
 visit the built app also reopens and works offline; see [offline guest app](docs/offline.md).
 
-## Three interfaces
+## Lecture interface and page guides
 
-The **lecture view** is the default for new visitors. `/` opens a course map with
-16 short lessons that follow the lecture slides (chapters 4, 8 and 9): the GCD, Extended
-Euclid, square-and-multiply, Miller-Rabin and CRT tables are filled one row at a time, then
-RSA by hand, signatures, three attacks, keys, contacts, messages and files, and a practice
-quiz. Lessons live under `/lecture/*`. See [the lecture view guide](docs/lecture-view.md).
+The yellow-and-black lecture view is the only public interface. `/` opens the course map;
+`/lecture/*` opens lessons, and `/account` and `/privacy` use the same visual language.
+Old Legacy and workshop bookmarks redirect to the matching lecture page. Stored interface
+preferences cannot enable a backup interface.
 
-The animated workshop, with guided playback, free exploration and step-by-step views
-inside the RSA machines, is at `/playground` (all lessons and tools have animated routes
-under `/playground/*`). The previous interface is the **Legacy lab** at `/legacy`.
-The header of each view links to the others. A visitor who already chose the workshop or
-the Legacy lab keeps that choice for `/`; `/lecture`, `/playground` and `/legacy` always open
-the corresponding experience, and all existing lesson URLs still work. All views share the
-same RSA engine. See [the workshop guide](docs/animated-workshop.md) for behavior and
-rollback details, and [animated lessons](docs/animated-lessons.md) for the route map, player,
-private-value handling and seeded Practice questions/progress.
+Each lesson opens a specific introduction on entry, with Skip and a spotlight tour of its
+actual controls. Students can opt out for that lesson on this browser and reopen **Page guide**
+at any time. Tours never reset inputs; the optional Try Next step uses the real calculation.
+The guides also support Escape, keyboard navigation, small screens and reduced motion.
 
-Error and 404 pages, accessibility checks, page titles and link previews, and Lighthouse
-results are described in [hardening](docs/hardening.md).
+Legacy and the animated workshop remain in source as backups. Their router lives in
+`frontend/src/app/BackupExperiences.tsx` and is included **only** in an explicit `backup-test`
+build. Production builds omit that module and both backup shells. To regression-test them:
+
+```powershell
+cd frontend
+npm run build -- --mode backup-test --outDir dist-backups
+npm run test:browser -- --config playwright.backups.config.ts
+```
+
+Do not deploy `dist-backups`. CI tests that build separately, preserving existing engine/UI
+regression coverage. To restore a public backup interface later, deliberately change the
+production router in `App.tsx` and review its navigation and tests.
 
 ## Key handling and limitations
 
