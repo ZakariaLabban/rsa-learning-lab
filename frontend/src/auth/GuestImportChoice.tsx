@@ -151,7 +151,7 @@ export function GuestImportChoice() {
             onChange={() => setChoice('review')}
             disabled={busy}
           />{' '}
-          Review guest data for import to this account
+          Review this public data before choosing whether to import it
         </label>
       </fieldset>
       {choice === 'review' && (
@@ -165,8 +165,8 @@ export function GuestImportChoice() {
             {busy ? 'Importing and syncing...' : 'Import guest public data and sync'}
           </button>
           <p>
-            This explicit action copies the selected public data into the signed-in account and
-            starts synchronization. The guest profile and its private keys stay on this device.
+            Reviewing does not upload anything. Import requires a separate confirmation with the
+            button above. The guest profile and its private keys stay on this device.
           </p>
         </>
       )}
