@@ -152,7 +152,7 @@ test.describe('leaving a page leaves nothing behind', () => {
   test('leaving an unknown lesson for Account clears its noindex metadata', async ({ page }) => {
     await page.goto('/lecture/not-a-lesson');
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
-    await page.getByRole('link', { name: 'Account', exact: true }).click();
+    await page.getByRole('link', { name: /^Account:/ }).click();
     await expect(page).toHaveURL(/\/account$/);
     await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /RSA/);

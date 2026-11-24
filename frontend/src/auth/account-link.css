@@ -1,0 +1,58 @@
+.lecture .bar .account-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex-shrink: 0;
+  min-height: 2.6rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--hair);
+  color: var(--ink);
+  text-decoration: none;
+}
+.lecture .account-link[data-signed-in='true'] {
+  background: var(--band-soft);
+  border-color: var(--ink-2);
+}
+.lecture .account-link-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font: 600 0.9rem/1.25 var(--sans);
+}
+.lecture .account-link-email {
+  display: block;
+  max-width: 13rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+.lecture .bar .account-link:hover {
+  background: var(--band);
+  color: var(--on-band);
+}
+@media (max-width: 640px) {
+  .lecture .account-link-email {
+    display: none;
+  }
+  .lecture .bar {
+    column-gap: 0.75rem;
+  }
+  .lecture .bar .account-link {
+    padding-inline: 0.5rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .lecture header.bar {
+    padding-inline: 0.75rem;
+    column-gap: 0.5rem;
+  }
+}
+
+.lecture .bar .account-link:hover .account-link-email {
+  color: var(--on-band);
+}
