@@ -14,6 +14,8 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { LabThemeProvider } from './LabTheme';
 import { lectureRedirect } from './lectureRedirect';
 
+const SharedKeyPage = lazy(() => import('../features/contacts/SharedKeyPage'));
+
 const AuthPage = lazy(() =>
   import('../auth/AuthPage').then((module) => ({
     default: module.AuthPage,
@@ -46,7 +48,9 @@ function Experiences() {
     );
   const redirect = lectureRedirect(pathname);
   if (redirect) return <Navigate replace to={`${redirect}${search}${hash}`} />;
-  const page = /^\/account\/?$/i.test(pathname) ? (
+  const page = pathname.startsWith('/k/') ? (
+    <SharedKeyPage />
+  ) : /^\/account\/?$/i.test(pathname) ? (
     <AuthPage />
   ) : /^\/privacy\/?$/i.test(pathname) ? (
     <PrivacyPage />
