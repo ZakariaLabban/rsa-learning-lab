@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CrtCards } from './CrtPage';
@@ -138,7 +139,7 @@ export function PracticePage() {
   const questions = useMemo(() => practiceSet(seed, level), [seed, level]);
   const correct = questions.filter((q) => results[q.id]).length;
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Practice with the lecture’s numbers" />
       <Idea>
         Try each question on paper first, then type your answer. If you are stuck, open the hint, or
@@ -185,6 +186,6 @@ export function PracticePage() {
           />
         ))}
       </ol>
-    </article>
+    </LessonArticle>
   );
 }

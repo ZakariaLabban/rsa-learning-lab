@@ -430,7 +430,10 @@ test('the big picture is a five-step animation with clear buttons', async ({ pag
   await expect(finished).toBeFocused();
   await page.getByRole('button', { name: '← Back' }).click();
   await expect(page.getByText('Picture 4 of 5')).toBeVisible();
-  await expect(page.getByRole('link', { name: /Start the maths/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Next lesson/ })).toHaveAttribute(
+    'href',
+    '/lecture/gcd',
+  );
 });
 
 test('the Next step button stays on screen while a long table grows', async ({ page }) => {
@@ -532,3 +535,34 @@ test('Extended Euclid says A1 and B1 can be skipped, and the contents menu colla
   await page.getByRole('button', { name: 'Show contents' }).click();
   await expect(rail).toBeVisible();
 });
+
+for (const width of [375, 1280, 1920]) {
+  test(`expanded references and lesson endings stay contained at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.addInitScript(() => localStorage.setItem('rsa-lab-rail', 'closed'));
+    for (const path of ['start', 'inverse']) {
+      await page.goto(`/lecture/${path}`);
+      await page.getByText('Words you need', { exact: true }).click();
+      const article = page.locator('.lesson-article');
+      const notes = page.getByRole('complementary', { name: 'Lesson reference' });
+      await expect(notes).toBeVisible();
+      const articleBox = (await article.boundingBox())!;
+      const notesBox = (await notes.boundingBox())!;
+      const navBox = (await page
+        .getByRole('navigation', { name: 'Previous and next lesson' })
+        .boundingBox())!;
+      const footerBox = (await page.locator('#lesson > footer').boundingBox())!;
+      expect(notesBox.x).toBeGreaterThanOrEqual(articleBox.x);
+      expect(notesBox.x + notesBox.width).toBeLessThanOrEqual(articleBox.x + articleBox.width + 1);
+      expect(navBox.y).toBeGreaterThanOrEqual(articleBox.y + articleBox.height);
+      expect(footerBox.y).toBeGreaterThanOrEqual(notesBox.y + notesBox.height);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
+      const next = page.getByRole('link', { name: /Next lesson/ });
+      await expect(next).toHaveCount(1);
+      if (path === 'start')
+        await expect(page.getByRole('link', { name: /Start the maths/ })).toHaveCount(0);
+    }
+  });
+}

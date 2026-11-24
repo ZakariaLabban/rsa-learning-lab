@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useRef, useState } from 'react';
 import { useBrowserSession } from '../../app/useBrowserSession';
 import { downloadBlob } from '../../components/download';
@@ -334,7 +335,7 @@ export function KeysPage() {
     (entry) => entry.source !== 'mine' && entry.source !== 'contact',
   );
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="My keys" />
       <Idea>
         A key pair has a <b>public</b> key (e, n) you give to everyone and a <b>private</b> key (d,
@@ -404,6 +405,6 @@ export function KeysPage() {
           This is a teaching lab: it has not been audited and is not for protecting real secrets.
         </p>
       </Collapse>
-    </article>
+    </LessonArticle>
   );
 }

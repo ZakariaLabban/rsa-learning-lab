@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useState } from 'react';
 import { whyRsaWorks, type WhyRsaRun } from './advanced';
 import { parseWhole, rsaSetup } from './model';
@@ -150,7 +151,7 @@ function ProofPart() {
 
 export function WhyPage() {
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Why RSA works" />
       <Idea>
         Locking raises M to the power e and unlocking raises the result to the power d. Because d
@@ -183,6 +184,6 @@ export function WhyPage() {
         with real keys, and RSA still works: the same argument holds separately mod p and mod q,
         because n is a product of two different primes.
       </p>
-    </article>
+    </LessonArticle>
   );
 }

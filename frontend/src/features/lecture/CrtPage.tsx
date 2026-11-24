@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useState } from 'react';
 import { crtDecrypt, crtSolve, crtSplit, type CrtDecryption, type CrtResult } from './advanced';
 import { EeaTable } from './EuclidPages';
@@ -398,7 +399,7 @@ function DecryptTab() {
 export function CrtPage() {
   const [tab, setTab] = useState<'rebuild' | 'decrypt'>('rebuild');
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Chinese Remainder Theorem" />
       <Idea>
         A number A below M = m₁m₂…mₖ is completely described by its remainders (a₁, a₂, …, aₖ) when
@@ -453,6 +454,6 @@ export function CrtPage() {
       <TabPanel id="crt" value={tab}>
         {tab === 'rebuild' ? <RebuildTab /> : <DecryptTab />}
       </TabPanel>
-    </article>
+    </LessonArticle>
   );
 }

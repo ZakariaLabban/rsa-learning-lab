@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { RsaFlow } from './diagrams';
@@ -152,7 +153,7 @@ export function RsaPage() {
 
   const ciphertext = setup ? power(message, setup.e, setup.n).result : 0n;
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="RSA by hand" />
       <Idea>
         You make a pair of keys from two secret primes. <b>Anyone</b> can lock a message with your
@@ -305,6 +306,6 @@ export function RsaPage() {
           </TabPanel>
         </>
       )}
-    </article>
+    </LessonArticle>
   );
 }

@@ -1,10 +1,10 @@
-import { Link } from 'react-router-dom';
+import { LessonArticle } from './parts';
 import { BigPicture } from './diagrams';
 import { Collapse, Idea, Words, LessonHeader } from './parts';
 
 export function StartPage() {
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="The big picture" />
       <Idea>
         RSA lets two people who have <b>never met</b> send each other secrets. Each person has a
@@ -37,11 +37,6 @@ export function StartPage() {
         </ol>
       </Collapse>
       <Words terms={['publicKey', 'privateKey', 'plaintext', 'ciphertext', 'attacker']} />
-      <div className="start-cta">
-        <Link to="/lecture/gcd" className="button primary big">
-          Start the maths: 1.1 GCD →
-        </Link>
-      </div>
-    </article>
+    </LessonArticle>
   );
 }

@@ -420,16 +420,6 @@
 .lecture .words dd {
   margin: 0.1rem 0 0;
 }
-@media (min-width: 1360px) {
-  .lecture .used-for,
-  .lecture .slide-ref,
-  .lecture details.collapse.words {
-    float: right;
-    clear: right;
-    width: 15rem;
-    margin: 0 -18rem 1rem 0;
-  }
-}
 
 /* controls: primary, secondary, quiet */
 .lecture button,
@@ -718,6 +708,7 @@
 
 /* tabs: a heavy rule under the one you are on */
 .lecture .tabs {
+  height: auto;
   display: flex;
   flex-wrap: wrap;
   gap: 0 1.5rem;
@@ -1673,11 +1664,6 @@
 .lecture .try-it {
   max-width: var(--wide);
 }
-@media (min-width: 1360px) {
-  .lecture article {
-    padding-right: 17rem;
-  }
-}
 
 /* collapsible contents */
 .lecture .layout.rail-closed {
@@ -1726,7 +1712,8 @@
 }
 
 /* titles: the clause number sits in a solid block, the title carries a rule underneath */
-.lecture article > header {
+.lecture article > header,
+.lecture .lesson-content > header {
   margin: 0 0 1.5rem;
   padding: 0 0 1rem;
   border-bottom: 2px solid var(--rule);
@@ -1835,5 +1822,143 @@
   .lecture .fig .figwrap {
     -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent);
     mask-image: linear-gradient(90deg, #000 88%, transparent);
+  }
+}
+
+/* A bounded workspace with a real reference column. Notes participate in the
+   article's height, so the lesson ending can never cross an expanded glossary. */
+.lecture #lesson {
+  --notes-width: 15rem;
+  --lesson-gap: 2.5rem;
+  container-type: inline-size;
+  max-width: 96rem;
+  margin-inline: auto;
+  padding: 2.5rem clamp(1.25rem, 3vw, 3rem) 5rem;
+}
+.lecture #lesson > article {
+  max-width: var(--wide);
+  margin-inline: auto;
+}
+.lecture #lesson > .lesson-article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  max-width: none;
+}
+.lecture .lesson-content {
+  align-self: start;
+  min-width: 0;
+}
+.lecture .lesson-notes {
+  min-width: 0;
+  align-self: start;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--hair);
+  border-top: 3px solid var(--band);
+  background: var(--field);
+}
+.lecture .lesson-notes .notes-title {
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+  font: 700 0.75rem var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+.lecture .lesson-notes :is(.used-for, .slide-ref, details.collapse.words) {
+  float: none;
+  clear: none;
+  width: auto;
+  margin: 0 0 1rem;
+  padding-top: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.lecture .lesson-notes > :last-child {
+  margin-bottom: 0;
+}
+.lecture .lesson-notes .words .collapse-body {
+  padding-left: 0;
+}
+.lecture .lesson-notes .words > summary {
+  font-size: 0.95rem;
+}
+.lecture #lesson > :is(.try-it, .lesson-nav, .app-footer) {
+  width: 100%;
+  max-width: var(--wide);
+  margin-inline: auto;
+}
+.lecture #lesson > .try-it {
+  margin-top: 2rem;
+  padding-block: 1.25rem;
+}
+.lecture #lesson > .lesson-nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.lecture .lesson-nav a {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3rem;
+  min-width: 0;
+  min-height: 4.5rem;
+  width: 100%;
+  max-width: 22rem;
+  padding: 1rem 1.25rem;
+}
+.lecture .lesson-nav a.next {
+  justify-self: end;
+  margin-left: 0;
+  text-align: right;
+}
+.lecture #lesson > .app-footer {
+  clear: both;
+  margin-top: 2rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--hair);
+  font: 0.85rem var(--sans);
+}
+.lecture #lesson > .app-footer a {
+  color: var(--ink-2);
+}
+@container (min-width: 58rem) {
+  .lecture #lesson > .lesson-article {
+    grid-template-columns: minmax(0, 1fr) var(--notes-width);
+    gap: var(--lesson-gap);
+  }
+  .lecture .lesson-notes {
+    position: sticky;
+    top: 1.25rem;
+    max-height: calc(100dvh - 2.5rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .lecture #lesson > :is(.try-it, .lesson-nav, .app-footer) {
+    max-width: calc(100% - var(--notes-width) - var(--lesson-gap));
+    margin-left: 0;
+    margin-right: auto;
+  }
+}
+@media (max-width: 640px) {
+  .lecture #lesson {
+    padding-top: 1.5rem;
+  }
+  .lecture #lesson > .lesson-nav {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lecture .lesson-nav > span:empty {
+    display: none;
+  }
+  .lecture .lesson-nav .next {
+    grid-row: 1;
+    text-align: left;
+  }
+  .lecture .lesson-nav a {
+    max-width: none;
+    min-height: 4.5rem;
   }
 }

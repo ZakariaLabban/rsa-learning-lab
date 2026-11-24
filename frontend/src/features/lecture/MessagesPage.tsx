@@ -1,3 +1,4 @@
+import { LessonArticle } from './parts';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RecipientPicker } from '../../components/RecipientPicker';
@@ -517,7 +518,7 @@ function Receive({ suggested }: { suggested: string }) {
 export function MessagesPage() {
   const [envelope, setEnvelope] = useState('');
   return (
-    <article>
+    <LessonArticle>
       <LessonHeader title="Send and receive secret messages" />
       <Idea>
         You lock a message with the receiver’s <b>public</b> key; only their <b>private</b> key can
@@ -535,6 +536,6 @@ export function MessagesPage() {
       </p>
       <Send onEnvelope={setEnvelope} />
       <Receive suggested={envelope} />
-    </article>
+    </LessonArticle>
   );
 }
