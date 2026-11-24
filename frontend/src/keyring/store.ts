@@ -60,6 +60,7 @@ type StoredKeyring = {
   rememberPrivate: boolean;
   activeId: string | null;
   entries: StoredEntry[];
+  pendingCloudDeletes?: Record<string, string>;
 };
 
 function newId(): string {
@@ -164,6 +165,7 @@ export class Keyring {
   readonly ready: Promise<void>;
   private clearRevision: string | null;
   private memoryRevision = 0;
+  private pendingCloudDeletes = new Map<string, string>();
   private pendingSaveBaseline: KeyringState | null = null;
 
   constructor(
@@ -322,6 +324,11 @@ export class Keyring {
       if (JSON.stringify(valueOf(current)) !== JSON.stringify(expectedMine.get(id) ?? null))
         continue;
       const target = nextMine.get(id);
+      if (
+        current?.cloudManaged &&
+        JSON.stringify(target ?? null) === JSON.stringify(valueOf(current))
+      )
+        continue;
       changedMine.set(id, target ? await cloudMineEntry(target, current) : null);
     }
     for (const id of contactIds) {
@@ -329,6 +336,11 @@ export class Keyring {
       if (JSON.stringify(valueOf(current)) !== JSON.stringify(expectedContacts.get(id) ?? null))
         continue;
       const target = nextContacts.get(id);
+      if (
+        current?.cloudManaged &&
+        JSON.stringify(target ?? null) === JSON.stringify(valueOf(current))
+      )
+        continue;
       changedContacts.set(id, target ? await cloudContactEntry(target) : null);
     }
 
@@ -459,6 +471,7 @@ export class Keyring {
   }
   remove(id: string) {
     this.editable(id);
+    if (this.storageKey !== STORAGE_KEY) this.pendingCloudDeletes.set(id, newId());
     this.update({
       entries: this.state.entries.filter((entry) => entry.id !== id),
       activeId: this.state.activeId === id ? null : this.state.activeId,
@@ -606,6 +619,34 @@ export class Keyring {
     }
   }
 
+  /** Only explicit removals can become cloud deletions. */
+  cloudDeleteIntents(): Map<string, string> {
+    const key = dataKeyAtRevision(this.storageKey, this.clearRevision);
+    let stored: Record<string, string> = {};
+    try {
+      stored = this.readStoredKeyring(key)?.pendingCloudDeletes ?? {};
+    } catch {
+      // In-memory removals still apply if browser storage is unavailable.
+    }
+    return new Map([...Object.entries(stored), ...this.pendingCloudDeletes]);
+  }
+
+  acknowledgeCloudDeletes(intents: ReadonlyMap<string, string>) {
+    if (intents.size === 0 || this.clearRevision !== this.readClearRevision()) return;
+    const key = dataKeyAtRevision(this.storageKey, this.clearRevision);
+    for (const [id, token] of intents)
+      if (this.pendingCloudDeletes.get(id) === token) this.pendingCloudDeletes.delete(id);
+    try {
+      const stored = this.readStoredKeyring(key);
+      if (!stored?.pendingCloudDeletes) return;
+      for (const [id, token] of intents)
+        if (stored.pendingCloudDeletes[id] === token) delete stored.pendingCloudDeletes[id];
+      this.storage?.setItem(key, JSON.stringify(stored));
+    } catch {
+      // A later successful sync can acknowledge the same intent.
+    }
+  }
+
   private save(previous: KeyringState): boolean {
     if (!this.storage || this.clearRevision !== this.readClearRevision()) return false;
     try {
@@ -672,9 +713,14 @@ export class Keyring {
         rememberPrivate: rememberPrivate || keepSavedPrivate || preference === 'true',
         activeId: keepActive ? selected : null,
         entries: saved,
+        pendingCloudDeletes: {
+          ...stored?.pendingCloudDeletes,
+          ...Object.fromEntries(this.pendingCloudDeletes),
+        },
       };
       const serialized = JSON.stringify(payload);
       this.storage.setItem(key, serialized);
+      this.pendingCloudDeletes.clear();
       if (this.clearRevision !== this.readClearRevision()) {
         this.storage.removeItem(key);
       } else if (

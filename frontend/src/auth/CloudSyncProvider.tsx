@@ -11,6 +11,7 @@ import type { Keyring } from '../keyring';
 import { localClearRevision } from './localDataKey';
 import {
   readSyncCheckpoint,
+  ignoreStaleTabOmissions,
   writeSyncCheckpoint,
   type LocalImportSelection,
   type PublicSnapshot,
@@ -87,6 +88,7 @@ export function CloudSyncProvider({
   const [status, setStatus] = useState<CloudSyncStatus>('checking');
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const running = useRef(false);
+  const rerun = useRef(false);
   const pendingSelection = useRef<LocalImportSelection | undefined>(undefined);
   const pendingResolvers = useRef<Array<(success: boolean) => void>>([]);
   const lastRunSucceeded = useRef(false);
@@ -95,7 +97,10 @@ export function CloudSyncProvider({
     async (selection?: LocalImportSelection) => {
       if (running.current) {
         pendingSelection.current = mergeSelections(pendingSelection.current, selection);
-        if (!selection) return false;
+        if (!selection) {
+          rerun.current = true;
+          return false;
+        }
         return new Promise<boolean>((resolve) => pendingResolvers.current.push(resolve));
       }
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -123,7 +128,12 @@ export function CloudSyncProvider({
         }
 
         const before = localSnapshot(store, accountId);
-        const checkpoint = readSyncCheckpoint(accountId);
+        const deleteIntents = store.cloudDeleteIntents();
+        const checkpoint = ignoreStaleTabOmissions(
+          readSyncCheckpoint(accountId),
+          before,
+          new Set(deleteIntents.keys()),
+        );
         const result = await synchronizePublicData({
           accountId,
           local: before,
@@ -143,10 +153,15 @@ export function CloudSyncProvider({
           { publicKeys: before.publicKeys, contacts: before.contacts },
           { publicKeys: result.local.publicKeys, contacts: result.local.contacts },
         );
-        if (JSON.stringify(readProgress(accountId)) === JSON.stringify(before.practiceProgress)) {
+        if (
+          JSON.stringify(readProgress(accountId)) === JSON.stringify(before.practiceProgress) &&
+          JSON.stringify(result.local.practiceProgress) !== JSON.stringify(before.practiceProgress)
+        ) {
           saveProgress(result.local.practiceProgress, accountId, clearRevision);
         }
         writeSyncCheckpoint(accountId, result.checkpoint);
+        for (const { id } of [...before.contacts, ...before.publicKeys]) deleteIntents.delete(id);
+        store.acknowledgeCloudDeletes(deleteIntents);
         setLastSyncedAt(Date.now());
         setStatus('synced');
         lastRunSucceeded.current = true;
@@ -158,7 +173,9 @@ export function CloudSyncProvider({
         running.current = false;
         const queued = pendingSelection.current;
         pendingSelection.current = undefined;
-        if (queued) window.setTimeout(() => void synchronize(queued), 0);
+        const retry = rerun.current;
+        rerun.current = false;
+        if (queued || retry) window.setTimeout(() => void synchronize(queued), 0);
         else
           pendingResolvers.current
             .splice(0)
