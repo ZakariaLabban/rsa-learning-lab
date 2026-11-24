@@ -58,7 +58,8 @@ export function CloudProfileStatus() {
 
       {status === 'enabled' && (
         <p role="status">
-          Your profile permits cloud writes. Import and synchronization are currently unavailable.
+          Your account is ready. Cloud import and synchronization are not available yet; signing in
+          does not upload your guest data.
         </p>
       )}
 

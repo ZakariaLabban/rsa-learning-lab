@@ -1,3 +1,4 @@
+import { AccountLayout } from './AccountLayout';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
@@ -152,19 +153,12 @@ export function AuthPage() {
   }
 
   return (
-    <main
-      style={{
-        maxWidth: 540,
-        margin: '60px auto',
-        padding: '24px',
-        lineHeight: 1.6,
-      }}
-    >
+    <AccountLayout>
       <Link to="/">← Back to RSA Lab</Link>
 
-      <h1>RSA Lab Account</h1>
+      <h1 className="account-title">RSA Lab Account</h1>
 
-      <p>
+      <p className="lead">
         Sign in to access optional account features. You can always use RSA Lab without an account.
       </p>
 
@@ -188,7 +182,7 @@ export function AuthPage() {
       )}
 
       {!loading && configured && !guestOverride && !session && (
-        <form onSubmit={handleSignIn}>
+        <form className="account-signin" onSubmit={handleSignIn}>
           <label htmlFor="auth-email">Email address</label>
 
           <input
@@ -200,16 +194,9 @@ export function AuthPage() {
             onChange={(event) => setEmail(event.target.value)}
             placeholder="you@example.com"
             disabled={busy}
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '12px',
-              margin: '10px 0 20px',
-              boxSizing: 'border-box',
-            }}
           />
 
-          <button type="submit" disabled={busy}>
+          <button type="submit" className="primary" disabled={busy}>
             {busy ? 'Sending...' : 'Send magic link'}
           </button>
           <p>Open the link in the browser profile where you requested it.</p>
@@ -265,7 +252,7 @@ export function AuthPage() {
           {/* CLOUD DATA DELETION */}
           <hr style={{ margin: '32px 0' }} />
 
-          <section>
+          <section className="account-danger">
             <h2>Delete My Cloud Data</h2>
 
             <p>Delete your cloud public keys, contacts, practice progress, and shared-key links.</p>
@@ -300,13 +287,6 @@ export function AuthPage() {
                   onChange={(event) => setDeleteText(event.target.value)}
                   disabled={busy}
                   autoComplete="off"
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '12px',
-                    margin: '10px 0 16px',
-                    boxSizing: 'border-box',
-                  }}
                 />
                 <button
                   type="button"
@@ -337,6 +317,6 @@ export function AuthPage() {
       {/* FEEDBACK MESSAGES */}
       {message && <p role="status">{message}</p>}
       {error && <p role="alert">{error}</p>}
-    </main>
+    </AccountLayout>
   );
 }

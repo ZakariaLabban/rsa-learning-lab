@@ -80,6 +80,7 @@ export function StepControls({
       <button
         type="button"
         className="primary big"
+        data-guide="next"
         onClick={steps.done ? undefined : steps.next}
         aria-disabled={steps.done}
       >
@@ -299,7 +300,7 @@ export function InputForm({
   };
   if (!open)
     return (
-      <div className="numbers-bar">
+      <div className="numbers-bar" data-guide="numbers">
         <span className="using">
           <small>Numbers used</small>
           {summary}
@@ -310,7 +311,7 @@ export function InputForm({
       </div>
     );
   return (
-    <form className="inputs" onSubmit={submit} noValidate>
+    <form className="inputs" data-guide="numbers" onSubmit={submit} noValidate>
       <div className="fields">{children}</div>
       <div className="controls">
         {submitLabel !== null && (

@@ -1,5 +1,29 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ context }) => {
+  await context.addInitScript(() => {
+    for (const path of [
+      'start',
+      'gcd',
+      'inverse',
+      'power',
+      'rsa',
+      'why',
+      'signatures',
+      'primality',
+      'crt',
+      'factoring',
+      'small-e',
+      'guessing',
+      'keys',
+      'contacts',
+      'messages',
+      'practice',
+    ])
+      localStorage.setItem(`rsa-lab-guide.v1:/lecture/${path}`, 'hidden');
+  });
+});
+
 const authOrigin = 'https://rsa-lab-account-test.supabase.co';
 const authStorageKey = 'sb-rsa-lab-account-test-auth-token';
 const accountA = '11111111-1111-4111-8111-111111111111';
@@ -26,11 +50,14 @@ test('clears guest progress across open tabs and preserves other browser prefere
     localStorage.setItem('test-preference', 'keep');
   });
   const other = await context.newPage();
-  await other.goto('/playground');
+  await other.goto('/');
   await expect(other.getByRole('link', { name: 'Account', exact: true })).toBeVisible();
   await expect(other.getByRole('link', { name: 'Privacy', exact: true })).toBeVisible();
-  await other.goto('/playground/learn/practice');
-  await expect(other.getByText(/First attempts: 1\/1 correct/)).toBeVisible();
+  await other.goto('/lecture/practice');
+  await expect(other.getByRole('heading', { name: /Practice with the lecture/ })).toBeVisible();
+  expect(await other.evaluate(() => localStorage.getItem('rsa-lab-practice.v1'))).toContain(
+    'attempts',
+  );
   await expect(other.getByRole('link', { name: 'Privacy', exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Clear local data...' }).click();
@@ -39,7 +66,7 @@ test('clears guest progress across open tabs and preserves other browser prefere
   await page.getByLabel('Type CLEAR to confirm:').fill('CLEAR');
   await Promise.all([other.waitForEvent('load'), confirm.click()]);
   await expect(page.getByRole('status').filter({ hasText: 'have been cleared' })).toBeVisible();
-  await expect(other.getByText(/First attempts: 0\/0 correct/)).toBeVisible();
+  await expect(other.getByRole('heading', { name: /Practice with the lecture/ })).toBeVisible();
   expect(await other.evaluate(() => localStorage.getItem('rsa-lab-practice.v1'))).toBeNull();
   expect(await other.evaluate(() => localStorage.getItem('test-preference'))).toBe('keep');
 });
@@ -123,7 +150,7 @@ test.describe('mocked Supabase account flow', () => {
     const other = await context.newPage();
     await other.goto('/account');
     await expect(other.getByText('b@example.test')).toBeVisible();
-    await expect(other.getByText(/Your profile permits cloud writes/)).toBeVisible();
+    await expect(other.getByText(/Your account is ready/)).toBeVisible();
 
     await page.getByRole('button', { name: 'Delete my cloud data...' }).click();
     await page.getByLabel('Type DELETE to confirm:').fill('DELETE');
@@ -182,13 +209,13 @@ test.describe('mocked Supabase account flow', () => {
     await page.route(`${authOrigin}/rest/v1/profiles?**`, (route) =>
       route.fulfill({ json: [{ sync_enabled: true, data_deleted_at: null }] }),
     );
-    await page.goto('/playground/learn/practice', { waitUntil: 'domcontentloaded' });
+    await page.goto('/lecture/practice', { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('status').filter({ hasText: 'Checking your session' }),
     ).toBeVisible();
     await expect(page.getByLabel('Your answer')).toHaveCount(0);
     await page.getByRole('button', { name: 'Continue as guest' }).click();
-    await expect(page.getByLabel('Your answer')).toBeVisible();
+    await expect(page.getByLabel('Your answer').first()).toBeVisible();
     finishRefresh();
     await page.getByRole('link', { name: 'Account', exact: true }).click();
     await expect(page.getByText('Guest mode is active in this tab.')).toBeVisible();

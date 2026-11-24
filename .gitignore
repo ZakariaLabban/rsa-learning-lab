@@ -14,3 +14,6 @@ frontend/playwright-report/
 frontend/test-results/
 .vercel/
 supabase/.temp/
+
+# Unpublished interface regression build
+frontend/dist-backups/

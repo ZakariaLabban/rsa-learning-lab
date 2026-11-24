@@ -1,0 +1,137 @@
+.lecture.account-view .account-layout {
+  display: grid;
+  grid-template-columns: minmax(13rem, 20rem) minmax(0, 44rem);
+  gap: clamp(2rem, 6vw, 6rem);
+  max-width: 76rem;
+  margin: auto;
+  padding: clamp(1.25rem, 4vw, 4rem);
+}
+.lecture .account-margin {
+  border-top: 6px solid var(--ink);
+  padding-top: 1.25rem;
+  align-self: start;
+}
+.lecture .account-kicker {
+  font: 700 0.75rem var(--mono);
+  letter-spacing: 0.1em;
+}
+.lecture .account-margin > p:first-of-type {
+  font: 600 clamp(2rem, 3vw, 3rem)/1.2 var(--serif);
+  margin: 1.5rem 0;
+}
+.lecture .account-margin mark {
+  background: var(--band);
+  color: var(--on-band);
+  padding: 0 0.12em;
+}
+.lecture .account-key-art {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 0;
+  font: 1.2rem var(--mono);
+}
+.lecture .account-key-art span {
+  border: 2px solid var(--ink);
+  padding: 0.8rem;
+  box-shadow: 4px 4px 0 var(--band);
+}
+.lecture .account-small {
+  font: 1rem/1.6 var(--sans);
+  color: var(--ink-2);
+}
+.lecture .account-sheet {
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.lecture .account-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin: 1.25rem 0;
+}
+.lecture .account-sheet section {
+  border-top: 1px solid var(--hair);
+  padding-top: 1rem;
+  margin-top: 2rem;
+}
+.lecture .account-sheet h2 {
+  font-size: 1.45rem;
+  margin: 1.5rem 0 0.75rem;
+}
+.lecture .account-sheet strong {
+  overflow-wrap: anywhere;
+}
+.lecture .account-signin {
+  background: var(--field);
+  border: 1px solid var(--rule);
+  border-top: 5px solid var(--band);
+  padding: clamp(1rem, 3vw, 2rem);
+  margin: 2rem 0;
+}
+.lecture .account-sheet label {
+  font-family: var(--sans);
+}
+.lecture .account-sheet input:not([type='radio']):not([type='checkbox']) {
+  display: block;
+  width: 100%;
+  padding: 0.8rem;
+  margin: 0.5rem 0 1rem;
+  border: 1px solid var(--rule);
+  background: var(--field);
+  color: var(--ink);
+  font: 1rem var(--sans);
+}
+.lecture .account-sheet button {
+  margin: 0.2rem 0.25rem 0.2rem 0;
+  white-space: normal;
+}
+.lecture .account-sheet fieldset {
+  border: 1px solid var(--hair);
+  padding: 1rem;
+  min-width: 0;
+}
+.lecture .account-sheet [role='status'],
+.lecture .account-sheet [role='alert'] {
+  border-left: 4px solid var(--band);
+  padding: 1rem;
+  background: var(--field);
+  overflow-wrap: anywhere;
+}
+.lecture .account-sheet [role='alert'] {
+  border-left-color: var(--red);
+}
+.lecture.account-view > .app-footer {
+  max-width: 76rem;
+  margin: auto;
+  padding: 1.5rem;
+}
+@media (max-width: 760px) {
+  .lecture.account-view .account-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+  .lecture .account-margin {
+    display: none;
+  }
+  .lecture.account-view .bar {
+    flex-wrap: wrap;
+  }
+}
+
+.lecture .account-sheet hr {
+  display: none;
+}
+.lecture .account-sheet .account-danger {
+  border: 1px solid var(--hair);
+  border-left: 4px solid var(--red);
+  padding: 0 1.25rem 1.25rem;
+}
+.lecture .account-danger > h2 {
+  border: 0;
+  padding: 0;
+}
+.lecture .account-danger button:first-of-type {
+  border-color: var(--red);
+  color: var(--red);
+}
