@@ -41,7 +41,13 @@ function ShareMine({ entries }: { entries: readonly KeyEntry[] }) {
     };
   }, [text, link]);
   if (!entry)
-    return <p className="note">Make a key on the Keys page first, or share a demo key.</p>;
+    return (
+      <>
+        {' '}
+        <p className="note">Make a key on the Keys page first.</p>
+        <ShareLinks onLink={() => {}} />
+      </>
+    );
   return (
     <>
       <div className="field">

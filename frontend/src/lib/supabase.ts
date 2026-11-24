@@ -187,17 +187,16 @@ export async function shareKeys(
   return null;
 }
 
-export async function listSharedKeys(accountId: string, fingerprint: string) {
+export async function listSharedKeys(accountId: string) {
   if (!supabase) throw new Error('Online sharing is unavailable.');
   const { data, error } = await supabase
     .from('shared_keys')
-    .select('slug,name')
-    .eq('fingerprint', fingerprint)
+    .select('slug,name,fingerprint')
     .eq('user_id', accountId)
     .is('revoked_at', null)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return data as { slug: string; name: string }[];
+  return data as { slug: string; name: string; fingerprint: string }[];
 }
 
 export async function lookupSharedKey(slug: string, signal: AbortSignal) {

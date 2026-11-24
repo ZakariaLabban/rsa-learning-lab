@@ -23,7 +23,7 @@ export function shareSlug(value: string) {
   }
 }
 
-export function ShareLinks({ entry, onLink }: { entry: KeyEntry; onLink: (url: string) => void }) {
+export function ShareLinks({ entry, onLink }: { entry?: KeyEntry; onLink: (url: string) => void }) {
   const { accountId } = useAuth();
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listSharedKeys>>>([]);
   const [busy, setBusy] = useState(false);
@@ -32,7 +32,7 @@ export function ShareLinks({ entry, onLink }: { entry: KeyEntry; onLink: (url: s
   useEffect(() => {
     if (!accountId) return;
     let active = true;
-    void listSharedKeys(accountId, entry.fingerprint).then(
+    void listSharedKeys(accountId).then(
       (rows) => {
         if (active) {
           setRows(rows);
@@ -49,17 +49,17 @@ export function ShareLinks({ entry, onLink }: { entry: KeyEntry; onLink: (url: s
     return () => {
       active = false;
     };
-  }, [accountId, entry.fingerprint]);
+  }, [accountId]);
   if (!accountId) return null;
   const url = (slug: string) => location.origin + '/k/' + slug;
   async function change(revoke?: string) {
-    if (!accountId || busy) return;
+    if (!accountId || busy || loading || (!entry && !revoke)) return;
     setBusy(true);
     setError('');
     try {
       const slug = await shareKeys(
         accountId,
-        revoke
+        revoke || !entry
           ? undefined
           : {
               name: entry.name,
@@ -69,8 +69,9 @@ export function ShareLinks({ entry, onLink }: { entry: KeyEntry; onLink: (url: s
             },
         revoke,
       );
+      if (revoke) setRows((rows) => rows.filter((row) => row.slug !== revoke));
       onLink(slug ? url(slug) : '');
-      setRows(await listSharedKeys(accountId, entry.fingerprint));
+      setRows(await listSharedKeys(accountId));
     } catch {
       setError('Could not update sharing. Check your connection and account cloud status.');
     } finally {
@@ -83,21 +84,25 @@ export function ShareLinks({ entry, onLink }: { entry: KeyEntry; onLink: (url: s
         Anyone with a link can read this public key. Revoking a link stops future lookups. Copies
         already imported remain.
       </p>
-      <button type="button" disabled={busy || loading} onClick={() => void change()}>
-        Create public-key link
-      </button>
+      {entry && (
+        <button type="button" disabled={busy || loading} onClick={() => void change()}>
+          Create public-key link
+        </button>
+      )}
       {rows.length > 0 && (
         <ul>
           {rows.map((row) => (
             <li key={row.slug}>
               {row.name} <CopyText value={url(row.slug)} label="Copy link" />
-              <button
-                type="button"
-                disabled={busy || loading}
-                onClick={() => onLink(url(row.slug))}
-              >
-                Use link in QR
-              </button>{' '}
+              {row.fingerprint === entry?.fingerprint && (
+                <button
+                  type="button"
+                  disabled={busy || loading}
+                  onClick={() => onLink(url(row.slug))}
+                >
+                  Use link in QR
+                </button>
+              )}
               <button
                 type="button"
                 disabled={busy || loading}
