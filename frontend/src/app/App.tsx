@@ -9,6 +9,7 @@ import {
 } from '../auth/localDataKey';
 import { browserStorage, Keyring, keyring, KeyringContext, STORAGE_KEY } from '../keyring';
 import { progressKey } from '../features/lessons/practiceProgress';
+import { CloudSyncProvider } from '../auth/CloudSyncProvider';
 import { ErrorBoundary } from './ErrorBoundary';
 import { LabThemeProvider } from './LabTheme';
 import { lectureRedirect } from './lectureRedirect';
@@ -95,7 +96,13 @@ function Profile({ accountId }: { accountId: string | null }) {
 
   return (
     <KeyringContext.Provider value={store}>
-      <Guarded />
+      {accountId ? (
+        <CloudSyncProvider accountId={accountId} store={store}>
+          <Guarded />
+        </CloudSyncProvider>
+      ) : (
+        <Guarded />
+      )}
     </KeyringContext.Provider>
   );
 }
