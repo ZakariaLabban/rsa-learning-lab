@@ -237,6 +237,9 @@ export function LectureShell() {
         <Link to="/playground" className="alt">
           Animated workshop
         </Link>
+        <Link to="/account" className="alt">
+          Account
+        </Link>
         <button
           type="button"
           className="theme"
@@ -271,6 +274,9 @@ export function LectureShell() {
             <Route path="*" element={<NotFound />} />
           </Routes>
           <LessonNav path={current} />
+          <footer className="app-footer">
+            <Link to="/privacy">Privacy</Link>
+          </footer>
         </main>
       </div>
     </div>

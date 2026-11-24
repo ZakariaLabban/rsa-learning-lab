@@ -7,6 +7,16 @@ import type { CipherResult, LabKey, Mode, Recovered } from './operations';
 export type { LabKey, CipherResult, Mode, Recovered } from './operations';
 
 const vault = new Map<string, PrivateKey>();
+let vaultRevision = 0;
+
+export function clearKeyVault() {
+  vaultRevision++;
+  vault.clear();
+}
+
+function checkVaultRevision(revision: number) {
+  if (revision !== vaultRevision) throw new DOMException('Local profile changed.', 'AbortError');
+}
 function computation<T>(
   request: WorkerRequest,
   options: { signal?: AbortSignal; onProgress?: (progress: KeyProgress) => void } = {},
@@ -48,12 +58,14 @@ export async function generateKey(
   bits: number,
   options: { signal?: AbortSignal; onProgress?: (progress: KeyProgress) => void } = {},
 ): Promise<LabKey> {
+  const revision = vaultRevision;
   if (![8, 16, 32, 64, 1024, 2048].includes(bits)) throw new Error('Unsupported key size.');
   const result = await computation<{ key: PrivateKey; candidates: number; elapsed_ms: number }>(
     { type: 'generate', bits: bits as KeyBits },
     options,
   );
   const identity = await fingerprint(result.key);
+  checkVaultRevision(revision);
   if (options.signal?.aborted) throw new DOMException('Generation cancelled.', 'AbortError');
   const id = crypto.randomUUID();
   vault.set(id, result.key);
@@ -70,7 +82,9 @@ export async function generateKey(
 }
 /** Registers an existing private key (for example from the keyring) for this tab's workers. */
 export async function adoptKey(key: PrivateKey): Promise<LabKey> {
+  const revision = vaultRevision;
   const identity = await fingerprint(key);
+  checkVaultRevision(revision);
   const id = crypto.randomUUID();
   vault.set(id, key);
   if (vault.size > 8) vault.delete(vault.keys().next().value!);

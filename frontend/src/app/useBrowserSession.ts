@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { adoptKey, generateKey, privateKeyFor, type LabKey } from '../engine/client';
 import type { PrivateKey } from '../engine/math';
-import { keyring } from '../keyring';
+import { useKeyringStore } from '../keyring';
 
 export function useBrowserSession() {
+  const keyring = useKeyringStore();
   const [bits, setBits] = useState(2048),
     [key, setKey] = useState<LabKey>();
   const [history, setHistory] = useState<LabKey[]>([]),

@@ -6,11 +6,18 @@ import { CopyButton } from '../../components/CopyButton';
 import { downloadBlob } from '../../components/download';
 import { ErrorBanner } from '../../components/ErrorBanner';
 import { groupFingerprint } from '../../engine/encoding';
-import { fileSlug, keyring, MAX_FILE_CHARS, useKeyring, type KeyEntry } from '../../keyring';
+import {
+  fileSlug,
+  useKeyringStore,
+  MAX_FILE_CHARS,
+  useKeyring,
+  type KeyEntry,
+} from '../../keyring';
 import { parseContact, shareText } from './model';
 import { QrScanner } from './QrScanner';
 
 function ContactCard({ entry, onError }: { entry: KeyEntry; onError: (error: string) => void }) {
+  const keyring = useKeyringStore();
   const [name, setName] = useState(entry.name);
   const [comparing, setComparing] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -98,6 +105,7 @@ function ContactCard({ entry, onError }: { entry: KeyEntry; onError: (error: str
 }
 
 export function Contacts() {
+  const keyring = useKeyringStore();
   const state = useKeyring();
   const contacts = state.entries.filter((e) => e.source === 'contact');
   const own = state.entries.filter((e) => e.source === 'mine' || e.source === 'demo');

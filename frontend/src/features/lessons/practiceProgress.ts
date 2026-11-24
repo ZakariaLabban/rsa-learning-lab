@@ -1,3 +1,4 @@
+import { dataKeyAtRevision, localClearRevision, localDataKey } from '../../auth/localDataKey';
 import type { PracticeTopic } from './practiceModel';
 export type PracticeProgress = {
   version: 1;
@@ -65,9 +66,13 @@ export function parseProgress(text: string | null): PracticeProgress {
     return emptyProgress();
   }
 }
-export function readProgress() {
+export function readProgress(accountId: string | null = null) {
   try {
-    return parseProgress(localStorage.getItem(progressKey));
+    return parseProgress(
+      localStorage.getItem(
+        dataKeyAtRevision(localDataKey(progressKey, accountId), localClearRevision(accountId)),
+      ),
+    );
   } catch {
     return emptyProgress();
   }
@@ -94,9 +99,16 @@ export function recordAnswer(
     },
   };
 }
-export function saveProgress(value: PracticeProgress) {
+export function saveProgress(
+  value: PracticeProgress,
+  accountId: string | null = null,
+  revision = localClearRevision(accountId),
+) {
+  if (revision !== localClearRevision(accountId)) return;
   try {
-    localStorage.setItem(progressKey, JSON.stringify(value));
+    const key = dataKeyAtRevision(localDataKey(progressKey, accountId), revision);
+    localStorage.setItem(key, JSON.stringify(value));
+    if (revision !== localClearRevision(accountId)) localStorage.removeItem(key);
   } catch {
     /* Practice remains usable without storage. */
   }

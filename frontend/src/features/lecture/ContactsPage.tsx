@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { downloadBlob } from '../../components/download';
 import { groupFingerprint } from '../../engine/encoding';
-import { fileSlug, keyring, publicKeyFile, useKeyring, type KeyEntry } from '../../keyring';
+import { fileSlug, useKeyringStore, publicKeyFile, useKeyring, type KeyEntry } from '../../keyring';
 import { parseContact, shareText } from '../contacts/model';
 import { QrScanner } from '../contacts/QrScanner';
 import { Collapse, CopyText, Idea, SlideRef, UsedFor, Words, LessonHeader } from './parts';
@@ -81,6 +81,7 @@ function ShareMine({ entries }: { entries: readonly KeyEntry[] }) {
 }
 
 function AddContact() {
+  const keyring = useKeyringStore();
   const [text, setText] = useState(''),
     [name, setName] = useState(''),
     [error, setError] = useState(''),
@@ -158,6 +159,7 @@ function AddContact() {
 }
 
 function ContactCard({ entry, mine }: { entry: KeyEntry; mine: KeyEntry | undefined }) {
+  const keyring = useKeyringStore();
   const [name, setName] = useState(entry.name),
     [error, setError] = useState('');
   return (

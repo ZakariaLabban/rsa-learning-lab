@@ -7,7 +7,7 @@ import type { PrivateKey } from '../../engine/math';
 import {
   fileSlug,
   keyPairFile,
-  keyring,
+  useKeyringStore,
   publicKeyFile,
   useKeyring,
   type KeyEntry,
@@ -35,6 +35,7 @@ const SOURCE_LABEL = {
  * Workbench use an assignment-size key.
  */
 export function MyKeys({ onUse }: { onUse?: (key: PrivateKey) => Promise<void> }) {
+  const keyring = useKeyringStore();
   const state = useKeyring();
   const [status, setStatus] = useState(''),
     [error, setError] = useState(''),
@@ -130,8 +131,9 @@ export function MyKeys({ onUse }: { onUse?: (key: PrivateKey) => Promise<void> }
           </p>
         ) : (
           <p className="helper-text">
-            Private keys are not saved: they disappear when you refresh. Contacts are saved. Export
-            a key-pair file to keep a backup.
+            Private keys held in memory disappear when you refresh or close the tab. For a signed-in
+            profile, they also disappear when the active account changes. Export a key-pair file to
+            keep a backup. Contacts are saved.
           </p>
         )}
 
