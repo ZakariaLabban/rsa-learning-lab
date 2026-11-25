@@ -388,6 +388,7 @@ test('a guest explicitly imports a shared public key and a revoked link stops re
   let revoked = false;
   await page.route(`${authOrigin}/rest/v1/rpc/get_shared_key`, (route) => {
     expect(route.request().postDataJSON()).toEqual({ share_slug: slug });
+    expect(route.request().headers()['cache-control']).toBe('no-store');
     return route.fulfill({
       json: revoked ? [] : [{ name: 'Shared teaching key', n: '187', e: '7', fingerprint }],
     });

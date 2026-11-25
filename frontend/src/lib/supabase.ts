@@ -203,6 +203,7 @@ export async function lookupSharedKey(slug: string, signal: AbortSignal) {
   if (!supabase) throw new Error('Online sharing is unavailable.');
   const { data, error } = await supabase
     .rpc('get_shared_key', { share_slug: slug })
+    .setHeader('Cache-Control', 'no-store')
     .abortSignal(signal)
     .maybeSingle();
   if (error) throw error;
