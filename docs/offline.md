@@ -42,8 +42,10 @@ until they reload.
 
 When the browser reports it is offline, a notice says so. It only promises that
 guest tools keep working once this page is controlled by the worker; otherwise it
-says unloaded pages still need a connection. Accounts and online share links do
-not exist yet (#48/#49); they must show their own offline state when added.
+says unloaded pages still need a connection. Accounts (#48) and online share links
+(#49) need a connection and show their own offline state: cloud sync reports that
+you are offline and that local changes will sync when you reconnect, and a `/k/…`
+link that cannot load asks you to check your connection and reload.
 
 ## Hosting notes
 
