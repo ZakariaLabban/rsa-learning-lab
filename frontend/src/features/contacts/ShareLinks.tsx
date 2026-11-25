@@ -5,11 +5,11 @@ import { listSharedKeys, shareKeys } from '../../lib/supabase';
 import { CopyText } from '../lecture/parts';
 
 const token = /^[A-Za-z0-9_-]{32,128}$/;
-export function shareSlug(value: string) {
+export function parseShareSlug(value: string, appOrigin: string) {
   try {
-    const url = new URL(value, location.origin);
+    const url = new URL(value, appOrigin);
     const slug = url.pathname.slice(3);
-    return url.origin === location.origin &&
+    return url.origin === new URL(appOrigin).origin &&
       !url.username &&
       !url.password &&
       !url.search &&
@@ -21,6 +21,10 @@ export function shareSlug(value: string) {
   } catch {
     return null;
   }
+}
+
+export function shareSlug(value: string) {
+  return parseShareSlug(value, location.origin);
 }
 
 export function ShareLinks({ entry, onLink }: { entry?: KeyEntry; onLink: (url: string) => void }) {
