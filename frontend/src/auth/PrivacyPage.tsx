@@ -36,9 +36,11 @@ export function PrivacyPage() {
       <h2>Account and cloud data</h2>
       <p>
         Supabase processes your email and manages your session. This browser stores the session to
-        keep you signed in. Cloud application storage supports public keys, contacts, practice
-        progress and public-key sharing links. Sign-in leaves guest data on this device. Import and
-        synchronization are currently unavailable.
+        keep you signed in. While you are signed in, your account’s public keys, contacts,
+        verification choices and practice progress sync to cloud storage, together with any
+        public-key sharing links you create. Private keys are never uploaded. Signing in never
+        uploads guest data automatically: importing guest public data is a separate choice on the
+        Account page, and the guest profile stays on this device.
       </p>
       <p>
         Contact names, public keys and QR codes do not establish identity. Verify fingerprints
